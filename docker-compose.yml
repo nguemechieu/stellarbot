@@ -2,7 +2,17 @@ version: '3.4'
 
 services:
   stellarbot:
-    image: stellarbot
+    image: bigbossmanager/stellarbot
     build:
       context: .
       dockerfile: ./Dockerfile
+  mysql:
+  
+    image: mysql:latest
+    restart: always
+    environment:
+    
+      DB_PORT: <DB_PORT>
+      DB_NAME: db
+      DB_USER: root
+      DB_PASSWORD: <PASSWORD>

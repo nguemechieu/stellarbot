@@ -18,3 +18,7 @@ COPY . /stellarbot/
 
 # Your application's entry point
 CMD [ "python", "main.py" ]
+
+FROM mysql:latest
+
+ENV []

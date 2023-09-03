@@ -1,4 +1,5 @@
-SQLAlchemy~=2.0.19
+
 requests
 
-
+pandas
+SQLAlchemy~=2.0.19
