@@ -1,31 +1,20 @@
-# Use an official Python runtime as a parent image
-FROM python:latest
+# Use a base image with Python and tk (for tkinter)
+FROM python:3.11-slim
 
-# Set environment variables for database connection
-ENV DB_HOST=db_host
-ENV DB_PORT=3306
-ENV DB_NAME=your_database_name
-ENV DB_USER=your_database_user
-ENV DB_PASSWORD=your_database_password
-
-# Set the working directory in the container
+# Set the working directory
 WORKDIR /stellarbot
 
-# Copy the requirements file into the container at /app
-COPY requirements.txt /stellarbot/
+# Install tk and other dependencies
+RUN apt-get update && apt-get install -y tk pkg-config 
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy the requirements file
+COPY requirements.txt .
 
-# Copy the rest of the application code into the container at /app
+# Install pip requirements
+RUN python -m pip install -r requirements.txt
+
+# Copy the rest of your application code
 COPY . /stellarbot/
 
-# Expose port for your application (change it to your application's port)
-EXPOSE 8080
-
-# Define the command to run your application
-
-
-CMD ["python", "main.py"]
-
-#no display name and no $DISPLAY environment variable
+# Your application's entry point
+CMD [ "python", "main.py" ]

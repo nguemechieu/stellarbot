@@ -1,30 +1,8 @@
-version: '3'
+version: '3.4'
 
 services:
   stellarbot:
+    image: stellarbot
     build:
       context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"  # Map your application's port to the host
-    depends_on:
-      - db
-  db:
-    image: mysql:latest
-    environment:
-      DB_NAME: your_database_name
-      DB_USER: your_database_user
-      DB_PASSWORD: your_database_password
-    ports:
-      - "3306:3306"  # Map PostgreSQL port to the host
-#With this setup, you can use docker-compose to build and run your application along with the database by running the following command in your project directory:
-#
-#  bash
-#  Copy code
-#  docker-compose up
-#  Make sure to customize the Dockerfile and docker-compose.yml according to your project's specific requirements, such as choosing the appropriate base image, specifying database settings, and configuring your application's ports and dependencies.
-#
-#
-
-
-
+      dockerfile: ./Dockerfile
