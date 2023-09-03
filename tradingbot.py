@@ -1,11 +1,17 @@
 import logging
 import threading
 import time
+import tkinter
+
+import pandas as pd
 import requests
+
+from home import Home
 
 
 class TradingBot(object):
-    def __init__(self):
+    def __init__(self, controller):
+        self.order_tickets = pd.DataFrame(columns=['order_id', 'symbol','price', 'quantity','create_time', 'type'])
         self.stellar_account_id = None
         self.stellar_account_secret = ""
         self.stellar_horizon_url = "https://horizon.stellar.org"
@@ -18,6 +24,7 @@ class TradingBot(object):
         self.logger.addHandler(logging.StreamHandler())
         self.logger.addHandler(logging.FileHandler(self.name + '.log'))
         self.logger.info('TradingBot initialized')
+        self.controller = controller
 
         self.thread = threading.Thread(target=self.run)
         self.thread.start()
@@ -41,6 +48,29 @@ class TradingBot(object):
                 base_asset_issuer="issuer_address_here", counter_asset_code="USD",
                 counter_asset_issuer="issuer_address_here")
             print(trade_aggregations)
+
+            for i in trade_aggregations:
+                if i["base_asset_code"] == 'BTC' and i["counter_asset_code"] == 'USDC':
+                    self.logger.info('Trade aggregation:' + str(i))
+
+                    order = {
+                        "type": "sell",
+                        "selling": {
+                            "asset_type": "USDC",
+                            "asset_code": "BTC",
+                            "asset_issuer": "issuer_address_here",
+                            "amount": "0.01",
+                            "price": "0.01",
+                            "stop_price": "0.023",
+                            "take_profit": "0.026",
+                        }
+                    }
+
+                    ticket = self.order_send(order)
+
+                    if ticket != None:
+                        self.order_tickets.append(ticket)
+
             time.sleep(10)
 
     def stop(self):
@@ -162,3 +192,24 @@ class TradingBot(object):
             return response.json()
         else:
             return " Error:" + str(response.status_code) + " " + str(response.reason)
+
+    def login(self, user_id, secret_key):
+
+        if user_id == "" or secret_key == "":
+            tkinter.Message(text="Please enter your user_id and secret_key")
+            return None
+
+        account_info = self.get_account_info(user_id)
+
+        if account_info is not None:
+
+            self.controller.show_frame(frame="Home")
+
+            return account_info
+
+
+
+        else:
+            return None
+
+        pass

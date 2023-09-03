@@ -10,5 +10,10 @@ setup(
     install_requires=[
         'requirements.txt'
     ],
-    zip_safe=False
+    zip_safe=False,
+    entry_points={
+        'console_scripts': [
+          'stellarbot = stellarbot.stellarbot:main'
+        ]
+    }
 )

@@ -1,8 +1,9 @@
 import tkinter
 from configparser import ConfigParser
 from tkinter import Message
-import sqlalchemy
+
 import pandas as pd
+import sqlalchemy
 
 
 class Db(object):
@@ -28,7 +29,8 @@ class Db(object):
         self.database = self.config.get(section='mysql', option='database')
         self.port = self.config.get(section='mysql', option='port')
         self.engine = sqlalchemy.create_engine(
-            "mysql+mysqldb://" + self.user + ":" + self.password + "@" + self.host + ":" + self.port + "/" + self.database +
+            "mysql+mysqldb://" + self.user + ":" + self.password + "@" + self.host + ":" + self.port + "/"
+            + self.database +
             "?charset"
             "=utf8mb4",
             connect_args={"charset": "utf8mb4"}
@@ -95,3 +97,12 @@ class Db(object):
                 data['volume']
             ))
         self.conn.commit()
+
+    def create_table(self):
+        cursor = self.conn
+        cursor.exec_driver_sql(
+            "CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, email VARCHAR(255)"
+            ",username VARCHAR(255), password VARCHAR(255), phone VARCHAR(255),"
+            "first_name VARCHAR(255), last_name VARCHAR(255), created_at DATETIME, updated_at DATETIME)")
+        self.conn.commit()
+        pass

@@ -1,5 +1,6 @@
 ################################
-#   StellarBot
+# Welcome to  StellarBot
+![stellarbot](images/stellarbot.png)
 ################################
 
 ## Description
