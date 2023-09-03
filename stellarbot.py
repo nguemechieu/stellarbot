@@ -1,6 +1,9 @@
+
+
 import tkinter
 
 from db import Db
+
 from home import Home
 from tradingbot import TradingBot
 from wallet import Wallet
@@ -15,7 +18,7 @@ class StellarBot(tkinter.Tk):
         self.geometry("1560x800")
         self.resizable(True, True)
         self.configure(bg="black", borderwidth=0, relief="ridge")
-        self.iconbitmap("images/stellarbot.ico")
+        self.iconbitmap(bitmap='./images/stellarbot.ico')
         self.db = Db()
         self.iconphoto(True, tkinter.PhotoImage(file="images/stellarbot.png"))
         tkinter.Label(self, text="Welcome to StellarBot", bg="white", fg="green", font=("Arial", 40)).grid(row=0,

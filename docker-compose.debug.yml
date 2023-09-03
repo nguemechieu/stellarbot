@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
   stellarbot:
-    image: stellarbot
+    image: bigbossmanager/stellarbot
     build:
       context: .
       dockerfile: ./Dockerfile

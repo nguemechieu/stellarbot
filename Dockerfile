@@ -7,6 +7,7 @@ WORKDIR /stellarbot
 # Install tk and other dependencies
 RUN apt-get update && apt-get install -y tk pkg-config 
 
+
 # Copy the requirements file
 COPY requirements.txt .
 
@@ -16,9 +17,19 @@ RUN python -m pip install -r requirements.txt
 # Copy the rest of your application code
 COPY . /stellarbot/
 
+
+
+
+# Use a base image with Python
+
+# Install tkinter (tk) package and Xvfb (virtual display)
+RUN apt-get update && apt-get install -y python3-tk xvfb
+
+
+# Set up the virtual display
+ENV DISPLAY=:99
 # Your application's entry point
-CMD [ "python", "main.py" ]
+EXPOSE  8090
 
-FROM mysql:latest
-
-ENV []
+# Start Xvfb and run the Python script
+CMD [ "Xvfb :99 -screen 0 1280x1024x16 &", "python", "main.py" ]
