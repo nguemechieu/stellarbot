@@ -29,7 +29,11 @@ RUN apt-get update && apt-get install -y python3-tk xvfb
 # Set up the virtual display
 ENV DISPLAY=:99
 # Your application's entry point
+
+RUN apt-get update && apt-get upgrade
+RUN apt-get install -y xvfb
 EXPOSE  8090
+
 
 # Start Xvfb and run the Python script
 CMD [ "Xvfb :99 -screen 0 1280x1024x16 &", "python", "main.py" ]
