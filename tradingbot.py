@@ -6,10 +6,11 @@ import tkinter
 import pandas as pd
 import requests
 
-from home import Home
+
 
 
 class TradingBot(object):
+    
     def __init__(self, controller):
         self.order_tickets = pd.DataFrame(columns=['order_id', 'symbol','price', 'quantity','create_time', 'type'])
         self.stellar_account_id = None
@@ -18,12 +19,23 @@ class TradingBot(object):
         self.base_url = "https://horizon.stellar.org"
 
         self.balance: float = 0.00
+        self.account_id ="  "
+        self.sequence = 0
+        self.home_domain = ""
+        self.balances = []
+    
+        self.account_df = pd.DataFrame(columns=['Account ID', 'Sequence', 'Home Domain', 'Balance', 'Limit', 'Asset Type', 'Asset Code', 'Asset Issuer'])
         self.name = 'TradingBot'
         self.logger = logging.getLogger(self.name)
         self.logger.setLevel(logging.INFO)
         self.logger.addHandler(logging.StreamHandler())
         self.logger.addHandler(logging.FileHandler(self.name + '.log'))
         self.logger.info('TradingBot initialized')
+
+        # Example account info
+        self.account_info = {
+                  '_links': {...}, } # The complete account info goes here
+
         self.controller = controller
 
         self.thread = threading.Thread(target=self.run)
@@ -31,13 +43,24 @@ class TradingBot(object):
 
         self.logger.info('Starting trading bot')
 
+
+   
+
+
+
     def run(self):
 
         self.stellar_account_id = "GDIQN3BCIF52R5WDMTPWUSN7IM3ZNQYYRWEWR2I7QX7BQUTKYNU2ISDY"
         self.stellar_account_secret = ""
 
-        account_info = self.get_account_info(self.stellar_account_id)
-        print("account info " + str(account_info))
+        self.account_info = self.get_account_info(self.stellar_account_id)
+     
+# Create the DataFrame
+        self.account_df = self.create_account_dataframe(self.account_info)
+        print(self.account_df)
+
+       
+
         while True:
             self.logger.info('Trading bot running')
 
@@ -50,7 +73,7 @@ class TradingBot(object):
             print(trade_aggregations)
 
             for i in trade_aggregations:
-                if i["base_asset_code"] == 'BTC' and i["counter_asset_code"] == 'USDC':
+              # if i["base_asset_code"] == 'BTC' and i["counter_asset_code"] == 'USDC':
                     self.logger.info('Trade aggregation:' + str(i))
 
                     order = {
@@ -62,14 +85,14 @@ class TradingBot(object):
                             "amount": "0.01",
                             "price": "0.01",
                             "stop_price": "0.023",
-                            "take_profit": "0.026",
+                             "take_profit": "0.026",
                         }
                     }
 
-                    ticket = self.order_send(order)
+                    # ticket = self.order_send(order)
 
-                    if ticket != None:
-                        self.order_tickets.append(ticket)
+                    # if ticket != None:
+                    #     self.order_tickets.append(ticket)
 
             time.sleep(10)
 
@@ -89,6 +112,41 @@ class TradingBot(object):
             return True
         else:
             return False
+        
+
+    def create_account_dataframe(self, account_info):
+    # Extract account data
+     account_id = account_info['account_id']
+     sequence = account_info['sequence']
+     home_domain = account_info['home_domain']
+
+    # Extract balances
+     balances = account_info['balances']
+
+    # Create a list of dictionaries to store balance information
+     balance_data = []
+     for balance in balances:
+        balance_data.append({
+            'balance': float(balance['balance']),
+            'limit': float(balance['limit']),
+            'asset_type': balance['asset_type'],
+            'asset_code': balance.get('asset_code', None),
+            'asset_issuer': balance.get('asset_issuer', None)
+        })
+
+    # Create a pandas DataFrame
+     df = pd.DataFrame({
+        'Account ID': [account_id],
+        'Sequence': [sequence],
+        'Home Domain': [home_domain],
+    })
+
+    # Add a row for each balance
+     for balance_entry in balance_data:
+        df = df.append(balance_entry, ignore_index=True)
+     return df
+
+
 
     def account_balance(self, account_id: str):
 
