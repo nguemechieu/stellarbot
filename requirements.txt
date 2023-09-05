@@ -3,3 +3,4 @@ requests
 
 pandas
 SQLAlchemy~=2.0.19
+mysqlclient

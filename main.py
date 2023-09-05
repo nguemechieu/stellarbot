@@ -5,10 +5,6 @@ import subprocess
 
 from stellarbot import StellarBot
 
-
-
-
-
 if __name__ == "__main__":
 
    

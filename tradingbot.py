@@ -32,7 +32,7 @@ class TradingBot(object):
         self.logger.addHandler(logging.FileHandler(self.name + '.log'))
         self.logger.info('TradingBot initialized')
 
-        # Example account info
+        
         self.account_info = {
                   '_links': {...}, } # The complete account info goes here
 
@@ -52,31 +52,32 @@ class TradingBot(object):
 
         self.stellar_account_id = "GDIQN3BCIF52R5WDMTPWUSN7IM3ZNQYYRWEWR2I7QX7BQUTKYNU2ISDY"
         self.stellar_account_secret = ""
-
-        self.account_info = self.get_account_info(self.stellar_account_id)
-     
-# Create the DataFrame
-        self.account_df = self.create_account_dataframe(self.account_info)
-        print(self.account_df)
-
-       
-
         while True:
+
+            self.account_info = self.get_account_info(self.stellar_account_id)
+
+# Create the DataFrame
+            self.account_df = self.create_account_dataframe(self.account_info)
+            print(self.account_df)
             self.logger.info('Trading bot running')
 
-            assets = self.get_assets(asset_code="BTC", asset_issuer="issuer_address_here")
+            assets = self.get_assets(asset_code="USDC",
+                                      asset_issuer="centre.io")
             print(assets)
             trade_aggregations = self.get_trade_aggregations(
-                base_asset_code="BTC",
-                base_asset_issuer="issuer_address_here", counter_asset_code="USD",
-                counter_asset_issuer="issuer_address_here")
+                base_asset_code="XLM",
+                base_asset_issuer="stellar.com", 
+                counter_asset_code="USDC",
+                counter_asset_issuer="centre.io")
             print(trade_aggregations)
 
             for i in trade_aggregations:
+                    
+                    print(i)
               # if i["base_asset_code"] == 'BTC' and i["counter_asset_code"] == 'USDC':
                     self.logger.info('Trade aggregation:' + str(i))
 
-                    order = {
+                    self.order = {
                         "type": "sell",
                         "selling": {
                             "asset_type": "USDC",
@@ -120,6 +121,7 @@ class TradingBot(object):
      sequence = account_info['sequence']
      home_domain = account_info['home_domain']
 
+
     # Extract balances
      balances = account_info['balances']
 
@@ -127,23 +129,30 @@ class TradingBot(object):
      balance_data = []
      for balance in balances:
         balance_data.append({
-            'balance': float(balance['balance']),
-            'limit': float(balance['limit']),
+            'balance': float(balance.get('balance',0.0)),
+            'limit': float(account_info['balances'][0]['limit']),
+            
             'asset_type': balance['asset_type'],
             'asset_code': balance.get('asset_code', None),
             'asset_issuer': balance.get('asset_issuer', None)
         })
 
     # Create a pandas DataFrame
-     df = pd.DataFrame({
+     dfs = pd.DataFrame({
         'Account ID': [account_id],
         'Sequence': [sequence],
         'Home Domain': [home_domain],
     })
 
     # Add a row for each balance
-     for balance_entry in balance_data:
-        df = df.append(balance_entry, ignore_index=True)
+     df =pd.DataFrame( columns=['Account ID', 'Sequence', 'Home Domain', 'Balance', 'Limit', 'Asset Type', 'Asset Code', 'Asset Issuer'])
+     df['Account ID']=[account_id]
+     df['Sequence']=[sequence]
+     df['Home Domain']= [home_domain]
+     df['Balance']= balance_data[0]['balance']
+     df['Limit']=balance_data[0]['limit']
+     df['Asset Type'] = balance_data[0]['asset_type']
+     df['Asset Code'] = balance_data[0]['asset_code']
      return df
 
 
