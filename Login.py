@@ -14,47 +14,45 @@ class Login(tkinter.Frame):
         tkinter.Frame.__init__(self, parent)
 
 
-        server = Server("https://horizon.stellar.org")
-        account_id = "GALAXYVOIDAOPZTDLHILAJQKCVVFMD4IKLXLSZV5YHO7VY74IWZILUTO"
-        raw_resp = server.accounts().account_id(account_id).call()
-        parsed_resp = AccountResponse.model_validate(raw_resp)
-        print(f"Account Sequence: {parsed_resp.sequence}")
-        
-        self.label_home = tkinter.Label(parent, text='Home')
-        self.label_home.pack(side=tkinter.LEFT)
+        # server = Server("https://horizon.stellar.org")
+        # account_id = "GALAXYVOIDAOPZTDLHILAJQKCVVFMD4IKLXLSZV5YHO7VY74IWZILUTO"
+        # raw_resp = server.accounts().account_id(account_id).call()
+        # parsed_resp = AccountResponse.model_validate(raw_resp)
+        # print(f"Account Sequence: {parsed_resp.sequence}")
+
         self.controller=controller
         self.parent=parent
-        self.width=400
-        self.height=400
-        self.canvas=tkinter.Canvas(parent, width=self.width, height=self.height, background='black')
-        self.canvas.place(x=300,y=200)
+
 
         accountid= tkinter.StringVar()
         accountid.set('Enter account ID')
         
+        tkinter.Label(self.parent, text='Account ID').grid(row=1,column=0, pady=20)
+        tkinter.Entry(self.parent,textvariable= accountid).grid( row=1,column=1,pady=20)
 
-        self.account_id_label=tkinter.Label(self.parent, text='Account ID',textvariable=accountid)
-
-        self.account_id_label.pack()
 
         accountsecret= tkinter.StringVar()
         accountsecret.set('Enter account secret')
 
-        self.account_secret_label=tkinter.Label(self.parent, text='Account Secret',textvariable=accountsecret)
-        self.account_secret_label.pack()
-
-
-        self.login_btn = tkinter.Button(self.parent, text='Login',command=lambda: self.login(accountid.get(),accountsecret.get()))
-        self.grid(row=0,column=0)
+        tkinter.Label(self.parent, text='Account Secret').grid( row=2,column=0, pady=20)
+        tkinter.Entry(self.parent,textvariable= accountsecret).grid( row=2,column=1,pady=20)
         
 
-        def login(self,accountid:str=None, accountsecret:str=None):
+
+        tkinter.Button(self.parent, text='Login',command=lambda: self.login(accountid.get(),
+                                                                            accountsecret.get())).grid(row=3,column=2,padx=20,pady=20)
+        tkinter.Button(self.parent, text='CreateAccount',command=lambda:   self.controller.show_pages('CreateAccount')).grid(row=3,column=0,pady=20)
+
+      
+        
+
+    def login(self,accountid:str=None, accountsecret:str=None):
             if accountid is not None and accountsecret is not None:
-                bot =TradingBot(controller=self.controller)
-
-                bot.login(self,accountid,accountsecret)
-                self.controller.show_frame('Home')
-
+                self.account_id=accountid
+                self.account_secret=accountsecret
+               
+                self.controller.show_pages('Home')
+            
     
 
 

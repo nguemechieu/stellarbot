@@ -3,7 +3,6 @@
 import os
 import subprocess
 
-
 from stellarbot import StellarBot
 
 if __name__ == "__main__":
@@ -13,15 +12,9 @@ if __name__ == "__main__":
    xvfb_command = f"Xvfb :{display_number} -screen 0 1280x1024x24 &"
    subprocess.Popen(xvfb_command, shell=True)
    # Set the DISPLAY environment variable to point to the virtual display
-
    os.environ["DISPLAY"] = f":{display_number}"
    print("Display number set to:", display_number)
-
-   
    StellarBot()
-   
-  
-
 else:
    
  # Remember to clean up the Xvfb process when done
