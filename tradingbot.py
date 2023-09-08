@@ -9,7 +9,9 @@ from stellar_sdk import Asset, Server
 from stellar_sdk import Keypair
 import asyncio
 from stellar_sdk import Account, Asset, Keypair, Network, TransactionBuilder
+import json
 
+from trade import Trade
 
 
 class TradingBot(object):
@@ -53,6 +55,28 @@ class TradingBot(object):
     
     # Check if connection is established
      
+    
+    
+    
+
+    def order_book(self,json_data):
+     data = json.loads(json_data)
+     bids = data["bids"]
+     asks = data["asks"]
+    
+     bid_prices = [float(bid["price"]) for bid in bids]
+     bid_amounts = [float(bid["amount"]) for bid in bids]
+    
+     ask_prices = [float(ask["price"]) for ask in asks]
+     ask_amounts = [float(ask["amount"]) for ask in asks]
+    
+     return {
+        "bid_prices": bid_prices,
+        "bid_amounts": bid_amounts,
+        "ask_prices": ask_prices,
+        "ask_amounts": ask_amounts
+    }
+
     def check_connection(self):
         while True:
             try:
@@ -76,26 +100,33 @@ class TradingBot(object):
     def run(self):
 
             
-       # response = requests.get(self.base_url, params={"addr":self.account_id})
-        #print(str(response))
+       response = requests.get(self.base_url, params={"addr":self.account_id})
+       print(str(response))
 
-        # test_asset = Asset("TEST", self.account_id)
-        # is_native = test_asset.is_native()  # False
-        # print(is_native)
+       test_asset = Asset("TEST", self.account_id)
+       is_native = test_asset.is_native()  # False
+       print(is_native)
+       
+
+        # server = Server("https://horizon.stellar.org")
+        # account_id = "GALAXYVOIDAOPZTDLHILAJQKCVVFMD4IKLXLSZV5YHO7VY74IWZILUTO"
+        # raw_resp = server.accounts().account_id(account_id).call()
+        # parsed_resp = AccountResponse.model_validate(raw_resp)
+        # print(f"Account Sequence: {parsed_resp.sequence}")
 
 
-        while True:
+
+       while True:
              root_keypair = Keypair.from_secret(self.account_secret)
              root_account = Account(account=root_keypair.public_key, sequence=1)
              transaction = (TransactionBuilder(
              source_account=root_account,
         # If you want to submit to pubnet, you need to change `network_passphrase` to `Network.PUBLIC_NETWORK_PASSPHRASE`
           network_passphrase=Network.PUBLIC_NETWORK_PASSPHRASE,
-        base_fee=100,    )    .append_payment_op(  # add a payment operation to the transaction
-        destination="GASOCNHNNLYFNMDJYQ3XFMI7BYHIOCFW3GJEOWRPEGK2TDPGTG2E5EDW",
+        base_fee=100   ).append_payment_op(  # add a payment operation to the transaction
+        destination=self.account_id,
         asset=Asset.native(),
-        amount="125.5",
-   )
+        amount=125.5 )
   .append_set_options_op(  # add a set options operation to the transaction
        home_domain="overcat.me"
    )
@@ -148,10 +179,19 @@ class TradingBot(object):
              assets = self.get_assets(asset_code="BTC",
                                       asset_issuer=None)
              print(assets)
-             trade_aggregations = self.get_trade_aggregations(
-                base_asset_code='BTC',
-                counter_asset_code='XLM')
+             trade_aggregations = self.get_trade_aggregations( base_asset_code='BTC',counter_asset_code='XLM')
              print(trade_aggregations)
+
+             self.base_asset= Asset.native()
+             self.counter_asset='USDC'
+             self.counter_asset_issuer ="GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
+
+
+             self.order_book= self.get_trade_aggregations(base_asset_code=Asset.native(),counter_asset_code=self.counter_asset,
+                                                          counter_asset_issuer=self.counter_asset_issuer
+                                                          
+                                                          
+                                                          )
 
             #  for i in trade_aggregations:
                     

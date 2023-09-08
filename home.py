@@ -1,33 +1,31 @@
 from datetime import datetime
-from tkinter import LEFT, TOP, Frame, BOTH, Label
+from tkinter import LEFT, TOP, BOTH
 import tkinter
+
+from stellar_sdk import Asset
 
 
 from tradingbot import TradingBot
 
 
-class Home(Frame):
+class Home(tkinter.Frame):
     def __init__(self, parent, controller):
+        
+        
+       
+        tkinter. Frame.__init__(self, parent)
         self.controller = controller
-        self.parent = parent
-        self.bot = TradingBot(controller=self.controller)
+        self.parent=parent
+       
         self.trade_info = {}
-        Frame.__init__(self, parent)
        
-        self.createWidgets()
+ 
+        self.start = tkinter.Button(self, text='Start', command=lambda:self.start_bot)
+        self.start.grid(row=6, column=0, sticky='nsew',pady=20,padx=200)
 
-       
+
+        self.menu_home = tkinter.Menu(self.parent, tearoff=0)
     
-    def createWidgets(self):
-        self.label_home = tkinter.Label( self.parent, text='Home')
-        self.label_home.grid(row=0, column=0)
-
-
-        self.menu_home = tkinter.Menu(self.parent)
-        self.menu_home.grid(
-            row =1,column=0
-         )
-        self.parent.config(menu=self.menu_home)
         self.menu_home.add_command(label='Start', command=lambda:self.start)
         self.menu_home.add_separator()
         self.menu_home.add_command(label='Stop', command=lambda:self.stop)
@@ -38,8 +36,16 @@ class Home(Frame):
         self.menu_home.add_separator()
         self.menu_home.add_command(label='Save', command=lambda:self.save)
         self.menu_home.add_separator()
-        self.menu_home.add_command(label='Exit', command=exit(1))
- 
+        self.menu_home.add_command(label='Exit', command=lambda:exit(1))
+        self.grid(row=0, column=0, sticky='nsew')
+
+    def start_bot(self):
+         self.bot = TradingBot(controller=self.controller)
+
+         print(str( self.bot.get_assets(asset_code=Asset.native())))
+
+
+       
 
 
   
