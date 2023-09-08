@@ -3,11 +3,10 @@
 import os
 import subprocess
 
+
 from stellarbot import StellarBot
 
 if __name__ == "__main__":
-
-   
 
    # Start Xvfb to create a virtual display (change the display number if needed)
    display_number = 99
@@ -17,6 +16,8 @@ if __name__ == "__main__":
 
    os.environ["DISPLAY"] = f":{display_number}"
    print("Display number set to:", display_number)
+
+   
    StellarBot()
    
   

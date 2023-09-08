@@ -1,0 +1,33 @@
+# Define the YAML content
+
+name: Continuous Integration Workflow
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+#       # Add more steps for your CI workflow here
+# """
+
+# # Create and write to the YAML file
+# with open('continuous-integration-workflow.yml', 'w') as file:
+#     file.write(yaml_content)
+
+# print("continuous-integration-workflow.yml created successfully.")

@@ -17,9 +17,6 @@ RUN python -m pip install -r requirements.txt
 # Copy the rest of your application code
 COPY . /stellarbot/
 
-
-
-
 # Use a base image with Python
 
 # Install tkinter (tk) package and Xvfb (virtual display)
