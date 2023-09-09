@@ -1,4 +1,5 @@
 import tkinter
+from tkinter import ttk
 from history import History
 from home import Home
 from order_book import OrderBook
@@ -14,25 +15,26 @@ class Login(tkinter.Frame):
         tkinter.Frame.__init__(self, parent)
 
         self.controller=controller
-        self.grid( row =0,column=0,pady=20,padx=20, sticky ='nswe')
+        self.grid( row =0,column=0,pady=250,padx=650, sticky ='nswe')
 
 
-        tkinter.Label(self,text="Account ID",font=("Helvetica",15)).grid(row=1,column=0)
-        tkinter.Label(self,text="Account Secret",font=("Helvetica",15)).grid(row=2,column=0)
-        tkinter.Label(self,text="Server",font=("Helvetica",15)).grid(row=3,column=0)
+        tkinter.Label(self,text="Account ID",font=("Helvetica",15)).grid(row=1,column=5)
+        tkinter.Label(self,text="Account Secret",font=("Helvetica",15)).grid(row=2,column=5)
+     
         self.account_id=tkinter.StringVar()
         self.account_secret=tkinter.StringVar()
-        self.server=tkinter.StringVar()
-        self.network=tkinter.StringVar()
-        self.network_passphrase=tkinter.StringVar()
-        tkinter.Entry(self,textvariable=self.account_id).grid(row=1,column=1,padx=300
-                                                              )
-        tkinter.Entry(self,textvariable=self.account_secret).grid(row=2,column=1,padx=300)
-        tkinter.Entry(self,textvariable=self.server).grid(row=3,column=1)
+        
+        tkinter.Entry(self,textvariable=self.account_id).grid(row=1,column=6 )
+        tkinter.Entry(self,textvariable=self.account_secret).grid(row=2,column=6)
+        
+        cff= tkinter.StringVar()
+        cff.set(value='name')
+        # self.choicebox= ttk.Combobox(self, width = 27, textvariable = cff)
+        # self.choicebox.grid(row =4,column=3)
+        
      
-        tkinter.Button(self,text="Login",command=lambda:self.login(accountid= self.account_id.get(),accountsecret=self.account_secret.get())).grid(row=7,column=6)
-        tkinter.Button(self,text="Cancel",command=lambda:self.cancel).grid(row=7,column=1)
-        tkinter.Button(self,text="Reset",command=lambda:self.reset()).grid(row=7,column=2)
+        tkinter.Button(self,text="Login",command=lambda:self.login(accountid= self.account_id.get(),accountsecret=self.account_secret.get())).grid(row=11,column=6)
+        tkinter.Button(self,text="CreateAccount",command=lambda:self.controller.show_pages('CreateAccount')).grid(row=11,column=5,padx=1)
 
 
     def cancel(self):
@@ -40,10 +42,7 @@ class Login(tkinter.Frame):
     def reset(self):
          self.account_id.set("")
          self.account_secret.set("")
-         self.server.set("")
-         self.network.set("")
-         self.network_passphrase.set("")        
-
+       
     def login(self,accountid:str=None, accountsecret:str=None):
             if accountid is not None and accountsecret is not None:
                 self.account_id=accountid

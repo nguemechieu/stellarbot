@@ -14,6 +14,8 @@ from marketwatch import MarketWatch
 from orders import Orders
 from tradingbot import TradingBot
 
+import os
+
 def send_email(subject: str = "", body: str = "", sender: str = "",
                recipients=None, password: str = ""):
     if recipients is None:
@@ -27,7 +29,6 @@ def send_email(subject: str = "", body: str = "", sender: str = "",
         smtp_server.sendmail(sender, recipients, msg.as_string())
         print("Message sent!")
 
-import os
 
 if os.environ.get('DISPLAY','') == '':
     print('no display found. Using :0.0')
@@ -57,11 +58,7 @@ class StellarBot(tkinter.Tk):
      
 
     def show_pages(self, param):
-        self.title(
-            "StellarBot    |     AI POWERED crypto Trader |    -->" + datetime.strftime(datetime.now(),
-                                                                                                 "%Y")
-            )
-
+        self.title("StellarBot    |     AI POWERED Crypto Trader |-->" + str(datetime.utcnow()))
         self.geometry("1530x800")
         self.configure(bg="#004d99")
         self.configure(highlightbackground="#004d99")
@@ -73,7 +70,7 @@ class StellarBot(tkinter.Tk):
       
         self.resizable(width=True, height=True)
           
-        self.configure(background="gray", relief=RAISED, border=9, bg="#004d99")
+        self.configure( relief=RAISED, border=9, bg="#004d99")
 
 
       

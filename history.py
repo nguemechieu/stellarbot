@@ -12,4 +12,3 @@ class History(Frame):
 
         self.parent.title("History")
         self.pack()
-        pass
