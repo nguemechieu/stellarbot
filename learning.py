@@ -1,7 +1,12 @@
+import datetime
+from statistics import LinearRegression
+import numpy as np
 import pandas as pd
 
-import yfinance as yf
 from pandas import DataFrame
+from sklearn.base import ClassifierMixin
+from sklearn.model_selection import train_test_split
+
 
 
 class Learning(object):
@@ -9,27 +14,23 @@ class Learning(object):
 
         self.symbol_list = []
         self.symbol = 'BTCUSDC'
-        candle_list = DataFrame(columns=['date', 'open', 'high', 'low', 'close', 'volume'])
+        self.start_date = '2020-01-01'
+        self.end_date = datetime.datetime.today().strftime('%Y-%m-%d')
+        self.price=100
+        self.quantity = 10
 
-        self.candle_list = candle_list
+        self.candle_list = DataFrame(columns=['date', 'open', 'high', 'low', 'close', 'volume'])
 
-        if len(candle_list) == 0:
-            self.candle_list = candle_list
-        else:
-            self.candle_list = candle_list
 
-        pass
-
-    def get_signal(self, symbol: str):
+    def get_signal(self, symbol: str,datas=None):
         self.symbol_list.append(symbol)
-        symbol = 'AAPL'
-        start_date = '2020-01-01'
-        end_date = '2021-01-01'
+     
+  
         # Fetch historical data
-        data = yf.download(symbol=symbol, start=start_date, end=end_date)
+        data = pd.DataFrame(datas,columns=['date', 'open', 'high', 'low', 'close', 'volume'])
         # Calculate the price range
-        high = data['High'].max()
-        low = data['Low'].min()
+        high = data['high'].max()
+        low = data['low'].min()
 
         # Calculate Fibonacci retracement levels
         fib_levels = {
@@ -41,5 +42,21 @@ class Learning(object):
         }
 
         print(f'Fibonacci Levels: {fib_levels}')
+
+   
+        labels = data['close']
+        features = data.drop(columns=['close'])
+        X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=42)
+        # regressor = LinearRegression( slope=0.3, intercept=0)
+  
+        
+        
+        
+      
+      
+
+
+
+
 
         return 0

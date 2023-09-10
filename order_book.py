@@ -7,4 +7,5 @@ class OrderBook(Frame):
 
         self.parent=parent
         self.controller=controller
+        Frame.__init__(self, parent)
         

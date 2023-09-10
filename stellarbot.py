@@ -1,10 +1,10 @@
-from atexit import register
+
 import smtplib
 import sys
 import tkinter
 from datetime import datetime
 from email.mime.text import MIMEText
-from tkinter import filedialog, RAISED, BOTTOM
+from tkinter import StringVar, filedialog, RAISED, BOTTOM
 
 from Login import Login
 from createAccount import CreateAccount
@@ -12,7 +12,6 @@ from db import Db
 from home import Home
 from marketwatch import MarketWatch
 from orders import Orders
-from tradingbot import TradingBot
 
 import os
 
@@ -44,12 +43,18 @@ class StellarBot(tkinter.Tk):
         self.frames = {
 
         }
+        self.account_id=StringVar()
+        self.account_id.set("")
+        self.account_secret=StringVar()
+        self.account_secret.set("")
+
+        self.bot=None
         self.pages = {}
         self.filename = None
         self.Messagebox = None
     
-        # self.parent.iconbitmap('src/images/stellarbot.ico')
-        #self.image = tkinter.PhotoImage(file=r"src/images/stellarbot.png")
+        self.iconbitmap("./src/images/stellarbot.ico")
+       
       
        
         
@@ -66,6 +71,7 @@ class StellarBot(tkinter.Tk):
         self.configure(padx=10)
         self.configure(pady=10)
         self.configure(relief=RAISED)
+        
         
       
         self.resizable(width=True, height=True)
