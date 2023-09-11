@@ -1,6 +1,6 @@
 
 # Welcome to  StellarBot
-![stellarbot](images/stellarbot.png)
+![stellarbot](src/images/stellarbot.png)
 
 
 ## Description
