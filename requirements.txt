@@ -1,7 +1,7 @@
 
-requests
 
-pandas
 SQLAlchemy~=2.0.19
 mysqlclient
 scikit-learn
+requests
+pandas

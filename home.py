@@ -1,11 +1,12 @@
 
 import datetime
 import time
-from tkinter import LEFT, StringVar, Text, Tk, ttk
+from tkinter import LEFT, StringVar, Text, Tk, TkVersion, ttk
 import tkinter
 import pandas as pd
 
 from stellar_sdk import Asset
+from account import Account
 
 from tradingbot import TradingBot
 
@@ -15,12 +16,13 @@ class Home(tkinter.Frame):
         tkinter. Frame.__init__(self, parent)
         self.controller = controller
         self.parent=parent
-        self.grid( row=0,column=0, sticky='nsew',ipadx=1400,ipady=600)
+        self.grid( row=0,column=0, sticky='nsew',ipadx=1500,ipady=700)
         self.config(background='lightgreen',relief='ridge')
 
         self.bot=None
         self.tab = ttk.Notebook(self)
-        self.tab.grid(row=0,column=0)
+        self.tab.grid(row=1,column=0)
+        self.config(background='lightgreen',relief='ridge')
         
         
         self.trade_tab = ttk.Frame(self.tab, relief='groove', borderwidth=1)
@@ -36,6 +38,10 @@ class Home(tkinter.Frame):
 
         self.transactions_list = tkinter.Listbox(self.transactions_tab, selectmode=tkinter.SINGLE, height=10, width=100)
         self.transactions_list.grid(row=1, column=1, sticky='nsew')
+        self.transactions_list.config(yscrollcommand=self.transactions_list.yview)
+        # read_transactions=pd.read_csv('transactions.csv')
+        # for index, row in read_transactions.iterrows():
+        #     self.transactions_list.insert(tkinter.END, str(row))
 
 
 
@@ -44,19 +50,92 @@ class Home(tkinter.Frame):
 
 
 
+
+        
 
         self.send_or_receive_tab = ttk.Frame(self.tab, relief='groove', borderwidth=1)
 
+        self.send_or_receive_receive_Label = tkinter.Label(self.send_or_receive_tab, text='amount', relief='groove', borderwidth=1)
+        self.send_or_receive_receive_Label.grid(row=1, column=0, sticky='nsew')
+        self.send_or_receive_receive_amount = tkinter.Entry(self.send_or_receive_tab)
+        self.send_or_receive_receive_amount.grid(row=1, column=1, sticky='nsew')
+
+        self.send_or_receive_send_asset = tkinter.Label(self.send_or_receive_tab, text='asset', relief='groove', borderwidth=1)
+        self.send_or_receive_send_asset.grid(row=2, column=0, sticky='nsew')
+
+        self.send_or_receive_send_Label = tkinter.Label(self.send_or_receive_tab, text='to', relief='groove', borderwidth=1)
+        self.send_or_receive_send_Label.grid(row=2, column=1, sticky='nsew')
+        self.send_or_receive_send_to = tkinter.Entry(self.send_or_receive_tab)
+        self.send_or_receive_send_to.grid(row=2, column=1, sticky='nsew')
+
         self.send_or_receive_send_btn = tkinter.Button(self.send_or_receive_tab, text='Send', command=lambda:self.send_order)
-        self.send_or_receive_send_btn.grid(row=3, column=0, sticky='nsew')
+        self.send_or_receive_send_btn.grid(row=3, column=0, sticky='nsew',padx=100,pady=200)
         self.send_or_receive_receive_btn = tkinter.Button(self.send_or_receive_tab, text='Receive', command=lambda:self.receive_order)
-        self.send_or_receive_receive_btn.grid(row=4, column=1, sticky='nsew')
+        self.send_or_receive_receive_btn.grid(row=3, column=1, sticky='nsew',padx=20,pady=200)
 
         self.licence_tab = ttk.Frame(self.tab, relief='groove', borderwidth=1)
         self.licence_tab.grid(row=5, column= 0,  rowspan=2, sticky='nsew')
 
         self.licence_label = tkinter.Label(self.licence_tab, text='Licence', relief='groove', borderwidth=1)
         self.licence_label.grid(row=6, column=0, sticky='nsew')
+
+        self.balance_label = tkinter.Label(self.transactions_tab, text='Balance', relief='ridge')
+        self.balance_label.grid(row=7, column=0, sticky='nsew')
+        
+
+
+        read=pd.read_csv('balances.csv')
+        
+        self.balance_tree = ttk.Treeview(self.transactions_tab)
+        self.balance_tree.grid(row=7, column=1, sticky='nsew')
+#       balance                                                                                0.0
+# limit                                                                  922337203685.477783
+# buying_liabilities                                                                     0.0
+# selling_liabilities                                                                    0.0
+# last_modified_ledger                                                            48054224.0
+# is_authorized                                                                         True
+# is_authorized.1                                                                       True
+# is_authorized_to_maintain_liabilities                                                 True
+# asset_type                                                                credit_alphanum4
+# asset_code                                                                            AQUA
+# asset_issuer                             GBNZILSTVQZ4R7IKQDGHYGY2QXL5QOFJYQMXPKWRRM5PAV...
+
+        columns = ('asset_code','asset_type','asset_issuer','asset_code','limit','limit','buying_liabilities','selling_liabilities','last_modified_ledger','is_authorized','is_authorized.1','is_authorized_to_maintain_liabilities','asset_code')
+       
+      
+     #values=(row['asset_code'], row('asset_type'), row['asset_issuer'], row['asset_code'], row['limit'], row['buying_liabilities'], row['selling_liabilities'], row['last_modified_ledger'], row['is_authorized'], row['is_authorized.1'],
+       
+        self.balance_tree['columns'] = columns
+        self.balance_tree['show'] = 'headings'
+        self.balance_tree.heading('asset_code', text='Asset Code')
+        self.balance_tree.heading('asset_type', text='Asset Type')
+        self.balance_tree.heading('asset_issuer', text='Asset Issuer')
+        self.balance_tree.heading('limit', text='Limit')
+        self.balance_tree.heading('buying_liabilities', text='Buying Liabilities')
+        self.balance_tree.heading('selling_liabilities', text='Selling Liabilities')
+        self.balance_tree.heading('last_modified_ledger', text='Last Modified Ledger')
+        self.balance_tree.heading('is_authorized', text='Is Authorized')
+        self.balance_tree.heading('is_authorized.1', text='Is Authorized.1')
+        self.balance_tree.heading('is_authorized_to_maintain_liabilities', text='Is Authorized To Maintain Liabilities')
+        self.balance_tree.heading('asset_code', text='Asset Code')
+        
+        for index, row in read.iterrows():
+            self.balance_tree.insert('', 'end', text=row['asset_code'], values=(row['asset_code'], row['asset_type'], row['asset_issuer'], row['asset_code'], row['limit'], row['buying_liabilities'], row['selling_liabilities'], row['last_modified_ledger'], row['is_authorized'], row['is_authorized.1'], row['is_authorized_to_maintain_liabilities'], row['asset_code']))
+          
+                                     
+                                     
+                                     
+                                     
+                                     
+                                     
+                                     
+        
+              
+
+
+        self.history_label = tkinter.Label(self.history_tab, text='History', relief='groove', borderwidth=1)
+        self.history_label.grid(row=1, column=0, sticky='nsew')
+        
 
 
 
@@ -94,7 +173,7 @@ class Home(tkinter.Frame):
         toggled_button1 = tkinter.Button(self.trade_tab, text="start bot", command=lambda:self.start_bot(start_bot=True,
                                                                                                                                  account_id="GDIQN3BCIF52R5WDMTPWUSN7IM3ZNQYYRWEWR2I7QX7BQUTKYNU2ISDY",
                                                                                                                                  
-                                                                                                                                 account_secret = "SDYAPMSEK2N4LYRFROWHE4SK4LFXF2T2OMCU3BVDAJTEAYKHT4ESKO"))
+                                                                                                                                 account_secret = "SDYAPMSEK2N4LYRFROWHE4SK4LFXF2T2OMCU3BVDAJTEAYKHT4ES"))
         toggled_button1.place(x=3,y=500)
         toggled_button = tkinter.Button(self.trade_tab, text="stop bot", command=lambda:self.start_bot(start_bot=False,
                                                                                                                                  account_id="GDIQN3BCIF52R5WDMTPWUSN7IM3ZNQYYRWEWR2I7QX7BQUTKYNU2ISDY",

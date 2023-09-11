@@ -1,1 +1,1 @@
-symbol,price,amount,open,low,high,close,volume,date
+,id,price,amount,asset,asset_issuer,type,date,symbol

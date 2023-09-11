@@ -63,13 +63,11 @@ class StellarBot(tkinter.Tk):
      
 
     def show_pages(self, param):
-        self.title("StellarBot    |     AI POWERED Crypto Trader |-->" + str(datetime.utcnow()))
+        self.title("StellarBot    |     AI POWERED STELLAR TRADER |-->" + str(datetime.utcnow()))
         self.geometry("1530x800")
         self.configure(bg="#004d99")
         self.configure(highlightbackground="#004d99")
-        self.configure(highlightcolor="black")
-        self.configure(padx=10)
-        self.configure(pady=10)
+
         self.configure(relief=RAISED)
         
         
