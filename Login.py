@@ -1,5 +1,5 @@
 import tkinter
-from tkinter import IntVar, StringVar, ttk
+from tkinter import IntVar, StringVar
 
 import pandas as pd
 

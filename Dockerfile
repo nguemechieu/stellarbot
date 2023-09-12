@@ -29,7 +29,7 @@ ENV DISPLAY=:99
 
 RUN apt-get update && apt-get upgrade
 RUN apt-get install -y xvfb
-EXPOSE  8090
+EXPOSE  9000
 
 
 # Start Xvfb and run the Python script

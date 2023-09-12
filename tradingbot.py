@@ -4,9 +4,14 @@ import random
 import threading
 import time
 import tkinter
+import cv2
 
 import pandas as pd
+import qrcode
+from google.cloud import bigquery
 import requests
+
+
 
 
 from stellar_sdk import Account, Asset, Keypair,  Server, TransactionBuilder
@@ -14,6 +19,7 @@ import stellar_sdk
 
 from learning import Learning
 
+from pyzbar.pyzbar import decode
 
 
 
@@ -167,6 +173,66 @@ class TradingBot(object):
                 return False
 
 
+    def qr_code_to_text(self,qr_code_image_path):
+    # Load the QR code image
+     image = cv2.imread(qr_code_image_path)
+
+    # Decode the QR code
+     decoded_objects = decode(image)
+
+     if decoded_objects:
+        # Extract and return the text from the first QR code found (assuming there's only one)
+        return decoded_objects[0].data.decode('utf-8')
+     else:
+        return None
+        
+
+
+    def generate_qr_code(self,account_id=       None):
+       """
+    Generate a QR code from a Stellar source keypair.
+
+    Args:
+        keypair (str): The source keypair (e.g., Stellar secret key).
+
+    Returns:
+        PIL.Image.Image: A PIL Image object representing the QR code.
+    """
+    # Create a QR code instance
+       qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+
+    # Add the keypair data to the QR code
+       qr.add_data(account_id)
+
+    # Make the QR code
+       qr.make(fit=True)
+
+    # Create a QR code image
+       qr_code_image = qr.make_image(fill_color="black", back_color="white")
+
+       return qr_code_image
+    def displayqrcode(self,account_id=None):
+# Example usage:
+  
+     qr_code = self.generate_qr_code(account_id)
+     qr_code.save("stellar_account_id.png")  # Save the QR code as an image file
+    
+# In this function:
+
+# We import the qrcode library.
+# The generate_qr_code function takes a keypair (Stellar secret key) as input.
+# We create a QR code instance using the qrcode.QRCode class, specifying various parameters like the error correction level, box size, and border.
+# The keypair data is added to the QR code using the qr.add_data method.
+# We generate the QR code with qr.make(fit=True).
+# Finally, we create a QR code image with the specified fill and background colors and return it as a PIL Image object.
+# You can call this function with your source keypair as input, save the resulting QR code as an image file, or display it as needed.
+
+
 
 
 
@@ -175,25 +241,50 @@ class TradingBot(object):
 
 
     def run(self):
-        self.learn=Learning()
-        self.learn.symbol= 'XLM'
-        self.learn.price= 100
-        self.learn.quantity= 100
 
-        self.logger.info('Starting trading bot')
+
+
+         self.qr_code_to_text('stellar_account_id.png') 
+
+#         client = bigquery.Client(project='tradeadviser',credentials=)
+
+    
+
+#         query = """
+#         SELECT
+#           account_id,
+#          balance,
+#          FROM `crypto-stellar.crypto_stellar.accounts_current`
+#           ORDER BY balance DESC
+#         LIMIT 10;
+#            """
+
+# # Make an API request
+#         query_job = client.query(query)
+
+        # print("The query data:")
+    #     # for row in query_job:
+    # # Row values can be accessed by field name or index.
+    #      print(f'account_id={row[0]}, balance={row["balance"]}')
+         self.learn=Learning()
+         self.learn.symbol= 'XLM'
+         self.learn.price= 100
+         self.learn.quantity= 100
+
+         self.logger.info('Starting trading bot')
         
 
 
         
-        self.horizon_url = "https://horizon.stellar.org"
-        self.source_keypair = Keypair.from_secret(secret=self.account_secret).public_key
+         self.horizon_url = "https://horizon.stellar.org"
+         self.source_keypair = Keypair.from_secret(secret=self.account_secret).public_key
 
 # Source account address (replace with your actual source account address)
-        self.source_account_address = self.source_keypair
+         self.source_account_address = self.source_keypair
 
 # Load source account details, including the current sequence number
-        response = requests.get(f"{self.horizon_url}/accounts/{self.source_account_address}")
-        data = response.json()
+         response = requests.get(f"{self.horizon_url}/accounts/{self.source_account_address}")
+         data = response.json()
 #       data = {
 #     "_links": {
 #         "self": {"href": "https://horizon.stellar.org/accounts/GD37VDNE2C4ASOR5PZ7HKWCY6ESWTZ4ERXMMFE54I5G7WTUSGZNYXNXA"},
@@ -235,34 +326,35 @@ class TradingBot(object):
         # df=pd.DataFrame(data,['_links','account_id','sequence','sequence_ledger','sequence_time','subentry_count','home_domain','thresholds','flags','balances','signers','data','num_sponsoring','num_sponsored','paging_token'])
         # df.to_csv('account_info.csv',index=False)
        
-        df2=pd.DataFrame(data['balances'],columns=['balance','limit','buying_liabilities','selling_liabilities','last_modified_ledger','is_authorized','is_authorized','is_authorized_to_maintain_liabilities','asset_type','asset_code','asset_issuer'])
-        df2.to_csv('balances.csv',index=False)
-        df3=pd.DataFrame(data['signers'],columns=['weight','key','type'])
-        df3.to_csv('signers.csv',index=False)
-        df4=pd.DataFrame(data['data'],columns=['key','value'])
-        df4.to_csv('data.csv',index=False)
+         df2=pd.DataFrame(data['balances'],columns=['balance','limit','buying_liabilities','selling_liabilities','last_modified_ledger','is_authorized','is_authorized','is_authorized_to_maintain_liabilities','asset_type','asset_code','asset_issuer'])
+         df2.to_csv('balances.csv',index=False)
+         df3=pd.DataFrame(data['signers'],columns=['weight','key','type'])
+         df3.to_csv('signers.csv',index=False)
+         df4=pd.DataFrame(data['data'],columns=['key','value'])
+         df4.to_csv('data.csv',index=False)
     
-        df8=pd.DataFrame(data['_links'],columns=['self','transactions','operations','payments','effects','offers','trades','data'])
-        df8.to_csv('_links.csv',index=False)
+         df8=pd.DataFrame(data['_links'],columns=['self','transactions','operations','payments','effects','offers','trades','data'])
+         df8.to_csv('_links.csv',index=False)
         
-        sequence_number = data["sequence"]
+         sequence_number = data["sequence"]
 
-        print( 'sequence_number :'+ str(sequence_number))
+         print( 'sequence_number :'+ str(sequence_number))
 
 
 
-        self.sequence=sequence_number
+         self.sequence=sequence_number
 
 
         
       
                 
-        while True:
+         while True:
              self.logger.info('Trading bot running')
 
 
       
-             self.send_money()
+            # self.send_money()
+             self.displayqrcode(self.account_id)
              
       
              self.assets= self.get_assets(

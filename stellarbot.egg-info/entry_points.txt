@@ -1,0 +1,2 @@
+[console_scripts]
+stellarbot = stellarbot.stellarbot:main

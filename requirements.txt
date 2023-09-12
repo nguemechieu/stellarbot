@@ -5,3 +5,8 @@ mysqlclient
 scikit-learn
 requests
 pandas
+google-cloud-bigquery
+qrcode
+pyzbar.pyzbar
+
+opencv-python-headless

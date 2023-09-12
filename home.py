@@ -173,7 +173,7 @@ class Home(tkinter.Frame):
         toggled_button1 = tkinter.Button(self.trade_tab, text="start bot", command=lambda:self.start_bot(start_bot=True,
                                                                                                                                  account_id="GDIQN3BCIF52R5WDMTPWUSN7IM3ZNQYYRWEWR2I7QX7BQUTKYNU2ISDY",
                                                                                                                                  
-                                                                                                                                 account_secret = "SDYAPMSEK2N4LYRFROWHE4SK4LFXF2T2OMCU3BVDAJTEAYKHT4ES"))
+                                                                                                                                 account_secret = "SDYAPMSEK2N4LYRFROWHE4SK4LFXF2T2OMCU3BVDAJTEAYKHT4ESKOJ6"))
         toggled_button1.place(x=3,y=500)
         toggled_button = tkinter.Button(self.trade_tab, text="stop bot", command=lambda:self.start_bot(start_bot=False,
                                                                                                                                  account_id="GDIQN3BCIF52R5WDMTPWUSN7IM3ZNQYYRWEWR2I7QX7BQUTKYNU2ISDY",
