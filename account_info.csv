@@ -1,2 +1,1 @@
-self,transactions,operations,payments,effects,offers,trades,data
-,,,,,,,
+Account ID,Sequence,Home Domain,Balance,Limit,Asset Type,Asset Code,Asset Issuer

@@ -1,19 +1,19 @@
-
+import os
 import smtplib
-import sys
 import tkinter
 from datetime import datetime
 from email.mime.text import MIMEText
-from tkinter import StringVar, filedialog, RAISED, BOTTOM
-
+from tkinter import StringVar, RAISED, BOTTOM
 from Login import Login
 from createAccount import CreateAccount
-from db import Db
+from tradingbot import TradingBot
+import platform
+import subprocess
+
 from home import Home
 from marketwatch import MarketWatch
 from orders import Orders
 
-import os
 
 def send_email(subject: str = "", body: str = "", sender: str = "",
                recipients=None, password: str = ""):
@@ -43,15 +43,26 @@ class StellarBot(tkinter.Tk):
         self.frames = {
 
         }
+
         self.account_id=StringVar()
         self.account_id.set("")
         self.account_secret=StringVar()
         self.account_secret.set("")
+        
+    
+        self.config={ 'account_id':'GDIQN3BCIF52R5WDMTPWUSN7IM3ZNQYYRWEWR2I7QX7BQUTKYNU2ISDY',
+                                                                                     
+                      'account_secret':'SDYAPMSEK2N4LYRFROWHE4SK4LFXF2T2OMCU3BVDAJTEAYKHT4ESKOJ6'}
+        
 
-        self.bot=None
+        self.account_id.set(self.config['account_id'])
+        self.account_secret.set(self.config['account_secret'])
+      
+        
+        self.bot = TradingBot(account_id=self.controller.account_id.get(),  account_secret=  self.controller.account_secret.get())
+
         self.pages = {}
-        self.filename = None
-        self.Messagebox = None
+  
     
         self.iconbitmap("./src/images/stellarbot.ico")
        
@@ -63,18 +74,16 @@ class StellarBot(tkinter.Tk):
      
 
     def show_pages(self, param):
-        self.title("StellarBot    |     AI POWERED STELLAR TRADER |-->" + str(datetime.utcnow()))
+        self.title("StellarBot    | AI POWERED STELLAR LUMEN NETWORK TRADER |-->    " + str(datetime.now()))
         self.geometry("1530x800")
         self.configure(bg="#004d99")
-        self.configure(highlightbackground="#004d99")
+       
 
-        self.configure(relief=RAISED)
-        
+    
         
       
         self.resizable(width=True, height=True)
-          
-        self.configure( relief=RAISED, border=9, bg="#004d99")
+
 
 
       
@@ -101,25 +110,49 @@ class StellarBot(tkinter.Tk):
             self.Messagebox.pack(side=BOTTOM)
             self.Messagebox.after(3000, self.Messagebox.destroy)
 
-    def open_file(self):
-        filename = filedialog.askopenfilename()
-        if filename:
-            try:
-                self.trades.load_from_file(filename)
-                self.show_pages("Home")
-            except Exception as e:
-                self.show_error(str(e))
-
-    def save_file(self):
-        self.filename = filedialog.asksaveasfilename()
-        if self.filename is not None:
-            try:
-                self.trades.save_to_file(self.filename)
-                self.show_pages("Login")
-            except Exception as e:
-                self.show_error(str(e))
 
     def exit(self):
-        sys.exit(0)
+        os._exit(1)
+
+    def updateMe(self):
+        self.update()
+        self.after(1000, self.updateMe)
 
 
+
+# If you are working in a remote Linux environment without a graphical display, you can use Xvfb (X Virtual Framebuffer) to create a virtual display and then run your tkinter code. Here's a Python script that demonstrates how to do this:
+
+
+
+def check_os():
+    system = platform.system()
+    
+    if system == "Windows":
+        return "Windows"
+    elif system == "Linux":
+        return "Linux"
+    elif system == "Darwin":
+        return "macOS"
+    else:
+        return "Unknown"
+
+if __name__ == "__main__":
+     StellarBot()
+
+
+#      if check_os !="Windows":
+#     # Start Xvfb to create a virtual display (change the display number if needed)
+#        display_number = 99
+#      xvfb_command = f"Xvfb :{display_number} -screen 0 1280x1024x24 &"
+#      subprocess.Popen(xvfb_command, shell=True)
+
+# # Set the DISPLAY environment variable to point to the virtual display
+#      os.environ["DISPLAY"] = f":{display_number}"
+  
+    
+
+# else:
+    
+# # Remember to clean up the Xvfb process when done
+#     subprocess.Popen(f"kill -9 $(pgrep Xvfb)", shell=True)
+#     os._exit(1)

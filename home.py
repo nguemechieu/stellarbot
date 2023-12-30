@@ -1,29 +1,30 @@
 
 import datetime
-import time
-from tkinter import LEFT, StringVar, Text, Tk, TkVersion, ttk
+from tkinter import LEFT, StringVar, ttk
 import tkinter
 import pandas as pd
-
-from stellar_sdk import Asset
 from account import Account
-
+from order_book import OrderBook
 from tradingbot import TradingBot
+
+
 
 
 class Home(tkinter.Frame):
     def __init__(self, parent, controller):
         tkinter. Frame.__init__(self, parent)
         self.controller = controller
+      
         self.parent=parent
         self.grid( row=0,column=0, sticky='nsew',ipadx=1500,ipady=700)
         self.config(background='lightgreen',relief='ridge')
 
-        self.bot=None
+        
         self.tab = ttk.Notebook(self)
         self.tab.grid(row=1,column=0)
         self.config(background='lightgreen',relief='ridge')
-        
+
+       
         
         self.trade_tab = ttk.Frame(self.tab, relief='groove', borderwidth=1)
         self.history_tab = ttk.Frame(self.tab, relief='groove', borderwidth=1)
@@ -39,7 +40,7 @@ class Home(tkinter.Frame):
         self.transactions_list = tkinter.Listbox(self.transactions_tab, selectmode=tkinter.SINGLE, height=10, width=100)
         self.transactions_list.grid(row=1, column=1, sticky='nsew')
         self.transactions_list.config(yscrollcommand=self.transactions_list.yview)
-        # read_transactions=pd.read_csv('transactions.csv')
+    
         # for index, row in read_transactions.iterrows():
         #     self.transactions_list.insert(tkinter.END, str(row))
 
@@ -120,6 +121,7 @@ class Home(tkinter.Frame):
         self.balance_tree.heading('asset_code', text='Asset Code')
         
         for index, row in read.iterrows():
+            
             self.balance_tree.insert('', 'end', text=row['asset_code'], values=(row['asset_code'], row['asset_type'], row['asset_issuer'], row['asset_code'], row['limit'], row['buying_liabilities'], row['selling_liabilities'], row['last_modified_ledger'], row['is_authorized'], row['is_authorized.1'], row['is_authorized_to_maintain_liabilities'], row['asset_code']))
           
                                      
@@ -135,6 +137,7 @@ class Home(tkinter.Frame):
 
         self.history_label = tkinter.Label(self.history_tab, text='History', relief='groove', borderwidth=1)
         self.history_label.grid(row=1, column=0, sticky='nsew')
+
         
 
 
@@ -153,45 +156,18 @@ class Home(tkinter.Frame):
         self.tab.add(self.settings_tab, text='Settings')
         self.tab.add(self.about_tab, text='About')
         self.tab.pack(side=LEFT,expand=1, fill='both')
-        infosvar = tkinter.StringVar()
-        infosvar.set('Live Crypto Markets  '+datetime.datetime.now().strftime('%Y-%m-%d%H:%M:%S'))
-
-        self.trade_infos_label = tkinter.Label(self.trade_tab, text='Trade Infos', borderwidth=1,textvariable=infosvar)
-        
-        self.trade_infos_label.grid(row=1, column=0, sticky='nsew')
-
-
-
-        # Variable to store the toggle state (0 for OFF, 1 for ON)
-        toggle_var = StringVar()
-        toggle_var.set('start bot')
-
+  
+   
 # Create the toggle button
 
         #read= pd.read_csv('account.csv')
+        self.account_id = tkinter.StringVar()
+        self.account_secret = tkinter.StringVar()
+        self.toggled_button1 = tkinter.Button(self.trade_tab,bg='green',fg='white', text="START",width=20, command=lambda:self.start_bot(account_id= self.account_id, account_secret= self.account_secret))
+        self.toggled_button1.place(x=300, y=20)                                                                                                                       
+        self.toggled_button = tkinter.Button(self.trade_tab,bg='red',fg='white',text='STOP',width=20, command=lambda:self.stop_bot)
+        self.toggled_button.place(x=450, y=20)
 
-        toggled_button1 = tkinter.Button(self.trade_tab, text="start bot", command=lambda:self.start_bot(start_bot=True,
-                                                                                                                                 account_id="GDIQN3BCIF52R5WDMTPWUSN7IM3ZNQYYRWEWR2I7QX7BQUTKYNU2ISDY",
-                                                                                                                                 
-                                                                                                                                 account_secret = "SDYAPMSEK2N4LYRFROWHE4SK4LFXF2T2OMCU3BVDAJTEAYKHT4ESKOJ6"))
-        toggled_button1.place(x=3,y=500)
-        toggled_button = tkinter.Button(self.trade_tab, text="stop bot", command=lambda:self.start_bot(start_bot=False,
-                                                                                                                                 account_id="GDIQN3BCIF52R5WDMTPWUSN7IM3ZNQYYRWEWR2I7QX7BQUTKYNU2ISDY",
-                                                                                                                                 
-                                                                                                                                 account_secret = "SDYAPMSEK2N4LYRFROWHE4SK4LFXF2T2OMCU3BVDAJTEAYKHT4ESKOJ6"))
-        toggled_button.place(x=100,y=500)
-
-
-
-        if toggle_var.get() !='start bot':
-            toggled_button.set('stop bot')
-            self.update()
-
-
-
-
-
-        
         self.trade_df = pd.DataFrame(columns=['Open', 'High', 'Low', 'Close', 'Volume','Time'])
         self.trade_df.set_index('Time', inplace=True)
 
@@ -204,7 +180,7 @@ class Home(tkinter.Frame):
 
 
         self.trade_tree =  ttk.Treeview(self.trade_tab, selectmode='browse')
-        self.trade_tree.grid(row=2, column=6, sticky='nsew')
+        self.trade_tree.place(x=700, y=600, width=1000, height=400)
 
         self.trade_tree['columns'] = ('Open', 'High', 'Low', 'Close', 'Volume','Time')
         self.trade_tree['show'] = 'headings'
@@ -220,18 +196,16 @@ class Home(tkinter.Frame):
         self.trade_tree.heading('Close', text='Close')
         self.trade_tree.heading('Volume', text='Volume')
         self.trade_tree.heading('Time', text='Time')
-
-        self.config(width=1560, height=800, relief='groove',background='black')
-
+        self.config(width=1560, height=800, relief='groove',background='black',borderwidth=1)
         self.order_book_label = tkinter.Label(self.order_book_tab, text='Order Book')
         self.order_book_label.grid(row=1, column=0, sticky='nsew')
-        self.order_book_canvas = tkinter.Canvas( self.order_book_tab, width=1100, height=500, relief='groove',background='black')
-        self.order_book_canvas.grid(row=4, column=2, sticky='nsew')
+        self.order_book_canvas = tkinter.Canvas( self.order_book_tab,relief='groove',background='black')
+        self.order_book_canvas.place(x=0, y=10, width=1500, height=700)
 
         self.history_label = tkinter.Label(self.history_tab, text='History')
         self.history_label.grid(row=0, column=0, sticky='nsew')
         self.history_canvas = tkinter.Canvas( self.history_tab, width=1200, height=300, relief='groove',background='black')
-        self.history_canvas.grid(row=4, column=0, sticky='nsew')
+        self.history_canvas.place(x=0, y=50, width=1500, height= 800 ,anchor= 'nw')
 
         self.settings_label = tkinter.Label(self.settings_tab, text='Settings')
         self.settings_label.grid(row=4, column=0, sticky='nsew')
@@ -243,20 +217,32 @@ class Home(tkinter.Frame):
 
         self.about_label = tkinter.Label(self.about_tab, text='Trading Bot')
         self.about_label.grid(row=5, column=0, sticky='nsew')
-        self.update()
-
-
+        self.screen_canvas = tkinter.Canvas( self.trade_tab,border=9, relief='raised', background='black')
+        self.screen_canvas.place(x=0, y=50, width=1400, height=500  ,anchor= 'nw')
 
       
-
-
-
-    def start_bot(self, start_bot=False, account_id='', account_secret=''  )->None:
-         self.bot = TradingBot(start_bot=start_bot,account_id=account_id,account_secret=account_secret)
-
-
     
+        self.update()
+    def stop_bot(self)->None:
+
+        self.controller.bot.stop()
+        self.toggled_button1.config( background='yellow',fg='white',state='disabled',text='START')
+
+    def start_bot(self, account_id='', account_secret=''  )->None:
+       self.controller.bot.start_bot=True
+       self.controller.bot.account_id=account_id
+       self.controller.bot.account_secret=account_secret
+       
+       self.toggled_button1.config(background='red',fg='white',state='disabled',text='STOP')
+    
+    def updateMe(self)->None:
+        self.update()
+        self.trade_tree.delete(*self.trade_tree.get_children())
+        self.trade_tree.insert(*self.trade_df.values.tolist())
+
         
+
+        self.after(1000, self.updateMe)
 
 
 

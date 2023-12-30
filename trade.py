@@ -17,4 +17,4 @@ class Trade(Frame):
 
     def init_ui(self):
         self.pack(fill=BOTH, expand=1)
-        pass
+        

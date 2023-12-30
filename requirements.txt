@@ -1,12 +1,9 @@
-
-
-SQLAlchemy~=2.0.19
+stellar_sdk 
 mysqlclient
 scikit-learn
 requests
-pandas
-google-cloud-bigquery
+pandas 
 qrcode
-pyzbar.pyzbar
-
+bigquery
 opencv-python-headless
+Pillow

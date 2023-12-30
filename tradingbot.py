@@ -1,174 +1,207 @@
-import json
+
+''' Trading Bot Class '''
+import tkinter
+
 import logging
 import random
 import threading
 import time
-import tkinter
-import cv2
-
-import pandas as pd
-import qrcode
-from google.cloud import bigquery
-import requests
-
-
-
-
-from stellar_sdk import Account, Asset, Keypair,  Server, TransactionBuilder
 import stellar_sdk
+import cv2
+import pandas as pd
 
+import requests
 from learning import Learning
-
-from pyzbar.pyzbar import decode
-
+import sqlite3
 
 
-class TradingBot(object):
-    
-    def __init__(self, start_bot=False, account_id=None, account_secret=None,controller=None):   
-        self.order_tickets = pd.DataFrame(columns=['order_id', 'symbol','price', 'quantity','create_time', 'type'])
-        self.controller=controller
-        self.stellar_horizon_url = "https://horizon.stellar.org"
-        self.base_url ="https://horizon.stellar.org" 
-        
-        self.balance: float = 0.00
-        
-        self.home_domain = "https://horizon.stellar.org/"
-        self.balances = []
-        self.base_asset= Asset.native()
-        self.counter_asset='USDC'
-        self.counter_asset_issuer ="GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
-
-        self.account_secret =account_secret
-        self.secret_key=self.account_secret
-        self.account_id = account_id
-        
-        self.stellar_network=stellar_sdk.Network.PUBLIC_NETWORK_PASSPHRASE
-        
-
-        #SDYAPMSEK2N4LYRFROWHE4SK4LFXF2T2OMCU3BVDAJTEAYKHT4ESKOJ6
-
-       
-        
-      
-        self.server = Server(horizon_url=self.base_url)
-        #self.keypair = Keypair.from_secret(self.secret_key)
-
-        self.account=  self.server.load_account(account_id= self.account_id)
-
-        self.asset_list=pd.DataFrame(self.get_asset_list(), columns=['asset_type', 'asset_code', 'asset_issuer'])
-        self.account_df = pd.DataFrame(columns=['Account ID', 'Sequence', 'Home Domain', 'Balance', 'Limit', 'Asset Type', 'Asset Code', 'Asset Issuer'])
-        
-            
-        current_time = int(time.time())  # Current time in Unix format
-        valid_duration = 3600  # Valid for 1 hour (adjust as needed)
-        self.min_time =  1631277600
-        self.max_time = current_time + valid_duration
+class TradingBot:
+    ''' Constructor for the Trading Bot '''    
+    def __init__(self, start_bot=False, account_id=None, account_secret='SB2LHKBL24ITV2Y346BU46XPEL45BDAFOOJLZ6SESCJZ6V5JMP7D6G5X',controller=None):   
         self.name = 'TradingBot'
         self.logger = logging.getLogger(self.name)
         self.logger.setLevel(logging.INFO)
         self.logger.addHandler(logging.StreamHandler())
         self.logger.addHandler(logging.FileHandler(self.name + '.log'))
+
+        
+        self.secret_key=account_secret
+        self.account_id = account_id
+        
+        self.db= sqlite3.connect(self.name + '.sql')
+
+        self.db.execute('''CREATE TABLE IF NOT EXISTS order_tickets(order_id TEXT, symbol TEXT,price TEXT, quantity TEXT,create_time TEXT, type TEXT)''')
+        self.db.execute('''CREATE TABLE IF NOT EXISTS assets(code TEXT,issuer TEXT,type TEXT)''')
+        self.db.execute('''CREATE TABLE IF NOT EXISTS transactions(transaction_id TEXT, from_account TEXT, to_account TEXT, amount TEXT, type TEXT)''')
+        self.db.execute('''CREATE TABLE IF NOT EXISTS settings(setting TEXT, value TEXT)''')
+        #Saving the account id and secret in the database
+        self.db.execute("INSERT INTO settings(setting, value) VALUES ('account_id', '{}')".format(self.account_id))
+        self.db.execute("INSERT INTO settings(setting, value) VALUES ('account_secret',' {}')".format(self.secret_key))
+        
+        self.db.commit()
+        self.db.close()
+
+        self.logger.info('Database initialized')
+        self.controller=controller # Used to communicate with the  tkinter GUI
         self.logger.info('TradingBot initialized')
-        self.thread =None
-      
+        self.stellar_horizon_url = "https://horizon.stellar.org" # Horizon server url
+     
+        self.stellar_network=stellar_sdk.Network.PUBLIC_NETWORK_PASSPHRASE
+        
+        self.server = stellar_sdk.Server(horizon_url=self.stellar_horizon_url) # Initialize the server
+        
+        self.keypair = stellar_sdk.Keypair.from_secret(secret=self.secret_key) # Initialize the keypair
+        
+        # Get User account
+        self.account=  self.server.load_account(account_id= self.account_id).raw_data
+        
+              
+        # Create an order builder object
+        self.order_tickets = pd.DataFrame(columns=['order_id', 'symbol','price', 'quantity','create_time', 'type'])
+        
+        self.server_status = threading.Event()
+        self.asset_issuers_list = [] # Used to keep track of the asset issuers
+
+        self.assets_list ={'asset_code':'','asset_issuer':'','asset_type':''} # Used to keep track of the asset list
+        self.transaction_list = [] # Used to keep track of the transactions
+        self.start_bot = start_bot # Used to start the bot
+        self.server_msg ={'status': 'off', 'error': None, 'account':[],'data': None,'message': None}
+    
+        self.balance: float = 0.00
+        
+        self.balances = []
+        self.base_asset_code= stellar_sdk.Asset.native().code
+        self.base_asset_issuer = stellar_sdk.Asset.native().issuer
+
+        self.counter_asset_code='USDC'
+        self.counter_asset_issuer ="GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
 
 
-  
+        self.symbol = self.counter_asset_code+'/'+self.base_asset_code 
+       
+        print(self.account, self.account_id)
+        self.server_data=self.server.data(account_id= self.account_id,data_name= 'balances')
+        print(self.server_data)
+        self.server_msg['data'] =  self.server_data
+        self.server_msg['status'] = 'Server online'
+        
+        self.asset_list=self.get_asset_list()
+            
+        current_time = int(time.time())  # Current time in Unix format
+        valid_duration = 3600  # Valid for 1 hour (adjust as needed)
+        self.min_time = 1631277600# Current time in Unix format
+        self.max_time = current_time + valid_duration
 
+          # Create a transaction builder object
+        self.transaction = stellar_sdk.transaction_builder.TransactionBuilder(v1=True,                                           
+                 source_account=self.account,
+                 network_passphrase=self.stellar_network,
+                 base_fee=100).add_time_bounds(min_time=self.min_time, max_time=self.max_time)
+       
+     
         self.account_info = { '_links': {...}, } # The complete account info goes here
 
         
         #check if internet connection is established
         self.connection = self.check_connection()
-
         if not self.connection:
             self.logger.info('No internet connection')
-            tkinter.Message(controller, text='No internet connection')
-       
-            return
-
-
+           
+            self.server_msg['status'] = 'No internet connection'
+            return None
+        self.thread = threading.Thread(target=self.run, args=( ))
+        self.thread.daemon = True
+      
         
-     
+        if self.start_bot:
+           self.logger.info('Bot started  ')
+           self.server_msg['message'] = 'Bot started @'+str(time.ctime())
 
-        self.thread = threading.Thread(target=self.run)
+           self.thread.start()
+        else:
+           self.logger.info('Bot stopped  ')
 
-        if start_bot == True:
-          
-            self.thread.start()
-            self.logger.info('Bot started  :time '+ time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-        
+           self.server_msg['message'] = 'Bot stopped @'+str(time.ctime())
+           if self.thread.is_alive():
+            self.thread.join()
+
+           
+        self.logger.info('Bot started  ')
+        self.server_msg['message'] = 'Bot started'
+        self.account_df = pd.DataFrame(columns=['Account ID', 'Sequence', 'Home Domain', 'Balance', 'Limit', 'Asset Type', 'Asset Code', 'Asset Issuer'])
+        self.account_df.to_csv('account_info.csv', index=False)
+
+        # Get current order book data
+        self.order_book = self.server.orderbook(
+            selling= stellar_sdk.Asset(self.counter_asset_code, self.counter_asset_issuer),
+            buying= stellar_sdk.Asset(self.base_asset_code, self.base_asset_issuer)
+            
+        ).limit(10).call().popitem()[-1]
+        print( str(self.order_book))
+        self.order_book_df = pd.DataFrame(self.order_book,columns=['bid_prices', 'bid_quantity', 'ask_prices', 'ask_quantity'])
+        self.order_book_df.to_csv('order_book.csv', index=0)
+        self.order_book_df = pd.read_csv('order_book.csv')
+        self.order_book_df = self.order_book_df.fillna(0)
+
+        self.order_book_df['bid_prices'] = self.order_book_df['bid_prices'].astype(float)
+        self.order_book_df['ask_prices'] = self.order_book_df['ask_prices'].astype(float)
+        self.order_book_df['bid_quantity'] = self.order_book_df['bid_quantity'].astype(float)
+        self.order_book_df['ask_quantity'] = self.order_book_df['ask_quantity'].astype(float)
+        self.order_book_df['bid_prices'] = self.order_book_df['bid_prices'].astype(float)
+
+        print(self.order_book_df)
+
            
                         
-        elif start_bot== False:
-               self.logger.info('Bot stopped')
-               self.thread.join(timeout=10)
-
+      
+    
 
     def get_asset_list(self):
-        endpoint = f"{self.base_url}/assets"
-        response = requests.get(endpoint)
-        if response.status_code == 200:
-            data= response.json()
-            return data
-        else:
-            print(response.status_code)
-            print(response.text)
-            return None
+
+        # Create a DataFrame from the assets_list dictionary
+        self.asset_0= self.server.assets().call().popitem()[-1]
+        print('assets',self.asset_0)
+
+
+        self.asset_list = pd.DataFrame(self.asset_0,columns=['asset_code', 'asset_issuer', 'asset_type'])
+
+        # Save the DataFrame to a CSV file
+        self.asset_list.to_csv('asset_list.csv', index=False)
+
+        return self.asset_list
+
     
     # Check if connection is established
      
     
     def Check_account(self, account_id_: str=None) -> dict:
-        endpoint = f"{self.base_url}/accounts/{account_id_}"
-        response = requests.get(endpoint)
+        endpoint = f"{self.stellar_horizon_url}/accounts/{account_id_}"
+        response = requests.get(endpoint,timeout=5000)
         if response.status_code == 200:
             return response.json()
         else:
             print(response.status_code)
             print(response.text)
+            self.server_msg['account'] =  response._content
             return None
 
     
     
 
-    def order_book(self):
-     
-        endpoint = f"{self.base_url}/accounts/{self.account_id}/orders"
-        response = requests.get(endpoint)
-        if response.status_code == 200:
-            data= response.json()
-        else:
-            print(response.status_code)
-            print(response.text)
-            return response.text
-     
-        bids = data["bids"]
-        asks = data["asks"]
     
-        bid_prices = [float(bid["price"]) for bid in bids]
-        bid_amounts = [float(bid["amount"]) for bid in bids]
-    
-        ask_prices = [float(ask["price"]) for ask in asks]
-        ask_amounts = [float(ask["amount"]) for ask in asks]
-    
-        return {
-        "bid_prices": bid_prices,
-        "bid_amounts": bid_amounts,
-        "ask_prices": ask_prices,
-        "ask_amounts": ask_amounts
-    }
-
     def check_connection(self):
         while True:
             try:
-                response = requests.get(self.base_url, params={"addr":self.account_id})
-                print(str(response))
-                return True
-            except:
-                print("Connection not established")
-                
+                response = requests.get(self.stellar_horizon_url, params={"addr":self.account_id},timeout=5000)
+                if response.status_code == 200:
+                    print("Connection established")
+                    self.logger.info('Connection established')
+                    self.server_msg['message'] = 'Connection established'
+                    return response.status_code == 200
+            except Exception as e:
+                print("Connection not established",response.status_code)
+                self.logger.info('No internet connection')
+                self.server_msg['message'] = 'No internet connection'+e.args[0]
                 time.sleep(5)
                 return False
 
@@ -182,149 +215,23 @@ class TradingBot(object):
 
      if decoded_objects:
         # Extract and return the text from the first QR code found (assuming there's only one)
-        return decoded_objects[0].data.decode('utf-8')
+        return decoded_objects
      else:
         return None
         
 
-
-    def generate_qr_code(self,account_id=       None):
-       """
-    Generate a QR code from a Stellar source keypair.
-
-    Args:
-        keypair (str): The source keypair (e.g., Stellar secret key).
-
-    Returns:
-        PIL.Image.Image: A PIL Image object representing the QR code.
-    """
-    # Create a QR code instance
-       qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=10,
-        border=4,
-    )
-
-    # Add the keypair data to the QR code
-       qr.add_data(account_id)
-
-    # Make the QR code
-       qr.make(fit=True)
-
-    # Create a QR code image
-       qr_code_image = qr.make_image(fill_color="black", back_color="white")
-
-       return qr_code_image
-    def displayqrcode(self,account_id=None):
-# Example usage:
-  
-     qr_code = self.generate_qr_code(account_id)
-     qr_code.save("stellar_account_id.png")  # Save the QR code as an image file
-    
-# In this function:
-
-# We import the qrcode library.
-# The generate_qr_code function takes a keypair (Stellar secret key) as input.
-# We create a QR code instance using the qrcode.QRCode class, specifying various parameters like the error correction level, box size, and border.
-# The keypair data is added to the QR code using the qr.add_data method.
-# We generate the QR code with qr.make(fit=True).
-# Finally, we create a QR code image with the specified fill and background colors and return it as a PIL Image object.
-# You can call this function with your source keypair as input, save the resulting QR code as an image file, or display it as needed.
-
-
-
-
-
-
-   
-
-
     def run(self):
+          #client = bigquery.Client(project='tradeadviser',credentials=)
 
-
-
-         self.qr_code_to_text('stellar_account_id.png') 
-
-#         client = bigquery.Client(project='tradeadviser',credentials=)
-
-    
-
-#         query = """
-#         SELECT
-#           account_id,
-#          balance,
-#          FROM `crypto-stellar.crypto_stellar.accounts_current`
-#           ORDER BY balance DESC
-#         LIMIT 10;
-#            """
-
-# # Make an API request
-#         query_job = client.query(query)
-
-        # print("The query data:")
-    #     # for row in query_job:
-    # # Row values can be accessed by field name or index.
-    #      print(f'account_id={row[0]}, balance={row["balance"]}')
          self.learn=Learning()
          self.learn.symbol= 'XLM'
          self.learn.price= 100
          self.learn.quantity= 100
-
          self.logger.info('Starting trading bot')
-        
+      
+         data = self.account
 
-
-        
-         self.horizon_url = "https://horizon.stellar.org"
-         self.source_keypair = Keypair.from_secret(secret=self.account_secret).public_key
-
-# Source account address (replace with your actual source account address)
-         self.source_account_address = self.source_keypair
-
-# Load source account details, including the current sequence number
-         response = requests.get(f"{self.horizon_url}/accounts/{self.source_account_address}")
-         data = response.json()
-#       data = {
-#     "_links": {
-#         "self": {"href": "https://horizon.stellar.org/accounts/GD37VDNE2C4ASOR5PZ7HKWCY6ESWTZ4ERXMMFE54I5G7WTUSGZNYXNXA"},
-#         "transactions": {"href": "https://horizon.stellar.org/accounts/GD37VDNE2C4ASOR5PZ7HKWCY6ESWTZ4ERXMMFE54I5G7WTUSGZNYXNXA/transactions{?cursor,limit,order}", "templated": True},
-#         "operations": {"href": "https://horizon.stellar.org/accounts/GD37VDNE2C4ASOR5PZ7HKWCY6ESWTZ4ERXMMFE54I5G7WTUSGZNYXNXA/operations{?cursor,limit,order}", "templated": True},
-#         "payments": {"href": "https://horizon.stellar.org/accounts/GD37VDNE2C4ASOR5PZ7HKWCY6ESWTZ4ERXMMFE54I5G7WTUSGZNYXNXA/payments{?cursor,limit,order}", "templated": True},
-#         "effects": {"href": "https://horizon.stellar.org/accounts/GD37VDNE2C4ASOR5PZ7HKWCY6ESWTZ4ERXMMFE54I5G7WTUSGZNYXNXA/effects{?cursor,limit,order}", "templated": True},
-#         "offers": {"href": "https://horizon.stellar.org/accounts/GD37VDNE2C4ASOR5PZ7HKWCY6ESWTZ4ERXMMFE54I5G7WTUSGZNYXNXA/offers{?cursor,limit,order}", "templated": True},
-#         "trades": {"href": "https://horizon.stellar.org/accounts/GD37VDNE2C4ASOR5PZ7HKWCY6ESWTZ4ERXMMFE54I5G7WTUSGZNYXNXA/trades{?cursor,limit,order}", "templated": True},
-#         "data": {"href": "https://horizon.stellar.org/accounts/GD37VDNE2C4ASOR5PZ7HKWCY6ESWTZ4ERXMMFE54I5G7WTUSGZNYXNXA/data/{key}", "templated": True}
-#     },
-#     "id": "GD37VDNE2C4ASOR5PZ7HKWCY6ESWTZ4ERXMMFE54I5G7WTUSGZNYXNXA",
-#     "account_id": "GD37VDNE2C4ASOR5PZ7HKWCY6ESWTZ4ERXMMFE54I5G7WTUSGZNYXNXA",
-#     "sequence": "206391230320345096",
-#     "sequence_ledger": 48056508,
-#     "sequence_time": "1694394469",
-#     "subentry_count": 5,
-#     "home_domain": "stellarterm.com",
-#     "last_modified_ledger": 48058517,
-#     "last_modified_time": "2023-09-11T04:21:29Z",
-#     "thresholds": {"low_threshold": 0, "med_threshold": 0, "high_threshold": 0},
-#     "flags": {"auth_required": False, "auth_revocable": False, "auth_immutable": False, "auth_clawback_enabled": False},
-#     "balances": [
-#         {"balance": "0.0000000", "limit": "922337203685.4775807", "buying_liabilities": "0.0000000", "selling_liabilities": "0.0000000", "last_modified_ledger": 48054224, "is_authorized": True, "is_authorized_to_maintain_liabilities": True, "asset_type": "credit_alphanum4", "asset_code": "AQUA", "asset_issuer": "GBNZILSTVQZ4R7IKQDGHYGY2QXL5QOFJYQMXPKWRRM5PAV7Y4M67AQUA"},
-#         {"balance": "509.7741220", "limit": "922337203685.4775807", "buying_liabilities": "0.0000000", "selling_liabilities": "0.0000000", "last_modified_ledger": 48056052, "is_authorized": True, "is_authorized_to_maintain_liabilities": True, "asset_type": "credit_alphanum12", "asset_code": "BTCLN", "asset_issuer": "GDPKQ2TSNJOFSEE7XSUXPWRP27H6GFGLWD7JCHNEYYWQVGFA543EVBVT"},
-#         {"balance": "0.0000000", "limit": "922337203685.4775807", "buying_liabilities": "0.0000000", "selling_liabilities": "0.0000000", "last_modified_ledger": 48054231, "is_authorized": True, "is_authorized_to_maintain_liabilities": True, "asset_type": "credit_alphanum4", "asset_code": "LTC", "asset_issuer": "GCQVEST7KIWV3KOSNDDUJKEPZLBFWKM7DUS4TCLW2VNVPCBGTDRVTEIT"},
-#         {"balance": "0.0000001", "limit": "0.0000001", "buying_liabilities": "0.0000000", "selling_liabilities": "0.0000000", "sponsor": "GA7PT6IPFVC4FGG273ZHGCNGG2O52F3B6CLVSI4SNIYOXLUNIOSFCK4F", "last_modified_ledger": 48056436, "is_authorized": True, "is_authorized_to_maintain_liabilities": True, "is_clawback_enabled": True, "asset_type": "credit_alphanum12", "asset_code": "SQL0001", "asset_issuer": "GDQMNGUDOSMCCN6MD52DPXX4ACECXVODFK2NQQGFXYLGXJFZ2LEEIY35"},
-#         {"balance": "0.0000000", "limit": "922337203685.4775807", "buying_liabilities": "0.0000000", "selling_liabilities": "0.0000000", "last_modified_ledger": 48054222, "is_authorized": True, "is_authorized_to_maintain_liabilities": True, "asset_type": "credit_alphanum4", "asset_code": "USDC", "asset_issuer": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"},
-#         {"balance": "106.9998392", "buying_liabilities": "0.0000000", "selling_liabilities": "0.0000000", "asset_type": "native"}
-#     ],
-#     "signers": [{"weight": 1, "key": "GD37VDNE2C4ASOR5PZ7HKWCY6ESWTZ4ERXMMFE54I5G7WTUSGZNYXNXA", "type": "ed25519_public_key"}],
-#     "data": {},
-#     "num_sponsoring": 0,
-#     "num_sponsored": 1,
-#     "paging_token": "GD37VDNE2C4ASOR5PZ7HKWCY6ESWTZ4ERXMMFE54I5G7WTUSGZNYXNXA"
-# }
-
-
-        # df=pd.DataFrame(data,['_links','account_id','sequence','sequence_ledger','sequence_time','subentry_count','home_domain','thresholds','flags','balances','signers','data','num_sponsoring','num_sponsored','paging_token'])
-        # df.to_csv('account_info.csv',index=False)
+         
        
          df2=pd.DataFrame(data['balances'],columns=['balance','limit','buying_liabilities','selling_liabilities','last_modified_ledger','is_authorized','is_authorized','is_authorized_to_maintain_liabilities','asset_type','asset_code','asset_issuer'])
          df2.to_csv('balances.csv',index=False)
@@ -332,12 +239,10 @@ class TradingBot(object):
          df3.to_csv('signers.csv',index=False)
          df4=pd.DataFrame(data['data'],columns=['key','value'])
          df4.to_csv('data.csv',index=False)
-    
-         df8=pd.DataFrame(data['_links'],columns=['self','transactions','operations','payments','effects','offers','trades','data'])
-         df8.to_csv('_links.csv',index=False)
+         df5=pd.DataFrame(data['_links'],columns=['self','transactions','operations','payments','effects','offers','trades','data'])
+         df5.to_csv('_links.csv',index=False)
         
          sequence_number = data["sequence"]
-
          print( 'sequence_number :'+ str(sequence_number))
 
 
@@ -354,153 +259,127 @@ class TradingBot(object):
 
       
             # self.send_money()
-             self.displayqrcode(self.account_id)
-             
-      
-             self.assets= self.get_assets(
+           
+             self.assets= self.get_asset_list()
 
-                asset_code= self.counter_asset,
-                asset_issuer= self.counter_asset_issuer,limit=10
-             )
 
-             self.asset_df =pd.DataFrame(self.assets,['asset','asset_issuer'])
+             self.asset_df =pd.DataFrame(self.assets,['asset_code','asset_issuer','asset_type'])
 
              print(str(self.asset_df))
 
 
-             self.fee_statistics =self.server.fee_stats().limit(10).order(desc=True).call()
+             self.fee_statistics =self.server.fee_stats().limit(10).order(desc=True).call().popitem()[-1]
              self.fee_statistics_df=pd.DataFrame(self.fee_statistics,columns=['fee_asset','fee_asset_issuer','fee_amount','fee_asset_type'])
              self.fee_statistics_df.to_csv('fee_statistics.csv',index=True)
-             
-         
+
+             self.ledger_statistics =self.server.offers().order(desc=True).limit(10).call().popitem()[-1]
+             self.ledger_statistics_df=pd.DataFrame(self.ledger_statistics,columns=['offer_id','offer_type','price','amount','price_r','amount_r'])
+             self.ledger_statistics_df.to_csv('ledger_offers.csv',index=True)
+
+             self.ledger_statistics =self.server.trades().order(desc=True).limit(10).call().popitem()[-1]
+             self.ledger_statistics_df=pd.DataFrame(self.ledger_statistics,columns=['trade_id','price','amount','price_r','amount_r'])
+             self.ledger_statistics_df.to_csv('ledger_trades.csv',index=True)
+
+             self.ledger_statistics =self.server.transactions().order(desc=True).limit(10).call().popitem()[-1]
+             self.ledger_statistics_df=pd.DataFrame(self.ledger_statistics,columns=['transaction_id','transaction_hash','transaction_type','transaction_result','transaction_fee','transaction_timestamp'])
+             self.ledger_statistics_df.to_csv('ledger_transaction.csv',index=True)
+
+             self.ledger_payments =self.server.payments().order(desc=True).limit(10).call().popitem()[-1]
+             self.ledger_payments_df=pd.DataFrame(self.ledger_payments,columns=['payment_id','from_account','to_account','amount'])
+             self.ledger_payments_df.to_csv('ledger_payments.csv',index=True)
+
+             self.ledger_effects =self.server.effects().order(desc=True).limit(10).call().popitem()[-1]
+             self.ledger_effects_df=pd.DataFrame(self.ledger_effects,columns=['effect_id','account','type','amount'])
+             self.ledger_effects_df.to_csv('ledger_effects.csv',index=True)
+
+
            
 
-             
-
-
-
-
-             # Create the first Asset instance (selling asset)
+    # Create the first Asset instance (selling asset)
              selling_asset = stellar_sdk.Asset(
-                 code=self.counter_asset,
+                 code=self.counter_asset_code,
                  issuer=self.counter_asset_issuer
              )  # Replace with the actual issuer's address
 
              # Create the second Asset instance (buying asset)
+             
              buying_asset = stellar_sdk.Asset("XLM")  # Replace with the actual issuer's address
              # Create symbols
              self.symbol= selling_asset.code + '_' + buying_asset.code
 
              # Create asset list
 
-             self.asset_list =pd.DataFrame( columns=['asset_type', 'asset_code', 'asset_issuer'])
-             self.asset_list['asset_type']='selling'
-             self.asset_list['asset_code']=selling_asset.code
-             self.asset_list['asset_issuer']=selling_asset.issuer
-             self.asset_list['asset_type']='buying'
-             self.asset_list['asset_code']=buying_asset.code
-             self.asset_list['asset_issuer']=buying_asset.issuer
-
-             self.orderbook = self.server.orderbook(selling=selling_asset, buying=buying_asset).limit(10).call()
-           
-
-             print( str(self.order_book))
+             self.asset_list =pd.DataFrame(self.assets, columns=['asset_type', 'asset_code', 'asset_issuer'])
+             self.asset_list.to_csv('asset_list.csv', index=False)
+      
 
              # Create a DataFrame from the bids and asks data
-             df = pd.DataFrame(self.orderbook['bids'] + self.orderbook['asks'])
+             df = pd.DataFrame( self.order_book['orderbook'], columns=['price', 'amount','bids', 'asks'] )
+             df.to_csv('order_book.csv', index=False)
 
              # Extract and work with the relevant columns
              df['price'] = df['price'].astype(float)
              df['amount'] = df['amount'].astype(float)
+             self.learn.price =df['price']
+             self.learn.quantity = df['amount']
+      
              
-
-             self.learn.price = float(df['price'].iloc[-1])
-             self.learn.quantity = float(df['amount'].iloc[-1])
-             self.learn.candle_list = df['price'].tolist()
-             self.learn.candle_list.append(self.learn.price)
-
-             data=pd.DataFrame(columns=['price', 'amount','open','low','high', 'close','volume','date'])
-
             
-             data['price']=df['price']
-             data['amount']=df['amount']
-            
-             data['open']=0
-             data['low']=0
-             data['high']=0
-             data['close']=0
-             data['volume']=0
-             data['date']=0
-
-             signal=2#self.learn.get_signal(symbol= self.learn.symbol,datas=data)
-             self.logger.info(f'Signal: {signal}')
-
-        
-             selling_asset = self.counter_asset
+             # Create a DataFrame and fill it with the data from the server
+           
+             
+             self.candles = self.get_stellar_candles(self.base_asset_code, self.base_asset_issuer, 
+                                                self.counter_asset_code, self.counter_asset_issuer
+                                                )
+            # Generate trades signal
+             signal=self.learn.get_signal(symbol= self.symbol,candle_list=self.candles)
+             self.logger.info(
+                
+               'signal :'+ str(signal)
+             )
 
              
-
 
              # Define the order details
              sell_amount = "56.0"  # Amount of selling asset
              sell_price =  "7.2" # Price in terms of selling asset\stellar_sdk.price.Price, str, decimal.Decimal
 
-
+            #Create the sell operation
+             self.selling_operation = stellar_sdk.manage_sell_offer.ManageSellOffer(selling=stellar_sdk.Asset.native(), buying=stellar_sdk.Asset(code="USDC",issuer=self.counter_asset_issuer),amount=sell_amount, price=sell_price,offer_id=random.randint(1, 100000000))
+             #Create the buy operation
+             self.buying_operation = stellar_sdk.manage_buy_offer.ManageBuyOffer(selling=stellar_sdk.Asset(code=self.counter_asset_code,issuer=self.counter_asset_issuer), buying=stellar_sdk.Asset.native(), amount=sell_amount, price=sell_price,      offer_id=random.randint(1, 100000000) )
+             #Operations
+             self.operations = [self.selling_operation, self.buying_operation]
+       
 
              # Price in terms of buying asset
 
-             #Create the sell operation
-             self.sell_operation = stellar_sdk.manage_sell_offer.ManageSellOffer(selling=Asset.native(), buying=Asset(code="USDC",issuer=self.counter_asset_issuer),amount=sell_amount, price=sell_price,offer_id=random.randint(1, 100000000))
-             #Create the buy operation
-             self.buying_operation = stellar_sdk.manage_buy_offer.ManageBuyOffer(selling=Asset(code=self.counter_asset,issuer=self.counter_asset_issuer), buying=Asset.native(), amount=sell_amount, price=sell_price,      offer_id=random.randint(1, 100000000) )
-             #Operations
-             self.operations = [self.sell_operation, self.buying_operation]
-             self.offers=self.server.offers().limit(10).order(desc=True).call()
-
-             self.offers_df=pd.DataFrame(self.offers)
+             self.offers=self.server.offers().limit(10).order(desc=True).call().popitem()[-1]['offers']
+             self.offers_df=pd.DataFrame(self.offers,columns=['offer_id','offer_type','price','amount','price_r','amount_r'])
              self.offers_df.to_csv('offers.csv',index=True)
-
              print('offers :'+str(self.offers_df))
 
-             
+            
+             self.operation2=self.server.operations().limit(10).order(desc=True).call().popitem()[-1]['operations']
 
-
-             self.operation2=self.server.operations().limit(10).order(desc=True).call()
-
-             self.operation2_df=pd.DataFrame(self.operation2["_embedded"]['records'])
+             self.operation2_df=pd.DataFrame(self.operation2['records'],columns=['operation_id','operation_type','price','amount','price_r','amount_r'])
              self.operation2_df.to_csv('operation2.csv',index=True)
-             print('operation2 :'+ (str(self.operation2_df.head())))
-             print('operation2 :'+ (str(self.operation2_df.tail())))
-
-
+          
 
 
              # Build the transaction
-
-
-
-
-
-
-
-   
 
              if signal == 'buy' or signal == 1:
                self.logger.info(f'Buying {self.learn.quantity} {self.learn.symbol} at {self.learn.price}')
               # Build Buying  transaction
                # Set TimeBounds
                
-
-               transaction = stellar_sdk.transaction_builder.TransactionBuilder(v1=True,
-               source_account=self.account,
-                 network_passphrase=self.stellar_network,
-                 base_fee=100).append_operation(self.buying_operation).add_time_bounds(min_time=self.min_time, max_time=self.max_time).build()
-               transaction.sign(signer=self.secret_key)
+               
               # Submit the transaction to the Stellar network
-              
+               self.transaction.append_operation(self.buying_operation).build().sign(signer=self.secret_key)
 
 
-               response =self.server.submit_transaction( transaction )
+               response = self.server.submit_transaction(self.transaction)
 
               # Check the transaction result
                if response !=None and response["successful"]:
@@ -516,69 +395,38 @@ class TradingBot(object):
 
               # Build selling the transaction
 
-              transaction = (stellar_sdk.transaction_builder.TransactionBuilder(v1=True,
-               source_account=self.account,
-                 network_passphrase=self.stellar_network,
-                 base_fee=100).append_operation(self.buying_operation).add_time_bounds(min_time=self.min_time, max_time=self.max_time).build())
-           
+               self.transaction.append_operation(self.selling_operation).build().sign(signer=self.secret_key)
+
+
+               #Submit the transaction to the Stellar network
+ 
+               response = self.server.submit_transaction(self.transaction,True)
               
-              transaction.sign(signer=self.secret_key)
 
-              
-              response = None#self.server.submit_transaction(transaction)
+              #Check the transaction result
+               if response["successful"] :
+                print("Sell order placed successfully!")
+                print("Transaction hash:", response["hash"])
+               else:
+                print("Sell order failed. Error:", response["result_xdr"])
 
-            #   #Check the transaction result
-            #   if response["successful"]:
-            #    print("Sell order placed successfully!")
-            #    print("Transaction hash:", response["hash"])
-            #   else:
-            #    print("Sell order failed. Error:", response["result_xdr"])
-
-            #    self.transaction_df=pd.DataFrame(transaction)
-            #    self.transaction_df.to_csv('transaction.csv')
-            #    print("transaction "+str(self.transaction_df))
-
-
-               
-             
-
-
-                 
-
-             
-
-            
-
-
-
-
-
-
-
+               self.transaction_df=pd.DataFrame(self.transaction)
+               self.transaction_df.to_csv('transaction.csv')
+               print("transaction "+str(self.transaction_df))
         
-             self.trades=self.server.trades().limit(10).order(desc=True).call() 
-             self.trade_df =pd.DataFrame(self.trades )
+             self.trades=self.server.trades().limit(10).order(desc=True).call().popitem()[-1]
+             self.trade_df =pd.DataFrame(self.trades ,columns=['trade_id','trade_type','price','amount','price_r','amount_r'])
 
              print('trades :'+str(self.trade_df))
-             self.trade_df.to_csv('trades.csv',index=True)
+             self.trade_df.to_csv('trades.csv',index=True)           
 
-
-
-        
-           
-
-             self.claimable=self.server.claimable_balances().limit(10).order(desc=True).call()
-             self.claimable_df=pd.DataFrame(self.claimable)
+             self.claimable=self.server.claimable_balances().limit(10).order(desc=True).call().popitem()[-1]
+             self.claimable_df=pd.DataFrame(self.claimable,columns=['claimable_id','claimable_type','claimable_balance','claimable_balance_r'])
              print('claimable :'+str(self.claimable_df.tail()))
 
         
              self.claimable_df.to_csv('claimable.csv',index=True)
 
-             
-   
-
-
-        
              time.sleep(10)
 
     def stop(self):
@@ -587,9 +435,7 @@ class TradingBot(object):
     def order_send(self, order):
         self.logger.info('Sending order:' + str(order))
 
-    def cancel_order(self, ticket: int):
-        self.logger.info('Cancelling order:' + str(ticket))
-
+   
     def trailing_stop_loss(self, symbol: str, price: float, stop_loss: float):
         self.logger.info('Trailing stop loss:' + str(symbol) + '' + str(price) + '' + str(stop_loss))
         if price < stop_loss:
@@ -598,24 +444,23 @@ class TradingBot(object):
             return False
         
 
-    def create_account_dataframe(self, account_info):
-    # Extract account data
-
-
+    def create_account_dataframe(self, account):
+   
     # Extract balances
-     balances = account_info['balances']
+     balances = account
 
     # Create a list of dictionaries to store balance information
      balance_data = []
      for balance in balances:
-        balance_data.append({
-            'balance': float(balance.get('balance',None)),
+        balance_data.append(
+           {
+            'balance': balance['balance'],
             'limit': 0,
             
             'asset_type': balance['asset_type'],
-            'asset_code': balance.get('asset_code', None),
-            'asset_issuer': balance.get('asset_issuer', None)
-        })
+            'asset_code': balance['asset_code'],
+            'asset_issuer': balance['asset_issuer']})
+
 
     # Add a row for each balance
      df =pd.DataFrame( columns=['Account ID', 'Sequence', 'Home Domain', 'Balance', 'Limit', 'Asset Type', 'Asset Code', 'Asset Issuer'])
@@ -632,7 +477,7 @@ class TradingBot(object):
 
 
     def account_balance(self):
-        endpoint = f"{self.base_url}/accounts/{self.account_id}/balances"
+        endpoint = f"{self.stellar_horizon_url}/accounts/{self.account_id}/balances"
         response = requests.get(endpoint)
         if response.status_code == 200:
             return response.json()
@@ -659,44 +504,52 @@ class TradingBot(object):
             "cursor": cursor,
             "limit": limit,
             "order": order}
-        endpoint = f"{self.base_url}/assets"
+        endpoint = f"{self.stellar_horizon_url}/assets"
         response = requests.get(url=endpoint, params=params)
         if response.status_code == 200:
             return response.json()
         else:
-            return " Error:" + str(response.status_code) + " " + str(response.reason)
-
+            self.server_msg['message']= " Error:" + str(response.status_code) + " " + str(response.reason)
+        return None
     # Function to fetch trade aggregations
     def get_trade_aggregations(self,
-                               base_asset_type=None,
-                               base_asset_code=Asset.native(),
-                               base_asset_issuer=None,
-                               counter_asset_type= 0,
+                               base_asset_code=stellar_sdk.Asset.native().code,
+                               base_asset_issuer=stellar_sdk.Asset.native().issuer,
+                              
                                counter_asset_code='BTCLN',
                                counter_asset_issuer=None ):
-        params = {
-            "base_asset_type": base_asset_type,
-            "base_asset_code": base_asset_code,
-            "base_asset_issuer": base_asset_issuer,
-            "counter_asset_type": counter_asset_type,
-            "counter_asset_code": counter_asset_code,
-            "counter_asset_issuer": counter_asset_issuer,
-        }
-        endpoint = f"{self.base_url}/trade_aggregations"
-        response = requests.get(endpoint, params=params)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return " Error:" + str(response.status_code) + " " + str(response.reason)
+        
+        # Create a timer to check the trade aggregations
+        trade_aggregations =self.server.trade_aggregations(           
+            base= stellar_sdk.Asset(code=base_asset_code, issuer=base_asset_issuer),
+            counter= stellar_sdk.Asset(code=counter_asset_code, issuer=counter_asset_issuer),
+
+           offset= 0,
+           resolution= 60000 # Critical period in milliseconds (60 seconds) do not remove any data
+
+        ).call().popitem()[-1]['records']
+    
+        timer = threading.Timer(10000, trade_aggregations)
+        timer.daemon = True
+        timer.start()
+        return trade_aggregations
+
         
 
 
-    def login(self, user_id:str=None, secret_key:str=None):
+        
+        
+        
 
-        if user_id == "" or secret_key == "":
-            tkinter.Message(text="Please enter your user_id and secret_key")
+    def login(self, user_id:str='', secret_key:str=''):
+
+        if user_id is None or secret_key is None:
+            
+            self.logger.info('Please enter your user_id and secret_key')
+            self.server_msg['message']='Please enter your user_id and secret_key'
+            tkinter.Message(master=self.controller, text=self.server_msg['message'], width=50)
             return None
-        #
+        
         
         if self.connected:
             self.account_info = self.Check_account(account_id_=user_id)
@@ -707,41 +560,83 @@ class TradingBot(object):
            
              self.controller.show_frame(frame="Home")
              self.logger.info('Successfully logged in')
+             self.server_msg['message']='Successfully logged in'
              self.connected = True
 
              return self.account_info
             else:
-             return None
+             self.logger.info('Invalid user_id or secret_key')
+             self.server_msg['message']='Invalid user_id or secret_key'
+             tkinter.Message(master=self.controller, text=self.server_msg['message'], width=50)
+             return False
         else :
-            return tkinter.Message(text='Please check your internet connection')
+            self.logger.info('Please login first')
+            self.server_msg['message']='Please login first'
+            tkinter.Message(master=self.controller, text=self.server_msg['message'], width=50)
+            return False
 
 
-    def receive_money( self, address:str=None, amount:str="10", asset:str=Asset.native()):
+    def receive_money( self, destination_public_key:str=None, amount:str="10", asset:str=stellar_sdk.Asset.native()):
        
-        self.sender_public_key="GD37VDNE2C4ASOR5PZ7HKWCY6ESWTZ4ERXMMFE54I5G7WTUSGZNYXNXA"
-        # Build the transaction
-        transaction = ( TransactionBuilder(source_account=self.account, network_passphrase="PUBLIC_NETWORK")
-        .append_payment_op(destination=self.sender_public_key, amount=amount, asset=asset).
-         
-          add_time_bounds(min_time=self.min_time, max_time=self.max_time).build())
-            
-    def send_money( self, amount:str="10", asset:str=Asset.native(), address:str=None):
+              # Build the transaction
+        self.transaction =  stellar_sdk.TransactionBuilder(source_account=self.account, network_passphrase="PUBLIC_NETWORK").append_payment_op(destination=destination_public_key, amount=amount, asset=asset).add_time_bounds(min_time=self.min_time, max_time=self.max_time).build()
+        # Sign the transaction
+        self.transaction.sign(self.keypair)
+
+        # Submit the transaction envelope to the Stellar network
+        try:
+            response = self.server.submit_transaction(self.transaction)
+            print(f"Transaction hash: {response['hash']}")
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+      
+    def send_money( self, amount:str="100", asset:str=stellar_sdk.Asset.native(), receiver_address:str=None):
        
-           self.receiver_public_key="GD37VDNE2C4ASOR5PZ7HKWCY6ESWTZ4ERXMMFE54I5G7WTUSGZNYXNXA"
+           #      self.receiver_public_key="GD37VDNE2C4ASOR5PZ7HKWCY6ESWTZ4ERXMMFE54I5G7WTUSGZNYXNXA"
            # Build the transaction
-           transaction = ( TransactionBuilder(source_account=self.account, network_passphrase="PUBLIC_NETWORK")
-             .append_payment_op(destination=self.receiver_public_key, amount=amount, asset=asset).
-            
-              add_time_bounds(min_time=self.min_time, max_time=self.max_time).build())
+           self.transaction =  stellar_sdk.TransactionBuilder(source_account=self.account, network_passphrase="PUBLIC_NETWORK")
+           self.transaction.add_extra_signer(self.keypair).append_payment_op(destination=receiver_address, amount=amount, asset=asset).add_time_bounds(min_time=self.min_time, max_time=self.max_time).build()
 
-           # Sign the transaction
-           transaction.sign(self.account_secret)
-
+        
            # Submit the transaction envelope to the Stellar network
            try:
-            response = self.server.submit_transaction(transaction)
+            response = self.server.submit_transaction(self.transaction)
             print(f"Transaction hash: {response['hash']}")
            except Exception as e:
              print(f"An error occurred: {e}")
+             tkinter.Message(master=self.controller, text=self.server_msg['message'], width = 50)
 
+
+    def get_stellar_candles(self,base_asset_code, base_asset_issuer, 
+                            counter_asset_code, counter_asset_issuer):
+    # Get trade aggregations (candles)
+     self.trade_aggregations = self.get_trade_aggregations(base_asset_code=base_asset_code,
+                                                            base_asset_issuer=base_asset_issuer, 
+                                                           counter_asset_code=counter_asset_code, 
+                                                           counter_asset_issuer=counter_asset_issuer)
     
+
+
+
+
+     # Creating a DataFrame
+     candles = pd.DataFrame( self.trade_aggregations , columns=['symbol','timestamp', 'open', 'high', 'low', 'close'
+                                                                ,'trade_count','base_volume','counter_volume','avg'
+                                                               
+  
+                                                                ])
+     
+     candles['symbol'] = self.symbol
+
+     # Converting timestamp to datetime
+     print('timestamp',str(candles))
+     # Converting timestamp to datetime
+     candles['timestamp'] = pd.to_datetime(candles['timestamp'], unit= 'ms')
+
+     #Saving candles to a database
+     candles.to_csv('candles.csv')
+     connection = sqlite3.connect('TradingBot.sql')
+     candles.to_sql('candles', con=connection, if_exists='append', index=False )
+    
+     return candles

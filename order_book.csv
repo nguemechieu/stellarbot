@@ -1,1 +1,1 @@
-,id,price,amount,asset,asset_issuer,type,date,symbol
+bid_prices,bid_quantity,ask_prices,ask_quantity
