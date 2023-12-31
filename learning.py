@@ -28,11 +28,17 @@ class Learning:
         self.limit = 1000
         self.price=100
         self.quantity = 10
+
+        self.fibo_msg = {
+            
+        }
+        self.symbol=''
         
 
 
     def get_signal(self, symbol: str,candle_list=None):
-        self.symbol_list.append(symbol)  
+        self.symbol_list.append(symbol) 
+        self.symbol = symbol
 
         #Fetch each symbol's candles
 
@@ -72,6 +78,7 @@ class Learning:
             0.618: high - (0.618 * (high - low)),
             0.786: high - (0.786 * (high - low))
         }
+        self.fibo_msg['fib_levels'] = self.symbol +':'+fib_levels.__str__()+ '\n'
 
         data.dropna()
 

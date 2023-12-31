@@ -1,1 +1,1 @@
-price,amount,bids,asks
+bid_prices,bid_quantity,ask_prices,ask_quantity

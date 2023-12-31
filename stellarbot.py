@@ -6,11 +6,12 @@ from email.mime.text import MIMEText
 from tkinter import StringVar, BOTTOM
 from Login import Login
 from createAccount import CreateAccount
+from home import Home
 from tradingbot import TradingBot
 import platform
 import subprocess
 
-from home import Home
+
 from marketwatch import MarketWatch
 from orders import Orders
 
