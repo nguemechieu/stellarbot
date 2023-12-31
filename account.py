@@ -1,5 +1,4 @@
 
-import os
 import tkinter
 from tkinter import ttk
 
@@ -20,9 +19,7 @@ class Account(ttk.Frame):
                           )
         read=pd.read_csv('account.csv')
         self.listbox.insert( 'balance', read)
-        self.listbox.bind('<<ListboxSelect>>',self.select)
-
-
+     
 
     
     

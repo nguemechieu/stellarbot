@@ -28,8 +28,6 @@ class Learning:
         self.limit = 1000
         self.price=100
         self.quantity = 10
-        self.candle_list = pd.DataFrame(columns=['symbol','date','price', 'open', 'high', 'low', 'close', 'volume'])
-
         
 
 

@@ -3,7 +3,7 @@ import smtplib
 import tkinter
 from datetime import datetime
 from email.mime.text import MIMEText
-from tkinter import StringVar, RAISED, BOTTOM
+from tkinter import StringVar, BOTTOM
 from Login import Login
 from createAccount import CreateAccount
 from tradingbot import TradingBot
@@ -76,26 +76,17 @@ class StellarBot(tkinter.Tk):
     def show_pages(self, param):
         self.title("StellarBot    | AI POWERED STELLAR LUMEN NETWORK TRADER |-->    " + str(datetime.now()))
         self.geometry("1530x800")
-        self.configure(bg="#004d99")
-       
-
-    
-        
-      
         self.resizable(width=True, height=True)
-
-
-
-      
-      
         self.delete_frame()
 
-        if param in ['Login', 'Register', 'ForgotPassword', 'ResetPassword', 'Home', 'About', 'News', 'CreateAccount']:
+        if param in ['Login', 'Register', 'ForgotPassword', 'ResetPassword', 'Home', 'About', 'News']:
              frames = [ Login, Home,MarketWatch,Orders, CreateAccount]
 
         for frame in frames:
                 if param == frame.__name__:
                     frame = frame(self, self.controller)
+
+                    
                     frame.tkraise()
 
     def delete_frame(self):
@@ -137,22 +128,26 @@ def check_os():
         return "Unknown"
 
 if __name__ == "__main__":
-     StellarBot()
+     
+    if check_os !="Windows":
+    # Start Xvfb to create a virtual display (change the display number if needed)
+     display_number = 99
+     xvfb_command = f"Xvfb :{display_number} -screen 0 1280x1024x24 &"
+     subprocess.Popen(xvfb_command, shell=True)
 
-
-#      if check_os !="Windows":
-#     # Start Xvfb to create a virtual display (change the display number if needed)
-#        display_number = 99
-#      xvfb_command = f"Xvfb :{display_number} -screen 0 1280x1024x24 &"
-#      subprocess.Popen(xvfb_command, shell=True)
-
-# # Set the DISPLAY environment variable to point to the virtual display
-#      os.environ["DISPLAY"] = f":{display_number}"
+# Set the DISPLAY environment variable to point to the virtual display
+     os.environ["DISPLAY"] = f":{display_number}"
   
     
 
-# else:
-    
-# # Remember to clean up the Xvfb process when done
-#     subprocess.Popen(f"kill -9 $(pgrep Xvfb)", shell=True)
-#     os._exit(1)
+    else:
+     os.environ["DISPLAY"] = ":0"
+    print(os.environ["DISPLAY"])
+# Remember to clean up the Xvfb process when done
+    subprocess.Popen(f"kill -9 $(pgrep Xvfb)", shell=True)
+
+    print('StellarBot is running on ', check_os())
+    StellarBot()
+
+else:
+    os._exit(1)

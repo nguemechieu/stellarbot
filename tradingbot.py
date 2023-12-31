@@ -17,7 +17,7 @@ import sqlite3
 
 class TradingBot:
     ''' Constructor for the Trading Bot '''    
-    def __init__(self, start_bot=False, account_id=None, account_secret='SB2LHKBL24ITV2Y346BU46XPEL45BDAFOOJLZ6SESCJZ6V5JMP7D6G5X',controller=None):   
+    def __init__(self, account_id=None, account_secret='SB2LHKBL24ITV2Y346BU46XPEL45BDAFOOJLZ6SESCJZ6V5JMP7D6G5X',controller=None):   
         self.name = 'TradingBot'
         self.logger = logging.getLogger(self.name)
         self.logger.setLevel(logging.INFO)
@@ -54,7 +54,7 @@ class TradingBot:
         
         # Get User account
         self.account=  self.server.load_account(account_id= self.account_id).raw_data
-        
+        self.candles= pd.DataFrame(columns=['symbol','timestamp','open','high','low','close','volume'])
               
         # Create an order builder object
         self.order_tickets = pd.DataFrame(columns=['order_id', 'symbol','price', 'quantity','create_time', 'type'])
@@ -64,7 +64,7 @@ class TradingBot:
 
         self.assets_list ={'asset_code':'','asset_issuer':'','asset_type':''} # Used to keep track of the asset list
         self.transaction_list = [] # Used to keep track of the transactions
-        self.start_bot = start_bot # Used to start the bot
+        
         self.server_msg ={'status': 'off', 'error': None, 'account':[],'data': None,'message': None}
     
         self.balance: float = 0.00
@@ -110,19 +110,11 @@ class TradingBot:
             self.server_msg['status'] = 'No internet connection'
             return None
         self.thread = threading.Thread(target=self.run, args=( ))
-        self.thread.daemon = True
-      
         
-        if self.start_bot:
-           self.logger.info('Bot started  ')
-           self.server_msg['message'] = 'Bot started @'+str(time.ctime())
+        self.logger.info('Bot stopped  ')
 
-           self.thread.start()
-        else:
-           self.logger.info('Bot stopped  ')
-
-           self.server_msg['message'] = 'Bot stopped @'+str(time.ctime())
-           if self.thread.is_alive():
+        self.server_msg['message'] = 'Bot stopped @'+str(time.ctime())
+        if self.thread.is_alive():
             self.thread.join()
 
            
@@ -314,7 +306,7 @@ class TradingBot:
       
 
              # Create a DataFrame from the bids and asks data
-             df = pd.DataFrame( self.order_book['orderbook'], columns=['price', 'amount','bids', 'asks'] )
+             df = pd.DataFrame( self.order_book, columns=['price', 'amount','bids', 'asks'] )
              df.to_csv('order_book.csv', index=False)
 
              # Extract and work with the relevant columns
@@ -354,15 +346,15 @@ class TradingBot:
 
              # Price in terms of buying asset
 
-             self.offers=self.server.offers().limit(10).order(desc=True).call().popitem()[-1]['offers']
+             self.offers=self.server.offers().limit(10).order(desc=True).call().popitem()[-1]
              self.offers_df=pd.DataFrame(self.offers,columns=['offer_id','offer_type','price','amount','price_r','amount_r'])
              self.offers_df.to_csv('offers.csv',index=True)
              print('offers :'+str(self.offers_df))
 
             
-             self.operation2=self.server.operations().limit(10).order(desc=True).call().popitem()[-1]['operations']
-
-             self.operation2_df=pd.DataFrame(self.operation2['records'],columns=['operation_id','operation_type','price','amount','price_r','amount_r'])
+             self.operation2=self.server.operations().limit(10).order(desc=True).call().popitem()[-1]
+      
+             self.operation2_df=pd.DataFrame( self.operation2)
              self.operation2_df.to_csv('operation2.csv',index=True)
           
 
@@ -427,7 +419,7 @@ class TradingBot:
         
              self.claimable_df.to_csv('claimable.csv',index=True)
 
-             time.sleep(10)
+             time.sleep(1)
 
     def stop(self):
         self.logger.info('Stopping trading bot')
@@ -529,10 +521,18 @@ class TradingBot:
 
         ).call().popitem()[-1]['records']
     
-        timer = threading.Timer(10000, trade_aggregations)
-        timer.daemon = True
-        timer.start()
         return trade_aggregations
+    
+    def start(self):
+
+        if not self.thread.is_alive():
+         self.thread.daemon = True # Daemonize the thread
+      
+        self.logger.info('Bot started  ')
+        self.server_msg['message'] = 'Bot started @'+str(time.ctime())
+
+        self.thread.start()
+        
 
         
 
@@ -640,3 +640,44 @@ class TradingBot:
      candles.to_sql('candles', con=connection, if_exists='append', index=False )
     
      return candles
+    
+
+
+    def send_money(self)->None:
+        self.send_money(amount=self.amount, asset=self.asset, receiver_address=self.receiver_address)
+
+
+    def receive_money(self)->None:
+        self.receive_money(destination_public_key=self.receiver_public_key, amount=self.amount, asset=self.asset)
+
+
+    def extract_operations_info(self,data):
+    # Extracting information from the provided JSON data
+     links = data['_links']
+     next_link = links['next']['href'] if 'next' in links else None
+     prev_link = links['prev']['href'] if 'prev' in links else None
+
+     embedded = data['_embedded']
+     records = embedded['records'] if 'records' in embedded else []
+
+    # Extracting relevant information from each record
+     extracted_records = []
+     for record in records:
+        record_info = {
+            'id': record['id'],
+            'type': record['type'],
+            'created_at': record['created_at'],
+            'transaction_hash': record['transaction_hash'],
+            'amount': record['amount'],
+            'price': record['price'],
+            'buying_asset_type': record['buying_asset_type'],
+            'selling_asset_type': record['selling_asset_type'],
+            'offer_id': record['offer_id'] if 'offer_id' in record else None,
+        }
+        extracted_records.append(record_info)
+
+     return {
+        'next_link': next_link,
+        'prev_link': prev_link,
+        'records': extracted_records,
+    }
