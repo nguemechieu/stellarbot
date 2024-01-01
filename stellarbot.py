@@ -66,6 +66,9 @@ class StellarBot(tkinter.Tk):
   
     
         self.iconbitmap("./src/images/stellarbot.ico")
+
+
+        self.frames =(Login, Home, CreateAccount)
        
       
        
@@ -80,8 +83,8 @@ class StellarBot(tkinter.Tk):
         self.resizable(width=True, height=True)
         self.delete_frame()
 
-        if param in ['Login', 'Register', 'ForgotPassword', 'ResetPassword', 'Home', 'About', 'News']:
-             frames = [ Login, Home,MarketWatch,Orders, CreateAccount]
+        if param in ['Login', 'CreateAccount','Home']:
+             frames = [ Login, Home, CreateAccount]
 
         for frame in frames:
                 if param == frame.__name__:
