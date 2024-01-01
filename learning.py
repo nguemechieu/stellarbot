@@ -1,51 +1,36 @@
-import datetime
 import sqlite3
 import pandas as pd
-
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from ta.trend import SMAIndicator
 from ta.momentum import RSIIndicator
 import numpy as np
-import numpy as np
-
+import pickle
+import os
 
 
 
 ''' This class is used to train and test a model to predict the price'''
 class Learning:
-    def __init__(self):
-        self.symbol_list = []
-        self.start_date = '2020-01-01'
-        self.end_date = datetime.datetime.today().strftime('%Y-%m-%d')
-        self.interval = '1d'
-        self.limit = 1000
+    def __init__(self,controller):
+        self.controller = controller
         self.price = 0
         self.symbol = ''
         self.fibonacci = {}
 
-    def get_signal(self, symbol: str, candle_list=None):
-        self.symbol_list.append(symbol)
-        self.symbol = symbol
-        self.end_date = datetime.datetime.today().strftime('%Y-%m-%d')
+    def get_signal(self, symbol: str ):
         
-        # Signal Generation for New Data
-        conn = sqlite3.connect('TradingBot'+ '.sql')
-        new_data = pd.read_sql(
-            f"SELECT * FROM candles WHERE symbol='{symbol}' AND timestamp BETWEEN '{self.start_date}' AND '{self.end_date}'  ORDER BY timestamp ASC",
-            con=conn, index_col=None, parse_dates=True
-        )
-
-        data = new_data
+        self.symbol = symbol
+        con=sqlite3.connect( 'StellarBot.sql')
+        #Making sure that the symbol is in the list
+        data =pd.read_sql(f'SELECT * FROM candles WHERE symbol = "{symbol}"', con=con ,index_col='timestamp')
         if data is None:
             print(f'No data found for {symbol}')
             return 0
         while data.shape[0] < 100:
             print(f'No data found for {symbol}')
             return 0
-
-        print(data.head(), data.tail())
         
         data['open'] = data['open'].apply(lambda x: float(x))
         data['high'] = data['high'].apply(lambda x: float(x))
@@ -53,9 +38,15 @@ class Learning:
         data['close'] = data['close'].apply(lambda x: float(x))
         data['base_volume'] = data['base_volume'].apply(lambda x: float(x))
         data['counter_volume'] = data['counter_volume'].apply(lambda x: float(x))
+        data['avg'] = data['avg'].apply(lambda x: float(x))
 
-        new_data = pd.DataFrame(data, columns=['open', 'high', 'low', 'close', 'base_volume', 'counter_volume'])
+        new_data = data.copy()
 
+        
+        print(new_data.head())
+        print(new_data.tail())
+        print(new_data.shape)
+        print(new_data.dtypes)
         high = new_data['high'].max()
         low = new_data['low'].min()
         price = (float(high) + float(low)) / 2
@@ -75,13 +66,13 @@ class Learning:
 
         new_data['price'] = data['close']
         new_data['price'] = price
-
         self.price = price
 
         # Feature Engineering
         new_data['SMA50'] = SMAIndicator(new_data['close'], window=50).sma_indicator()
         new_data['SMA200'] = SMAIndicator(new_data['close'], window=200).sma_indicator()
         new_data['RSI'] = RSIIndicator(new_data['close']).rsi()
+        new_data['RSI'] = new_data['RSI'].apply(lambda x: 1 if x >= 70 else 0)
 
         # Labeling
         new_data['Signal'] = np.where(new_data['SMA50'] > new_data['SMA200'], 1, 0)
@@ -94,14 +85,33 @@ class Learning:
 
         X = new_data[features]
         y = new_data['Signal']
+        print(X.head())
+        print(X.tail())
+        print(y.head())
+        print(y.tail())
+        if X.empty:
+            print(f' No data found for {symbol}')
+            return 0
 
         # Split the data
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, train_size=0.8,
                                                             stratify=y)
+        model = RandomForestClassifier(n_estimators=100, random_state=42)
+    
+        if not  os.path.exists('model.pkl'):
+            # Model Training
+            model.fit(X_train, y_train)
+            pickle.dump(model, open('model.pkl', 'wb'))
 
         # Model Training
-        model = RandomForestClassifier(n_estimators=100, random_state=42)
-        model.fit(X_train, y_train)
+        model.fit(X_train, y_train) 
+        pickle.dump(model, open('model.pkl', 'wb'))
+    
+        
+
+        model=pickle.load(open('model.pkl', 'rb'))
+        print(model)
+        print(model.predict(X_test))
 
         fib_levels = {
             0.236: high - (0.236 * (high - low)),
@@ -120,6 +130,8 @@ class Learning:
                 fibo_signal = 1  # Buy signal
             elif abs(price - fibo_price) / price < 0.01:
                 fibo_signal = -1  # Sell signal
+            print(f'Fibonacci Level: {level}')
+            print(f'Price: {price}')
 
         #
 

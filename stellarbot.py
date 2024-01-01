@@ -12,10 +12,6 @@ import platform
 import subprocess
 
 
-from marketwatch import MarketWatch
-from orders import Orders
-
-
 def send_email(subject: str = "", body: str = "", sender: str = "",
                recipients=None, password: str = ""):
     if recipients is None:
@@ -44,6 +40,7 @@ class StellarBot(tkinter.Tk):
         self.frames = {
 
         }
+        self.controller=self
 
         self.account_id=StringVar()
         self.account_id.set("")

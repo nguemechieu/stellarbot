@@ -8,7 +8,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
 
-
 class Home(tkinter.Frame):
     def __init__(self, parent, controller):
         tkinter. Frame.__init__(self, parent)
@@ -34,7 +33,7 @@ class Home(tkinter.Frame):
         self.transactions_list.place(x=0, y=20, width=600, height=400)
         self.transactions_list.config(yscrollcommand=self.transactions_list.yview)
         
-        read_transactions = pd.read_csv('ledger_transaction.csv')
+        read_transactions = pd.read_csv('ledger_transactions.csv')
 
         self.offers_list = tkinter.Listbox(self.transactions_tab, selectmode=tkinter.SINGLE, height=20, width=1100)
         self.offers_list.place(x=700, y=20, width=600, height=400)
@@ -72,22 +71,13 @@ class Home(tkinter.Frame):
         self.balance_label.grid(row=7, column=0, sticky='nsew')
         
 
-        if not os.path.exists('balances.csv'):
-            with open('balances.csv',mode= 'w', encoding='utf-8') as f:
-                f.write('asset_code,asset_type,asset_issuer,asset_code,limit,buying_liabilities,selling_liabilities,last_modified_ledger,is_authorized,is_authorized.1,is_authorized_to_maintain_liabilities,asset_code\n')
-                f.close()
-
                  
         read=pd.read_csv('balances.csv')
         
         self.balance_tree = ttk.Treeview(self.transactions_tab, selectmode='extended')
-        self.balance_tree.place(x=10, y=400)
+        self.balance_tree.place(x=10, y=20)
 
         columns = ('asset_code','asset_type','asset_code','limit','buying_liabilities','selling_liabilities','last_modified_ledger','is_authorized','is_authorized.1','is_authorized_to_maintain_liabilities','asset_code')
-       
-      
-       #values=(row['asset_code'], row('asset_type'), row['asset_issuer'], row['asset_code'], row['limit'], row['buying_liabilities'], row['selling_liabilities'], row['last_modified_ledger'], row['is_authorized'], row['is_authorized.1'],
-        
         self.balance_tree['columns'] = columns
         self.balance_tree['show'] = 'headings'
         self.balance_tree.heading('asset_code', text='Asset Code')
@@ -112,10 +102,10 @@ class Home(tkinter.Frame):
         self.account_tab =  tkinter.Frame(self.tab, relief='groove', borderwidth=1,background='gray')
         self.account_tab.place(x=0, y=0)
         self.account_canvas = tkinter.Canvas(self.account_tab, width=1400, height = 650,background= 'black')
-        self.account_canvas.place(x=0, y=30)
+        self.account_canvas.place(x=100, y=100)
 
         
-        self.account_canvas.create_text(10, 100, text=[account].sort(), font= ('Arial',14) )
+        self.account_canvas.create_text(10, 100, text=[account].sort(), font= ('Arial',14), fill='white')
 
      
         self.trade_server_text = tkinter.StringVar()
@@ -130,7 +120,7 @@ class Home(tkinter.Frame):
         self.trade_tree.place(x=0, y=500, width=1300, height=400)
         self.trade_tree['columns'] = ('symbol','timestamp','open', 'high', 'low', 'close', 'base_volume', 'counter_volume', 'trade_count')
         self.trade_tree['show'] = 'headings'
-        self.trade_tree.heading('symbol', text='symbol')
+        self.trade_tree.heading('symbol', text='symbol', anchor='center')
         self.trade_tree.heading('timestamp', text='timestamp')
         self.trade_tree.heading('open', text='open')
         self.trade_tree.heading('high', text='high')
@@ -175,12 +165,7 @@ class Home(tkinter.Frame):
         self.settings_canvas.place(x=0, y=30, width=1200, height=   600,anchor= 'nw')
         self.about_label = tkinter.Label(self.about_tab, text='Trading Bot')
         self.about_label.grid(row=5, column=0, sticky='nsew')
-
-        self.candles =self.controller.bot.candles
         
-        data =self.candles
-        data['timestamp'] =  pd.to_datetime(data['timestamp'], unit='ms')
-
         # Create a candlestick chart
         fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -189,19 +174,12 @@ class Home(tkinter.Frame):
         self.trade_canvas = tkinter.Canvas( self.trade_tab, relief='groove',background='black')
         self.trade_canvas.place(x=0, y=10, width= 1300, height= 400)
 
-        self.trade_canvas.create_text(10, 310, text=self.candles.__str__(), font=('Arial',14), anchor= 'nw')
-         
-        
+        self.trade_canvas.create_text(10, 310, text='', font=('Arial',14), anchor= 'nw')
 
-        # navigator = NavigationToolbar2TkAgg(self.trade_tab, self.trade_canvas)
-        # navigator.update()
-
-# Customize chart appearance
         
         self.chart_tab = tkinter.Frame(self.tab, relief='groove', borderwidth=1 , background='gray')
         self.chart_canvas = tkinter.Canvas(self.chart_tab, width=1500, height = 660,background= 'black', bd= 3)
         self.chart_canvas.place(x=0, y=5)
-        self.trade_canvas.create_text(100, 50, text=self.candles.__str__(), font= ('Arial',14), anchor= 'nw' )
         self.trade_canvas.place(x=0, y=10)
         figure_canvas = FigureCanvasTkAgg(fig, master=self.chart_canvas)
         figure_canvas.draw()
@@ -228,8 +206,6 @@ class Home(tkinter.Frame):
         self.send_money_image_label.place(x=40, y=20, anchor= 'nw')
         self.send_money_label = tkinter.Label(self.send_money_tab, text='Send Money', font=('Arial',14))
         self.send_money_label.place(x=400, y=20, anchor= 'nw',width=20, height= 20)
-        
-
         self.send_money_address = tkinter.Label(self.send_money_tab, text='Enter Address', font=('Arial',14),height=20, width=200) 
         self.send_money_address.place(x=40, y=30,  anchor= 'nw', height= 20)
         self.send_money_address_entry = tkinter.Entry(self.send_money_tab, width=20 , font=('Arial',14), bg='white', fg='black') 
@@ -301,7 +277,7 @@ class Home(tkinter.Frame):
     
     
     def updateMe(self)->None:
-        self.candles = pd.read_sql('SELECT * FROM candles', con=self.controller.bot.db, index_col='timestamp')
+        self.candles = pd.read_csv('candles.csv')#read_sql('SELECT * FROM candles', con=self.controller.bot.db, index_col='timestamp')
         if self.candles['symbol'] is not None:
            self.trade_tree.insert('', 'end', text='symbol', values=(self.candles['symbol'], 
                                                                self. candles['open'], 
