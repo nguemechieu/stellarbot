@@ -8,6 +8,7 @@ from ta.momentum import RSIIndicator
 import numpy as np
 import pickle
 import os
+import time
 
 
 
@@ -24,13 +25,22 @@ class Learning:
         self.symbol = symbol
         con=sqlite3.connect( 'StellarBot.sql')
         #Making sure that the symbol is in the list
-        data =pd.read_sql(f'SELECT * FROM candles WHERE symbol = "{symbol}"', con=con ,index_col='timestamp')
+        data =pd.read_sql(f'SELECT * FROM candles WHERE symbol = "{symbol}"', con=con ,index_col='timestamp', parse_dates=True)
+       
+       
         if data is None:
             print(f'No data found for {symbol}')
             return 0
         while data.shape[0] < 100:
             print(f'No data found for {symbol}')
             return 0
+        
+
+        data['timestamp'] = pd.to_datetime(data['timestamp'], unit= 'ms')
+        #Filtering the data by timestamp
+        data = data[data['timestamp'] > '2021-01-01' and data['timestamp'] <= time.today()]
+        data = data[data['timestamp'] <= '2021-01-02']
+        data = data.reset_index(drop=True)
         
         data['open'] = data['open'].apply(lambda x: float(x))
         data['high'] = data['high'].apply(lambda x: float(x))

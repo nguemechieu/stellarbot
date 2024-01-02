@@ -1,24 +1,29 @@
 
 ''' Trading Bot Class '''
 import tkinter
-
+import os
 import logging
 import random
 import threading
 import time
 import stellar_sdk
 import cv2
-import pandas as pd
 import datetime
-
 import requests
-from learning import Learning
 import sqlite3
-
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+from ta.trend import SMAIndicator
+from ta.momentum import RSIIndicator
+import numpy as np
+import pickle
 
 class TradingBot:
-    ''' Constructor for the Trading Bot '''    
-    def __init__(self, account_id=None, account_secret='SB2LHKBL24ITV2Y346BU46XPEL45BDAFOOJLZ6SESCJZ6V5JMP7D6G5X',controller=None):   
+    ''' Constructor for the Trading Bot '''  
+    #'SB2LHKBL24ITV2Y346BU46XPEL45BDAFOOJLZ6SESCJZ6V5JMP7D6G5X'  
+    def __init__(self, account_id=None, account_secret=None,controller=None):   
         self.name = 'StellarBot'
         self.logger = logging.getLogger(self.name)
         self.logger.setLevel(logging.INFO)
@@ -29,43 +34,63 @@ class TradingBot:
         self.secret_key=account_secret
         self.account_id = account_id
         self.thread = threading.Thread(target=self.run, args=())
+        try:
+         if not os.path.exists(self.name + '.sql'):
+            self.db = sqlite3.connect(self.name + '.sql')
+
+            
+            self.db.execute( '''CREATE TABLE IF NOT EXISTS accounts(account_id TEXT, secret TEXT)''')
+            self.db.execute('''CREATE TABLE IF NOT EXISTS assets(code TEXT,issuer TEXT,type TEXT)''')
+            self.db.execute('''CREATE TABLE IF NOT EXISTS transactions(transaction_id TEXT, from_account TEXT, to_account TEXT, amount TEXT, type TEXT)''')
+            self.db.execute('''CREATE TABLE IF NOT EXISTS settings(setting TEXT, value TEXT)''')
+            self.db.execute('''CREATE TABLE IF NOT EXISTS candles(symbol TEXT,timestamp TEXT,open TEXT,high TEXT,low TEXT,close TEXT,base_volume TEXT,counter_volume TEXT , 'trade_count' TEXT, 'avg' TEXT)''')
+            self.db.commit()
+        except Exception as e:
+            self.logger.error(e)
+        self.logger.info('Database not initialized')
         
         self.db= sqlite3.connect(self.name + '.sql')
-
-        self.db.execute('''CREATE TABLE IF NOT EXISTS order_tickets(order_id TEXT, symbol TEXT,price TEXT, quantity TEXT,create_time TEXT, type TEXT)''')
-        self.db.execute('''CREATE TABLE IF NOT EXISTS assets(code TEXT,issuer TEXT,type TEXT)''')
-        self.db.execute('''CREATE TABLE IF NOT EXISTS transactions(transaction_id TEXT, from_account TEXT, to_account TEXT, amount TEXT, type TEXT)''')
-        self.db.execute('''CREATE TABLE IF NOT EXISTS settings(setting TEXT, value TEXT)''')
-        #Saving the account id and secret in the database
+    
+         #Saving the account id and secret in the database
         self.db.execute("INSERT INTO settings(setting, value) VALUES ('account_id', '{}')".format(self.account_id))
-        self.db.execute("INSERT INTO settings(setting, value) VALUES ('account_secret',' {}')".format(self.secret_key))
-        
+        self.db.execute("INSERT INTO settings(setting, value) VALUES ('account_secret',' {}')".format(self.secret_key))      
         self.db.commit()
-      
-        # self.db.execute('''CREATE TABLE IF NOT EXISTS candles(symbol TEXT,timestamp TEXT,open TEXT,high TEXT,low TEXT,close TEXT,base_volume TEXT,counter_volume TEXT )''')
 
+        self.current_time = int(time.time())
+        self.valid_duration =  60*60*24*365*1000 # 3 years
+        self.min_time = 1631277600# Current time in Unix format
+        self.max_time = self.current_time + self.valid_duration # Current time in Unix format
+        self.timeframe_list=['1m','5m','15m','30m','1h','2h','4h','6h','8h','12h','1d','3d',' 1w','1M']
+        #Converting the timeframe to milliseconds
+        self.timeframe_selected = '1m'
+        self.timeframe = int( self.timeframe_list.index(self.timeframe_selected) * 60000)
+        print('timeframe ',self.timeframe)
+        self.resolution = 60000 # 1 minute resolution or timeframe in milliseconds
+        self.start_time = 0# Initial time in Unix format
+        self.end_time = self.current_time + self.timeframe # Current time in Unix
+
+        self.offset = 0 # Used to keep track of the offset of the timeframe in milliseconds
         self.logger.info('Database initialized')
         self.controller=controller # Used to communicate with the  tkinter GUI
-          
-        self.server_msg ={'status': 'OFFLINE', 'type': 'INFO', 'timestamp': None,'message': None,'sequence': None, 'balance': None, 'fibo': None }
+        self.server_msg ={ 'session:':datetime.datetime.now(), 'status': 'OFFLINE', 'type': 'INFO','message': None,'sequence': None, 'balance': None, 'fibo': None }
                        
-        self.learn=Learning(controller)
+    # Used to learn the model
        
         self.stellar_horizon_url = "https://horizon.stellar.org" # Horizon server url
      
-        self.stellar_network=stellar_sdk.Network.PUBLIC_NETWORK_PASSPHRASE
+        self.stellar_network=stellar_sdk.Network.PUBLIC_NETWORK_PASSPHRASE# Stellar network to connect to 
         
         self.server = stellar_sdk.Server(horizon_url=self.stellar_horizon_url) # Initialize the server
         
         self.keypair = stellar_sdk.Keypair.from_secret(secret=self.secret_key) # Initialize the keypair
-       
+
         # Get User account
         self.account=  self.server.load_account(account_id= self.account_id)
         if self.account :
             self.connected = True
             self.logger.info('CONNECTED TO STELLAR ACCOUNT')
             self.server_msg['status'] = 'CONNECTED TO STELLAR NETWORK'
-        self.create_account_image= cv2.imread('create_account.png')
+        self.create_account_image= cv2.imread('stellar_account.png')
         # Create an order builder object
         self.order_tickets = pd.DataFrame(columns=['order_id', 'symbol','price', 'quantity','create_time', 'type'])
         
@@ -82,25 +107,19 @@ class TradingBot:
         self.base_asset_code= stellar_sdk.Asset.native().code
         self.base_asset_issuer = stellar_sdk.Asset.native().issuer
 
+      
         self.counter_asset_code='USDC'
         self.counter_asset_issuer ="GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
-
-
+        self.base_asset= stellar_sdk.Asset.native()
+        self.counter_asset= stellar_sdk.Asset(self.counter_asset_code,self.counter_asset_issuer)
+        
         self.symbol = self.counter_asset_code+'/'+self.base_asset_code 
        
         print(self.account, self.account_id)
         self.server_data=self.server.data(account_id= self.account_id,data_name= 'balances')
         print(self.server_data)
-        self.server_msg['data'] =  self.server_data
-
-   
+        self.server_msg['data'] =  self.server_data 
         self.asset_list=self.get_asset_list()
-            
-        current_time = int(time.time())  # Current time in Unix format
-        valid_duration = 3600  # Valid for 1 hour (adjust as needed)
-        self.min_time = 1631277600# Current time in Unix format
-        self.max_time = current_time + valid_duration
-
           # Create a transaction builder object
         self.transaction = stellar_sdk.transaction_builder.TransactionBuilder(v1=True,                                           
                  source_account=self.account,
@@ -119,11 +138,7 @@ class TradingBot:
             self.server_msg['status'] = 'OFFLINE'
             self.server_msg['message'] = 'NO INTERNET CONNECTION!\nPlease check your internet connection'
             return None
-           
-        
-     
-        
-        self.logger.info('Bot stopped  ')
+
         self.server_msg['status'] = 'CONNECTED TO STELLAR NETWORK'
 
         if self.thread.is_alive():
@@ -155,7 +170,7 @@ class TradingBot:
 
         print(self.order_book_df)
 
-           
+                                 
                         
       
     
@@ -206,29 +221,30 @@ class TradingBot:
             
                 return False
             finally:
-                time.sleep(5)
+                time.sleep(0.5)
 
 
 
     def run(self):
           #client = bigquery.Client(project='tradeadviser',credentials=)
-         self.learn.symbol= self.symbol
-         self.learn.price= 100
+    
          balances = self.account_info['_links']
          df2=pd.DataFrame(balances,columns=['balance','limit','buying_liabilities','selling_liabilities','last_modified_ledger','is_authorized','is_authorized','is_authorized_to_maintain_liabilities','asset_type','asset_code','asset_issuer'])
          df2.to_csv('balances.csv',index=False)
-         
-         while True:
-            
-             self.server_msg['status'] = 'Loading...'
+        
+         while True:         
+             self.server_msg['status'] = 'LIVE TRADING'
+          
             # self.send_money()
+             self.get_stellar_candles()
+             
 
              fee_statistic =self.server.fee_stats().limit(100).order(desc=True).call().popitem()[-1]
              self.fee_statistics_df=pd.DataFrame(fee_statistic,columns=['fee_asset','fee_asset_issuer','fee_amount','fee_asset_type'])
              self.fee_statistics_df.to_csv('ledger_fee_statistics.csv',index=True)
              stellar_offers_json = self.fetch_stellar_offers()
              stellar_offers_df = self.convert_to_dataframe(stellar_offers_json)
-             print(stellar_offers_df.head(), stellar_offers_df.tail())
+         
              ledger_offers = stellar_offers_df
              self.ledger_offers_df=pd.DataFrame(ledger_offers)
              self.ledger_offers_df.to_csv('ledger_offers.csv',index=True)
@@ -245,7 +261,7 @@ class TradingBot:
           
              self.claimable=self.server.claimable_balances().limit(100).order(desc=True).call().popitem()[-1]['records']
              self.claimable_df=pd.DataFrame(self.claimable)
-             print('claimable :'+str(self.claimable_df.tail()))
+           
              self.claimable_df.to_csv('ledger_claimable.csv',index=True)
 
 
@@ -275,25 +291,15 @@ class TradingBot:
              self.asset_list =self.get_asset_list()
             
       
-
-            
-             
-            
-             # Create a DataFrame and fill it with the data from the server
-           
-             
-             self.get_stellar_candles(self.base_asset_code, self.base_asset_issuer, 
-                                                self.counter_asset_code, self.counter_asset_issuer
-                                                )
+        
             # Generate trades signal
-             signal=self.learn.get_signal(symbol= self.symbol)
-             self.logger.info( 'signal :'+ str(signal))
+             signal=self.get_signal(symbol= self.symbol)
+        
              self.server_msg['message'] = 'symbol :'+ self.symbol +'  signal :'+ str(signal)
-      
 
              # Define the order details
              sell_amount = "56.0"  # Amount of selling asset
-             sell_price =  "7.2" # Price in terms of selling asset\stellar_sdk.price.Price, str, decimal.Decimal
+             sell_price =  "7.3" # Price in terms of selling asset\stellar_sdk.price.Price, str, decimal.Decimal
 
             #Create the sell operation
              self.selling_operation = stellar_sdk.manage_sell_offer.ManageSellOffer(selling=stellar_sdk.Asset.native(), buying=stellar_sdk.Asset(code="USDC",issuer=self.counter_asset_issuer),amount=sell_amount, price=sell_price,offer_id=random.randint(1, 100000000))
@@ -331,13 +337,13 @@ class TradingBot:
             #              print("Buy order failed. Error:", response["result_xdr"].__str__())
             #              self.server_msg['message'] ='Buy order failed. Error:'+ response["result_xdr"].__str__()
 
-                elif signal =='sell' or signal == 2:
+                elif signal =='sell' or signal == -1:
               # Build selling the transaction
                    transaction = stellar_sdk.transaction_builder.TransactionBuilder(v1=True,
                       source_account=self.account, network_passphrase=self.stellar_network,
                     base_fee=100).append_operation(self.selling_operation).add_time_bounds(min_time=self.min_time, max_time=self.max_time).build()
                    transaction.sign(signer=self.secret_key)
-            #        response = self.server.submit_transaction(transaction)
+            #      response = self.server.submit_transaction(transaction)
               
 
             #   #Check the transaction result
@@ -351,7 +357,9 @@ class TradingBot:
              except Exception as e:
               self.server_msg['message'] = 'Transaction:'+str(e)
 
-             time.sleep(5)
+             self.logger.info(self.server_msg['message'])
+
+             time.sleep(1)
 
     def stop(self):
         self.running = False
@@ -402,14 +410,11 @@ class TradingBot:
 
         self.balance = balance
     
-      
-
     # Function to fetch asset information
-    def get_assets(self, asset_code=None, asset_issuer=None, cursor=None, limit=None, order=None):
+    def get_assets(self, asset_code=None, asset_issuer=None, limit=None, order=None):
         params = {
             "asset_code": asset_code,
             "asset_issuer": asset_issuer,
-            "cursor": cursor,
             "limit": limit,
             "order": order}
         endpoint = f"{self.stellar_horizon_url}/assets"
@@ -421,19 +426,19 @@ class TradingBot:
         return None
     # Function to fetch trade aggregations
     def get_trade_aggregations(self,
-                               base_asset_code=stellar_sdk.Asset.native().code,
-                               base_asset_issuer=stellar_sdk.Asset.native().issuer,
+                               base=stellar_sdk.Asset.native(),
+                               
                               
-                               counter_asset_code='BTCLN',
-                               counter_asset_issuer=None ):
+                               counter=None
+                                ):
         
         # Create a timer to check the trade aggregations
         trade_aggregations =self.server.trade_aggregations(           
-            base= stellar_sdk.Asset(code=base_asset_code, issuer=base_asset_issuer),
-            counter= stellar_sdk.Asset(code=counter_asset_code, issuer=counter_asset_issuer),
+            base= stellar_sdk.Asset(code=base.code, issuer=base.issuer),
+            counter= stellar_sdk.Asset(code=counter.code, issuer=counter.issuer),
 
-           offset= 0,
-           resolution= 60000 # Critical period in milliseconds (60 seconds) do not remove any data
+           offset= self.offset,# 
+           resolution= self.resolution # Critical period in milliseconds (60 seconds) do not remove any data
 
         ).limit(100).call().popitem()[-1]['records']
     
@@ -442,7 +447,7 @@ class TradingBot:
     def start(self):
 
         # Initialize the thread timer
-        self.thread_timer = threading.Timer(50000, self.get_stellar_candles, args=( ))
+        self.thread_timer = threading.Timer(5000, self.get_stellar_candles, args=())
         self.thread_timer.daemon = True
         self.thread_timer.start()
         self.logger.info('Bot started  ')
@@ -519,13 +524,14 @@ class TradingBot:
              tkinter.Message(master=self.controller, text=self.server_msg['message'], width = 50)
 
 
-    def get_stellar_candles(self,base_asset_code, base_asset_issuer, 
-                            counter_asset_code, counter_asset_issuer):
+    def get_stellar_candles(self):
     # Get trade aggregations (candles)
-     self.trade_aggregations = self.get_trade_aggregations(base_asset_code=base_asset_code,
-                                                            base_asset_issuer=base_asset_issuer, 
-                                                           counter_asset_code=counter_asset_code, 
-                                                           counter_asset_issuer=counter_asset_issuer)
+     self.trade_aggregations =      self.get_trade_aggregations(base= self.base_asset,counter= self.counter_asset) 
+     if len(self.trade_aggregations) > 0:
+      self.start_time =time.time()
+         
+
+     print('trade_aggregations',str(self.trade_aggregations))
 
      # Creating a DataFrame
      candles = pd.DataFrame( self.trade_aggregations , columns=['symbol','timestamp', 'open', 'high', 'low', 'close'
@@ -533,6 +539,10 @@ class TradingBot:
                                                                
   
                                                                 ])
+     
+     candles['timestamp'] = pd.to_datetime(candles['timestamp'], unit='ms')
+     con = sqlite3.connect(self.name + '.sql')
+     candles.to_sql('candles', con, if_exists='append', index=False, index_label='timestamp')
      
      candles['symbol'] = self.symbol
 
@@ -629,9 +639,156 @@ class TradingBot:
         return df
      else:
         return None
+    def get_signal(self, symbol: str): 
+ 
+        db = sqlite3.connect(self.name + '.sql')
+        #Making sure that the symbol is in the list
+        data =pd.read_sql_query(f"SELECT * FROM candles WHERE symbol = '{symbol}'", con=db, index_col='timestamp', parse_dates=True)
+        print('data ',data)
+       
+        if data is None:
+            print(f'No data found for {symbol}')
+            return 0
+        while data.shape[0] < 100:
+            print(f'No data found for {symbol}')
+            return 0
+
+        
+     
+        high = data['high'].astype(float)
+        low = data['low'].astype(float)
+        open = data['open'].astype(float)
+        close =data['close'].astype(float)
+        volume = data['base_volume'].astype(float)
+        volume2 = data['counter_volume'].astype(float)
+        volume3 = data['avg'].astype(float)
+       
+        price =high - (0.236 * (high - low))
+        fib_levels = {
+            0.236: high - (0.236 * (high - low)),
+            0.382: high - (0.382 * (high - low)),
+            0.500: high - (0.500 * (high - low)),
+            0.618: high - (0.618 * (high - low)),
+            0.786: high - (0.786 * (high - low)),
+            1.000: high - (1.000 * (high - low)),
+            1.214: high - (1.214 * (high - low)),
+            1.445: high - (1.445 * (high - low)),
+            1.700: high - (1.700 * (high - low))
+        }
+
+        if len(fib_levels) <0 or len(price) < 100:
+            print(f'No Fibonacci levels found for {symbol}')
+            self.server_msg['message'] = f'No Fibonacci levels found for {symbol}'
+            return 0
+        # for level, fibo_price in fib_levels.items():
+        #  if price is not None:
+        #     if (price.iloc[-1:] - fibo_price / price.iloc[-1:]) < 0.01:  # You can adjust the threshold as needed
+        #      signal = 1  # Buy signal
+        #     elif (price.iloc[-1:] - fibo_price) / price.iloc[-1: ] > 0.01:  # You can adjust the threshold as needed
+        #      signal = -1 # Sell signal
+        #     print(f'Fibonacci Level: {level}')
+        #     print(f'Price: {price}')
+        #     self.server_msg['message'] = f'Fibonacci Level: {level}, Price: {price}, Signal: {signal}'
+
+        
+        self.fib_levels = fib_levels
+        new_data=pd.DataFrame( columns=['SMA50', 'SMA200', 'RSI', 'Signal'])
+        # Feature Engineering
+        new_data['SMA50'] = SMAIndicator( close=close, window=50, fillna=False).sma_indicator()
+        
+        new_data['SMA200'] = SMAIndicator(close, window=200).sma_indicator()
+                                               
+        new_data['RSI'] = RSIIndicator(close,  window=14).rsi()
+        
+        print(new_data.head())
+        print(new_data.tail())
+        print(new_data.shape)
+        print(new_data.dtypes)
+        # Labeling
+        new_data['Signal'] = np.where(new_data['SMA50'] > new_data['SMA200'], 1, 0)
+        new_data.dropna(inplace=True)
+
+        # Features and Target
+        features = ['SMA50', 'SMA200', 'RSI']
+        print(new_data.head())
+        print(new_data.tail())
+
+        X = new_data[features]
+        y = new_data['Signal']
+        print(X.head())
+        print(X.tail())
+        print(y.head())
+        print(y.tail())
+        if X.empty or X.shape[0] < 100:
+            print(f' No data found for {symbol}')
+            return 0
+
+        # Split the data
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, train_size=0.8,
+                                                            stratify=y)
+        model = RandomForestClassifier(n_estimators=100, random_state=42)
+    
+  
+        # Model Training
+        model.fit(X_train, y_train) 
+       
+        print(model.predict(X_test))
+
+ 
+        # Assuming fibo_signal is initially 0 (no signal)
+        signal = []
+
+        # Check if the close price is near any Fibonacci level
+
+     
+
+        # Model Prediction
+        y_pred = model.predict(X_test)
+
+        # Model Evaluation
+        accuracy = accuracy_score(y_test, y_pred)
+        print(f'Model Accuracy: {accuracy}')
+
+        new_data.dropna(inplace=True)
+
+        new_features = new_data[features]
+        new_data['Predicted_Signal'] = model.predict(new_features)
+        new_data.dropna(inplace=True)
+
+        # Apply Fibonacci signals to the new data
+        #new_data['Fibo_Signal'] = signal
+
+        score = accuracy_score(new_data['Signal'], new_data['Predicted_Signal'])
+       # fibo_score = accuracy_score(new_data['Signal'], new_data['Fibo_Signal'])
+        print(f'Model Accuracy: {score}')
+       # print(f'Fibo Signal Accuracy: {fibo_score}')
+
+  
+        signal = new_data['Predicted_Signal'].values[-1:]
+       # fibo_signal = new_data['Fibo_Signal'].values[-1:]
+
+        # Adjust conditions based on your strategy
+        if signal == 1 and accuracy > 95:
+            print(f'Signal Buy: {signal}')
+            return 1
+        elif signal == 0 and accuracy > 95:
+            print(f'Signal Sell: {signal}')
+            return -1
+        # elif fibo_signal == 1:
+        #     print(f'Fibo Signal Buy: {fibo_signal}')
+        #     return 1
+        # elif fibo_signal == -1:
+        #     print(f'Fibo Signal Sell: {fibo_signal}')
+            return -1
+
+        return 0
 
 
 
 
 
 
+
+
+
+   

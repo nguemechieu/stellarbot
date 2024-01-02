@@ -1,29 +1,13 @@
 import os
-import smtplib
 import tkinter
 from datetime import datetime
-from email.mime.text import MIMEText
-from tkinter import StringVar, BOTTOM
+from tkinter import StringVar
 from Login import Login
 from createAccount import CreateAccount
 from home import Home
 from tradingbot import TradingBot
 import platform
 import subprocess
-
-
-def send_email(subject: str = "", body: str = "", sender: str = "",
-               recipients=None, password: str = ""):
-    if recipients is None:
-        recipients = ["r@gmail.com", "recipient2@gmail.com"]
-    msg = MIMEText(body)
-    msg['Subject'] = subject
-    msg['From'] = sender
-    msg['To'] = ', '.join(recipients)
-    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
-        smtp_server.login(sender, password)
-        smtp_server.sendmail(sender, recipients, msg.as_string())
-        print("Message sent!")
 
 
 if os.environ.get('DISPLAY','') == '':
@@ -34,20 +18,17 @@ class StellarBot(tkinter.Tk):
 
     def __init__(self):
         tkinter.Tk.__init__(self)
-
-        self.controller = self
-        self.parent = self.master
+        self.controller = self #reference to the controller
+        self.parent = self.master #reference to the parent window
         self.frames = {
 
         }
-        self.controller=self
-
+        self.remember_me= tkinter.IntVar()
         self.account_id=StringVar()
         self.account_id.set("")
         self.account_secret=StringVar()
         self.account_secret.set("")
-        
-    
+        self.time_o =tkinter.StringVar()
         self.config={ 'account_id':'GDIQN3BCIF52R5WDMTPWUSN7IM3ZNQYYRWEWR2I7QX7BQUTKYNU2ISDY',
                                                                                      
                       'account_secret':'SDYAPMSEK2N4LYRFROWHE4SK4LFXF2T2OMCU3BVDAJTEAYKHT4ESKOJ6'}
@@ -56,38 +37,27 @@ class StellarBot(tkinter.Tk):
         self.account_id.set(self.config['account_id'])
         self.account_secret.set(self.config['account_secret'])
       
-        
+        # Initialize the TradingBot class
         self.bot = TradingBot(account_id=self.controller.account_id.get(),  account_secret=  self.controller.account_secret.get())
-
         self.pages = {}
-  
-    
         self.iconbitmap("./src/images/stellarbot.ico")
-
-
-        self.frames =(Login, Home, CreateAccount)
-       
-      
-       
-        
+        self.frames =(Login, Home, CreateAccount) 
         self.show_pages("Login")
         self.mainloop()
      
 
     def show_pages(self, param):
-        self.title("StellarBot    | AI POWERED STELLAR LUMEN NETWORK TRADER |-->    " + str(datetime.now()))
+        self.title(  self.time_o)
         self.geometry("1530x800")
         self.resizable(width=True, height=True)
         self.delete_frame()
 
         if param in ['Login', 'CreateAccount','Home']:
              frames = [ Login, Home, CreateAccount]
-
         for frame in frames:
                 if param == frame.__name__:
                     frame = frame(self, self.controller)
-
-                    
+                    self.title(  self.time_o.get() + " | " + param)
                     frame.tkraise()
 
     def delete_frame(self):
@@ -95,19 +65,15 @@ class StellarBot(tkinter.Tk):
             _frame.destroy()
 
 
-    def show_error(self, param):
-        if param is not None:
-            self.Messagebox = tkinter.Message(self.master, text=param, width=300)
-            print(param)
-            self.Messagebox.pack(side=BOTTOM)
-            self.Messagebox.after(3000, self.Messagebox.destroy)
 
-
-    def exit(self):
+    def exit(self): # This function is called when the exit button is pressed. It
         os._exit(1)
 
-    def updateMe(self):
+    def updateMe(self): # This function is called every 1000 milliseconds. It updates the screen.
         self.update()
+       
+        self.time_o.set(datetime.now().strftime("%H:%M:%S %d/%m/%Y") +" |  WELCOME TO STELLARBOT")
+        
         self.after(1000, self.updateMe)
 
 
@@ -117,38 +83,34 @@ class StellarBot(tkinter.Tk):
 
 
 def check_os():
-    system = platform.system()
+    system = platform.system() # Get the operating system name
     
     if system == "Windows":
         return "Windows"
-    elif system == "Linux":
+    if system == "Linux":
         return "Linux"
-    elif system == "Darwin":
+    if system == "Darwin":
         return "macOS"
-    else:
-        return "Unknown"
+    
+    return "Unknown"
 
 if __name__ == "__main__":
-     
-    if check_os !="Windows":
-    # Start Xvfb to create a virtual display (change the display number if needed)
+    if check_os  !="Windows":
+    # Start Xvfb to create a virtual display (change the display number if needed) and then run
      display_number = 99
      xvfb_command = f"Xvfb :{display_number} -screen 0 1280x1024x24 &"
      subprocess.Popen(xvfb_command, shell=True)
 
-# Set the DISPLAY environment variable to point to the virtual display
+# Set the DISPLAY environment variable to point to the virtual display number you just created.
      os.environ["DISPLAY"] = f":{display_number}"
   
-    
-
     else:
-     os.environ["DISPLAY"] = ":0"
+     os.environ["DISPLAY"] = ":0"# Set the DISPLAY environment variable to point to the virtual display number you just created.
     print(os.environ["DISPLAY"])
-# Remember to clean up the Xvfb process when done
+    #  Clean up the Xvfb process when done
     subprocess.Popen(f"kill -9 $(pgrep Xvfb)", shell=True)
 
     print('StellarBot is running on ', check_os())
-    StellarBot()
-
+    StellarBot() # Run the StellarBot class
 else:
     os._exit(1)

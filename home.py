@@ -2,13 +2,10 @@
 from tkinter import  ttk
 import tkinter
 import pandas as pd
-import os
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
-
-
 class Home(tkinter.Frame):
+    '''This class is the main frame of the application. It contains the tabs and the widgets.'''
     def __init__(self, parent, controller):
         tkinter. Frame.__init__(self, parent)
         self.controller = controller
@@ -31,7 +28,6 @@ class Home(tkinter.Frame):
 
         self.transactions_list = tkinter.Listbox(self.transactions_tab, selectmode=tkinter.SINGLE, height=20, width=600)
         self.transactions_list.place(x=0, y=20, width=600, height=400)
-        self.transactions_list.config(yscrollcommand=self.transactions_list.yview)
         
         read_transactions = pd.read_csv('ledger_transactions.csv')
 
@@ -42,15 +38,12 @@ class Home(tkinter.Frame):
         self.offers_list.insert(tkinter.END, str(offers.__str__())  + '\n')
               
         self.transactions_list.insert(tkinter.END, str(read_transactions.__str__()+'\n'))
-     
-        self.offers_list.config(yscrollcommand=self.offers_list.yview)
-
-       
+  
         self.send_money_tab = tkinter.Frame(self.tab, relief='groove', borderwidth=1,background='gray')
         self.send_money_tab.grid(row=2, column=0, sticky='nsew')
 
         self.send_money_label = tkinter.Label(self.send_money_tab, text='Send Money', relief='groove', borderwidth=1)
-        self.send_money_label.grid(row=1, column=0, sticky='nsew')
+        self.send_money_label.place(x= 400, y=500, height=40)
 
         self.receive_money_tab = tkinter.Frame(self.tab, relief='groove', borderwidth=1,background='gray')
         self.receive_money_tab.grid(row=2, column=0, sticky='nsew')
@@ -109,10 +102,9 @@ class Home(tkinter.Frame):
         self.toggled_button1.place(x=400, y=410)                                                                                                                       
         self.toggled_button = tkinter.Button(self.trade_tab,bg='red',fg='white',text='STOP',width=20, command=lambda:self.stop_bot())
         self.toggled_button.place(x=600, y=410)
-
-        self.trade_tree =  ttk.Treeview(self.trade_tab, selectmode='extended')
-        self.trade_tree.place(x=0, y=500, width=1400)
-        self.trade_tree['columns'] = ('symbol','timestamp','open', 'high', 'low', 'close', 'base_volume', 'counter_volume', 'trade_count')
+        self.trade_tree =  ttk.Treeview(self.trade_tab, selectmode='browse',height=500)
+        self.trade_tree.place(x=10, y=500)
+        self.trade_tree['columns'] = ('timestamp','symbol','open', 'high', 'low', 'close', 'base_volume', 'counter_volume', 'avg','trade_count')
         self.trade_tree['show'] = 'headings'
         self.trade_tree.heading('timestamp', text='timestamp')
         self.trade_tree.heading('symbol', text='symbol')
@@ -122,18 +114,21 @@ class Home(tkinter.Frame):
         self.trade_tree.heading('close', text='close')
         self.trade_tree.heading('base_volume', text='base_volume')
         self.trade_tree.heading('counter_volume', text='counter_volume')
+        self.trade_tree.heading('avg', text='avg')
         self.trade_tree.heading('trade_count', text='trade_count')
-       
+    
+
+  
+      
 
         
         self.order_book_canvas = tkinter.Canvas( self.order_book_tab,relief='groove',background='black', borderwidth=1)
         self.order_book_canvas.place(x=10, y=100, width=1300, height=660)
-
         self.order_book_tree =  ttk.Treeview(self.order_book_tab, selectmode='browse')
         self.order_book_tree.place(x=0, y=30, width=300, height=760)
         self.order_book_tree['columns'] = ('price', 'quantity')
         self.order_book_tree['show'] = 'headings'
-        self.order_book_tree.heading('price', text='price')
+        self.order_book_tree.heading('price', text='price', anchor='center')
         self.order_book_tree.heading('quantity', text='quantity')
         order_book = pd.read_csv('order_book.csv')
         for index, row in order_book.iterrows():
@@ -180,8 +175,6 @@ class Home(tkinter.Frame):
         fig.tight_layout()
         fig.subplots_adjust(top=0.95)
 
-        fig.canvas.mpl_connect('scroll_event', self.on_scroll)
-       
         plt.xticks(rotation=45)
 
 
@@ -230,13 +223,16 @@ class Home(tkinter.Frame):
         self.tab.add(self.settings_tab, text='Settings')
         self.tab.add(self.licence_tab, text='Licence')
         self.tab.add(self.about_tab, text='About')
-        #self.trade_tree.bind('<<TreeviewSelect>>', self.on_treeview)]
+        self.trade_tree.bind('<<TreeviewSelect>>', self.on_treeview)
         #Update the GUI
         self.updateMe()
-    
-    def on_scroll(self, event)->None:
-        self.trade_canvas.xview_scroll(int(event.x), 'units')
-        self.chart_canvas.xview_scroll(int(event.x), 'units')
+    def on_treeview(self, event)->None:
+        
+        self.trade_tree.selection_set(self.trade_tree.get_children()[0])
+        self.trade_tree.focus(self.trade_tree.get_children()[0])
+        self.trade_tree.see(self.trade_tree.get_children()[0])
+   
+        
     def stop_bot(self)->None:
 
         self.controller.bot.stop()
@@ -251,13 +247,16 @@ class Home(tkinter.Frame):
     
     
     def updateMe(self)->None:
-        self.candles = pd.read_csv('candles.csv')#read_sql('SELECT * FROM candles', con=self.controller.bot.db, index_col='timestamp')
-        if self.candles['symbol'] is not None:
-           self.trade_tree.insert('', 'end', text='timestamp', values=( self.candles['timestamp'].sort_index( ascending=False)))
+        self.candles = pd.read_csv('candles.csv')
         trades =pd.read_csv('ledger_trades.csv')
-        self.history_canvas.create_text(400, 200, text=str(trades.__str__()), font= ('Arial',14),fill='white' )
+        self.history_canvas.create_text(400, 200, text=[f+'\n' for f in trades].__str__(), font= ('Arial',14),fill='white' )
         self.trade_tree.delete(*self.trade_tree.get_children()) 
-        self.trade_tree.insert('', 'end', text='timestamp', values=(self.candles['timestamp'].sort_index( ascending=False)))
+      
+      
+        v=self.candles.sort_values(by='timestamp',ascending=False)
+        if len(v)>0:
+         self.trade_tree.insert('', 'end', text='timestamp', values=([0],v['symbol'],v['open'],v['close'],v['high'],v['low'],v['base_volume'],v['counter_volume'],v['avg'], v['trade_count']),tag='trade')
+        self.trade_canvas.delete('all')    
         self.trade_canvas.create_text(150, 10, text= 'Status:', font= ('Arial',14), fill='lightgreen')
         self.trade_canvas.create_text(400, 10, text= self.controller.bot.server_msg['status'], font= ('Arial',14), fill='lightgreen')
         self.trade_canvas.create_text(150, 60, text= 'Type:', font= ('Arial',14), fill='red')
@@ -265,6 +264,8 @@ class Home(tkinter.Frame):
         self.trade_canvas.create_text(150, 90, text= 'Message:', font= ('Arial',14), fill='green')
         self.trade_canvas.create_text(500, 90, text= self.controller.bot.server_msg['message'], font= ('Arial',14), fill='white')
         account =self.account 
+
+        self.account_canvas.delete('all')
         self.account_canvas.create_text(300, 10, text= 'Account ID:', font= ('Arial',14), fill='white')
         self.account_canvas.create_text(500, 10, text= account['account_id'].__str__(), font= ('Arial',14), fill='white')
         self.account_canvas.create_text(300, 30, text= 'Balance:', font= ('Arial',14), fill='white')
