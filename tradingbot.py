@@ -28,6 +28,7 @@ class TradingBot:
         self.running = False
         self.secret_key=account_secret
         self.account_id = account_id
+        self.thread = threading.Thread(target=self.run, args=())
         
         self.db= sqlite3.connect(self.name + '.sql')
 
@@ -62,19 +63,13 @@ class TradingBot:
         self.account=  self.server.load_account(account_id= self.account_id)
         if self.account :
             self.connected = True
-            self.logger.info('Connected to Stellar network')
+            self.logger.info('CONNECTED TO STELLAR ACCOUNT')
             self.server_msg['status'] = 'CONNECTED TO STELLAR NETWORK'
-        
-        # Initialize the run thread
-        self.thread = threading.Thread( target=self.run, args=( ))
-        # Initialize the thread timer
-        self.thread_timer = threading.Timer(50000, self.get_stellar_candles, args=( ))
-    
         self.create_account_image= cv2.imread('create_account.png')
         # Create an order builder object
         self.order_tickets = pd.DataFrame(columns=['order_id', 'symbol','price', 'quantity','create_time', 'type'])
         
-        self.server_status = threading.Event()
+      
         self.asset_issuers_list = [] # Used to keep track of the asset issuers
 
         self.assets_list ={'asset_code':'','asset_issuer':'','asset_type':''} # Used to keep track of the asset list
@@ -121,13 +116,11 @@ class TradingBot:
         self.connection = self.check_connection()
         if not self.connection:
             self.logger.info('NO INTERNET CONNECTION!\nPlease check your internet connection')
-           
             self.server_msg['status'] = 'OFFLINE'
+            self.server_msg['message'] = 'NO INTERNET CONNECTION!\nPlease check your internet connection'
             return None
-        self.thread.daemon = True
-        self.thread.start()
-        self.thread_timer.daemon = True
-        self.thread_timer.start()
+           
+        
      
         
         self.logger.info('Bot stopped  ')
@@ -141,8 +134,6 @@ class TradingBot:
 
            
 
-        self.account_df = pd.DataFrame(columns=['Account ID', 'Sequence', 'Home Domain', 'Balance', 'Limit', 'Asset Type', 'Asset Code', 'Asset Issuer'])
-        self.account_df.to_csv('account_info.csv', index=False)
 
         # Get current order book data
         self.order_book = self.server.orderbook(
@@ -212,8 +203,10 @@ class TradingBot:
                 print("Connection not established",response.status_code)
                 self.logger.info('No internet connection')
                 self.server_msg['message'] = 'No internet connection '+ str(e)
-                time.sleep(5)
+            
                 return False
+            finally:
+                time.sleep(5)
 
 
 
@@ -448,20 +441,15 @@ class TradingBot:
     
     def start(self):
 
-        if not self.thread.is_alive():
-         self.thread.daemon = True # Daemonize the thread
-      
+        # Initialize the thread timer
+        self.thread_timer = threading.Timer(50000, self.get_stellar_candles, args=( ))
+        self.thread_timer.daemon = True
+        self.thread_timer.start()
         self.logger.info('Bot started  ')
         self.server_msg['message'] = 'Bot started @'+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.thread.start()
         
 
-        
-
-
-        
-        
-        
 
     def login(self, user_id:str='', secret_key:str=''):
 
