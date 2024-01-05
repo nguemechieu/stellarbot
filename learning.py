@@ -8,7 +8,8 @@ from ta.momentum import RSIIndicator
 import numpy as np
 import pickle
 import os
-import time
+
+import datetime
 
 
 
@@ -38,7 +39,7 @@ class Learning:
 
         data['timestamp'] = pd.to_datetime(data['timestamp'], unit= 'ms')
         #Filtering the data by timestamp
-        data = data[data['timestamp'] > '2021-01-01' and data['timestamp'] <= time.today()]
+        data = data[data['timestamp'] > '2021-01-01' and data['timestamp'] <= datetime.datetime.today()]
         data = data[data['timestamp'] <= '2021-01-02']
         data = data.reset_index(drop=True)
         

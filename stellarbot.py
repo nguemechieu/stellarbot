@@ -29,9 +29,9 @@ class StellarBot(tkinter.Tk):
         self.account_secret=StringVar()
         self.account_secret.set("")
         self.time_o =tkinter.StringVar()
-        self.config={ 'account_id':'GDIQN3BCIF52R5WDMTPWUSN7IM3ZNQYYRWEWR2I7QX7BQUTKYNU2ISDY',
+        self.config={ 'account_id':'GC5HLWK3OPPOFXZB674ERHOW76CFXBLBJ3DQ4RSRYUS4YVKB7SQME456',
                                                                                      
-                      'account_secret':'SDYAPMSEK2N4LYRFROWHE4SK4LFXF2T2OMCU3BVDAJTEAYKHT4ESKOJ6'}
+                      'account_secret':'SBXATKQLVCHN4V5FKP5LSHG222ZV7ZRO47X4FBQUPWQ2AJ6EIMWKV2AN'}#'SDYAPMSEK2N4LYRFROWHE4SK4LFXF2T2OMCU3BVDAJTEAYKHT4ESKOJ6'}
         
 
         self.account_id.set(self.config['account_id'])
@@ -103,7 +103,6 @@ if __name__ == "__main__":
 
 # Set the DISPLAY environment variable to point to the virtual display number you just created.
      os.environ["DISPLAY"] = f":{display_number}"
-  
     else:
      os.environ["DISPLAY"] = ":0"# Set the DISPLAY environment variable to point to the virtual display number you just created.
     print(os.environ["DISPLAY"])
