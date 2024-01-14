@@ -5,7 +5,7 @@ from tkinter import StringVar
 from Login import Login
 from createAccount import CreateAccount
 from home import Home
-from tradingbot import TradingBot
+from tradingbot import StellarClient
 import platform
 import subprocess
 
@@ -34,11 +34,11 @@ class StellarBot(tkinter.Tk):
                       'account_secret':'SBXATKQLVCHN4V5FKP5LSHG222ZV7ZRO47X4FBQUPWQ2AJ6EIMWKV2AN'}#'SDYAPMSEK2N4LYRFROWHE4SK4LFXF2T2OMCU3BVDAJTEAYKHT4ESKOJ6'}
         
 
-        self.account_id.set(self.config['account_id'])
-        self.account_secret.set(self.config['account_secret'])
+        self.account_id.set(self.config['account_id'].__str__())
+        self.account_secret.set(self.config['account_secret'].__str__())
       
         # Initialize the TradingBot class
-        self.bot = TradingBot(account_id=self.controller.account_id.get(),  account_secret=  self.controller.account_secret.get())
+        self.bot = StellarClient(account_id=self.account_id.get(), secret_key=  self.account_secret.get())
         self.pages = {}
         self.iconbitmap("./src/images/stellarbot.ico")
         self.frames =(Login, Home, CreateAccount) 
@@ -95,7 +95,7 @@ def check_os():
     return "Unknown"
 
 if __name__ == "__main__":
-    if check_os  !="Windows":
+    if( check_os  !="Windows"):
     # Start Xvfb to create a virtual display (change the display number if needed) and then run
      display_number = 99
      xvfb_command = f"Xvfb :{display_number} -screen 0 1280x1024x24 &"

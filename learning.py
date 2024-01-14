@@ -1,20 +1,18 @@
-import sqlite3
+import os
+import numpy as np
+import pickle
+import datetime
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from ta.trend import SMAIndicator
 from ta.momentum import RSIIndicator
-import numpy as np
-import pickle
-import os
-
-import datetime
 
 
 
 ''' This class is used to train and test a model to predict the price'''
-class Learning:
+class Learning(object):
     def __init__(self,controller):
         self.controller = controller
         self.price = 0
@@ -24,10 +22,9 @@ class Learning:
     def get_signal(self, symbol: str ):
         
         self.symbol = symbol
-        con=sqlite3.connect( 'StellarBot.sql')
+   
         #Making sure that the symbol is in the list
-        data =pd.read_sql(f'SELECT * FROM candles WHERE symbol = "{symbol}"', con=con ,index_col='timestamp', parse_dates=True)
-       
+        data =pd.read_csv('ledger_candles.csv')
        
         if data is None:
             print(f'No data found for {symbol}')
@@ -51,15 +48,15 @@ class Learning:
         data['counter_volume'] = data['counter_volume'].apply(lambda x: float(x))
         data['avg'] = data['avg'].apply(lambda x: float(x))
 
-        new_data = data.copy()
-
+        data.dropna()
+        new_data = pd.DataFrame()
         
-        print(new_data.head())
-        print(new_data.tail())
-        print(new_data.shape)
-        print(new_data.dtypes)
-        high = new_data['high'].max()
-        low = new_data['low'].min()
+        print(data.head())
+        print(data.tail())
+        print(data.shape)
+        print(data.dtypes)
+        high = data['high']
+        low = data['low']
         price = (float(high) + float(low)) / 2
         self.price = price
         print(f'Price: {price}')
@@ -73,21 +70,25 @@ class Learning:
         }
         self.fibonacci = fib_levels.__str__()
 
-        new_data.dropna(inplace=True)
+        new_data.dropna()
 
         new_data['price'] = data['close']
         new_data['price'] = price
         self.price = price
 
+        new_data['close'] = data['close']
+    
+
         # Feature Engineering
         new_data['SMA50'] = SMAIndicator(new_data['close'], window=50).sma_indicator()
+        
         new_data['SMA200'] = SMAIndicator(new_data['close'], window=200).sma_indicator()
         new_data['RSI'] = RSIIndicator(new_data['close']).rsi()
         new_data['RSI'] = new_data['RSI'].apply(lambda x: 1 if x >= 70 else 0)
 
         # Labeling
         new_data['Signal'] = np.where(new_data['SMA50'] > new_data['SMA200'], 1, 0)
-        new_data.dropna(inplace=True)
+        new_data.dropna()
 
         # Features and Target
         features = ['SMA50', 'SMA200', 'RSI']
@@ -100,8 +101,7 @@ class Learning:
         print(X.tail())
         print(y.head())
         print(y.tail())
-        if X.empty:
-            print(f' No data found for {symbol}')
+        if X.shape[0] < 100:
             return 0
 
         # Split the data
@@ -121,8 +121,7 @@ class Learning:
         
 
         model=pickle.load(open('model.pkl', 'rb'))
-        print(model)
-        print(model.predict(X_test))
+   
 
         fib_levels = {
             0.236: high - (0.236 * (high - low)),

@@ -1,10 +1,12 @@
-
+import os
+import datetime 
 from tkinter import  ttk
 import tkinter
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import mplfinance as mpf
+
+
  
 '''   This class is the main frame of the application. It contains the tabs and the widgets.'''
 class Home(tkinter.Frame):
@@ -93,14 +95,16 @@ class Home(tkinter.Frame):
 
         self.account_tab =  tkinter.Frame(self.tab, relief='groove', borderwidth=1,background='gray')
         self.account_tab.place(x=0, y=0)
-        self.account_canvas = tkinter.Canvas(self.account_tab, width=1400, height = 700,background= 'black',border=9)
-        self.account_canvas.place(x=0, y=10)
+      
         self.trade_server_text = tkinter.StringVar()
+
+        self.account=None#pd.read_csv('ledger_account.csv')
      
         self.toggled_button1 = tkinter.Button(self.trade_tab,bg='green',fg='white', text="START",width=20, command=lambda:self.start_bot())
         self.toggled_button1.place(x=400, y=410)                                                                                                                       
         self.toggled_button = tkinter.Button(self.trade_tab,bg='red',fg='white',text='STOP',width=20, command=lambda:self.stop_bot())
         self.toggled_button.place(x=600, y=410)
+
         self.trade_tree =  ttk.Treeview(self.trade_tab, selectmode='browse',height=500)
         self.trade_tree.place(x=10, y=500)
         self.trade_tree['columns'] = ('timestamp','symbol','open', 'high', 'low', 'close', 'base_volume', 'counter_volume', 'avg','trade_count')
@@ -116,10 +120,12 @@ class Home(tkinter.Frame):
         self.trade_tree.heading('avg', text='avg')
         self.trade_tree.heading('trade_count', text='trade_count')
 
-        self.order_book_canvas = tkinter.Canvas( self.order_book_tab,relief='groove',background='black', borderwidth=1)
-        self.order_book_canvas.place(x=10, y=100, width=1300, height=660)
+        self.order_book_canvas = tkinter.Canvas( self.order_book_tab,relief='groove',background='black', borderwidth=1, bd= 3)
+        self.order_book_canvas.place(x=10, y=10, width=800, height=360)
+        
         self.order_book_tree =  ttk.Treeview(self.order_book_tab, selectmode='browse')
-        self.order_book_tree.place(x=0, y=30, width=300, height=760)
+        self.order_book_tree.place(x=10, y=500, width=400, height=260)
+
         self.order_book_tree['columns'] = ('price', 'quantity')
         self.order_book_tree['show'] = 'headings'
         self.order_book_tree.heading('price', text='price', anchor='center')
@@ -128,33 +134,43 @@ class Home(tkinter.Frame):
         for index, row in order_book.iterrows():
             print(index,row)
             self.order_book_tree.insert('', 'end', text=(index,row))
-        self.offers_canvas = tkinter.Canvas( self.history_tab, width=300, height=700,bg='green', relief='groove',background='black', bd= 3)
-        self.offers_canvas.place(x=300, y=30, width=300, height= 700,anchor= 'nw')
-        self.offers_canvas.create_text(300, 40, text=offers.__str__(), font=('Arial',14), anchor= 'nw')
 
-        self.history_canvas = tkinter.Canvas( self.history_tab, width=1300, height=500,bg='green', relief='groove',background='black',bd= 3)
-        self.history_canvas.place(x=10, y=30 ,anchor= 'nw')
+        self.offers_canvas = tkinter.Canvas( self.history_tab, width=600, height=400,bg='green', relief='groove',background='black', bd= 3)
+        self.offers_canvas.place(x=30, y=400,anchor= 'nw')
+
+        self.offers_canvas.create_text(300, 40, text=offers.__str__(), font=('Arial',14), anchor= 'nw')
+        self.account_canvas = tkinter.Canvas(self.account_tab, width=1200, height = 500,background= 'black',border=9)
+        self.account_canvas.place(x=10, y=10)
+
+        self.history_canvas = tkinter.Canvas( self.history_tab, width=500,bg='green', relief='groove',background='black',bd= 3)
+        self.history_canvas.place(x=1000, y=500 ,anchor= 'nw')
         self.history_canvas.create_text(300, 200, text='history', font=('Arial',14), anchor= 'nw')
         
         
-        self.transactions_canvas = tkinter.Canvas( self.transactions_tab, width=1200, height=700,bg='green', relief='groove',background='black',bd= 3)
-        self.transactions_canvas.place(x=0, y=30, width=1500, height= 700,anchor= 'nw')
+        self.transactions_canvas = tkinter.Canvas( self.transactions_tab, width=500,bg='green', relief='groove',background='black',bd= 3)
+        self.transactions_canvas.place(x=10, y=400,anchor= 'nw')
+
+       
         self.transactions=pd.read_csv('ledger_transactions.csv')
+
         self.transactions_canvas.create_text(10, 0, text='Transactions', font=('Arial',14), anchor= 'nw')
         self.transactions_canvas.create_text(300, 200, text=[f+'\n' for f in self.transactions].__str__(), font=('Arial',14), anchor= 'nw')
        # self.account= pd.read_csv('ledger_account.csv')
         # Create a candlestick chart
         fig, ax = plt.subplots(figsize=(10, 6))
-
         plt.xticks(rotation=45)
-       
-        self.trade_canvas = tkinter.Canvas( self.trade_tab, relief='groove',background='black',border=9)
-        self.trade_canvas.place(x=0, y=10, width= 1300, height= 400)
+        self.trade_canvas = tkinter.Canvas( self.trade_tab, relief='groove',background='black',border=3,bd=5)
+        self.trade_canvas.place(x=100, y=10, width=1300, height=400,anchor='nw')
+
+        self.chart_tab = tkinter.Frame(self.tab, relief='groove', borderwidth=1 )
+        self.chart_tab.place(x=0, y=10)
+
+        self.chart_canvas = tkinter.Canvas(self.chart_tab, width=1300,height=400,background= 'black', bd= 3)
+        self.chart_canvas.place(x=10, y=400, anchor='nw')
+
+        
         self.trade_canvas.create_text(10, 310, text='', font=('Arial',14), anchor= 'nw')
-        self.chart_tab = tkinter.Frame(self.tab, relief='groove', borderwidth=1 , background='gray')
-        self.chart_canvas = tkinter.Canvas(self.chart_tab, width=1500, height = 660,background= 'black', bd= 3)
-        self.chart_canvas.place(x=0, y=5)
-        self.trade_canvas.place(x=0, y=10)
+        
         figure_canvas = FigureCanvasTkAgg(fig, master=self.chart_canvas)
         figure_canvas.draw()
         figure_canvas.get_tk_widget().place(x=200, y=60)
@@ -167,22 +183,31 @@ class Home(tkinter.Frame):
         fig.tight_layout()
         fig.subplots_adjust(top=0.95)
 
+
         plt.xticks(rotation=45)
-
-        candle_data = pd.read_csv('candles.csv')
-
-        candle_data['timestamp'] = pd.to_datetime(candle_data['timestamp'])
-        candle_data.set_index('timestamp', inplace=True)
-     
+        self.candle_data0 = pd.DataFrame(columns=['symbol','timestamp', 'open', 'high', 'low', 'close', 'base_volume','counter_volume', 'avg','trade_count'])
+        if not os.path.exists('ledger_candles.csv'):
+         self.candle_data0.to_csv('ledger_candles.csv')
+        self.candle_data = pd.DataFrame(columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+        self.candle_data['open'] = self.candle_data0['open'].values
+        self.candle_data['high'] = self.candle_data0['high'].values
+        self. candle_data['low'] = self.candle_data0['low'].values
+        self.candle_data['close'] = self.candle_data0['close'].values
+        self. candle_data['volume'] = self.candle_data0['base_volume'].values
+        self.candle_data['timestamp'] = pd.to_datetime(self.candle_data['timestamp'])
+        self.candle_data.set_index('timestamp', inplace=True)
         fig, ax = plt.subplots(figsize=(10, 6))
-        OHCL = mpf.plot(candle_data,  type='candle', style='charles',
-            title='candlestick',
-            ylabel='Price ($)',
-            ylabel_lower='Shares \nTraded',
-            volume=False, 
-            mav=(3,6,9), 
-            savefig='test-mplfiance.png')
-        print(OHCL)
+
+        # ax.plot(candle_data['timestamp'], candle_data['open'], candle_data[ 'high'], candle_data['low'], candle_data['close'], candle_data['volume'], color='red', linewidth=2)
+     
+        # OHCL = mpf.plot(candle_data,  type='candle', style='charles',
+        #     title='candlestick',
+        #     ylabel='Price ($)',
+        #     ylabel_lower='Shares \nTraded',
+        #     volume=False, 
+        #     mav=(3,6,9), 
+        #     savefig='test-mplfiance.png')
+        # print(OHCL)
         
       
         plt.tight_layout()
@@ -210,12 +235,12 @@ class Home(tkinter.Frame):
             self.send_money_asset_entry.get()))
 
         self.receive_money = tkinter.Label(self.send_money_tab, text='Receive Money', font=('Arial',14),image= tkinter.PhotoImage(file='images/receive_money.png'))
-        self.receive_money.place(x=200, y=10,  anchor= 'nw',width=1400, height= 20)
+        self.receive_money.place(x=200, y=10,  anchor= 'nw')
         
         
         self.balances_tab = tkinter.Frame(self.tab, relief='groove', borderwidth=1 , background='gray')
         self.balances_canvas = tkinter.Canvas(self.balances_tab, width=1500, height = 660,background= 'black', bd= 3)
-        self.balances_canvas.place(x=0, y=0)
+        self.balances_canvas.place(x=0, y=0, anchor='nw')
     
         self.tab.add(self.trade_tab, text='Server')
         self.tab.add(self.chart_tab, text='Charts')
@@ -234,48 +259,49 @@ class Home(tkinter.Frame):
         self.updateMe()
     def on_treeview(self, event)->None:
         
-        self.trade_tree.selection_set(self.trade_tree.get_children()[0])
-        self.trade_tree.focus(self.trade_tree.get_children()[0])
-        self.trade_tree.see(self.trade_tree.get_children()[0])
+        if len(self.trade_tree.selection_get())>0:
+         self.trade_tree.selection_set(self.trade_tree.get_children()[0])
+         self.trade_tree.focus(self.trade_tree.get_children()[0])
+         self.trade_tree.see(self.trade_tree.get_children()[0])
    
         
     def stop_bot(self)->None:
 
-        self.controller.bot.stop()
+
         self.toggled_button1.config( background='green',fg='yellow',state='normal',text='START')
         self.toggled_button.config(background='gray',fg='yellow',state='disabled',text='STOP')
+        self.controller.bot.stop()
 
     def start_bot(self  )->None:
-       self.controller.bot.start()
+     
 
        self.toggled_button1.config( background='gray',fg='yellow',state='disabled',text='START')
        self.toggled_button.config(background='red',fg='yellow',state='normal',text='STOP')
+       self.controller.bot.start()
     
     
     def updateMe(self)->None:
-        self.candles = pd.read_csv('candles.csv')
+        
         trades =pd.read_csv('ledger_trades.csv')
         self.history_canvas.create_text(400, 200, text=[f+'\n' for f in trades].__str__(), font= ('Arial',14),fill='white' )
         self.trade_tree.delete(*self.trade_tree.get_children()) 
-      
-      
-        v=self.candles.sort_values(by='timestamp',ascending=False)
+        v=self.candle_data0
         if len(v)>0:
          self.trade_tree.insert('', 'end', text='timestamp', values=([0],v['symbol'],v['open'],v['close'],v['high'],v['low'],v['base_volume'],v['counter_volume'],v['avg'], v['trade_count']),tag='trade')
-        self.trade_canvas.delete('all')    
-        self.trade_canvas.create_text(150, 40, text= 'STATUS:', font= ('Arial',14), fill='lightgreen')
-        self.trade_canvas.create_text(400, 40, text= self.controller.bot.server_msg['status'], font= ('Arial',14), fill='lightgreen')
-        self.trade_canvas.create_text(150, 70, text= 'TYPE:', font= ('Arial',14), fill='red')
-        self.trade_canvas.create_text(400, 70, text= self.controller.bot.server_msg['type'], font= ('Arial',14), fill='white')
-        self.trade_canvas.create_text(150, 90, text= 'MESSAGE:', font= ('Arial',14), fill='green')
-        self.trade_canvas.create_text(500, 90, text= self.controller.bot.server_msg['message'], font= ('Arial',14), fill='white')
-        # account =self.account 
-        # self.account_canvas.delete('all')
-        # self.account_canvas.create_text(300, 50, text= 'AccountID:', font= ('Arial',14), fill='white')
-        # self.account_canvas.create_text(600, 50, text= account['account_id'].__str__(), font= ('Arial',14), fill='white')
-        # self.account_canvas.create_text(300, 80, text= 'Balance:', font= ('Arial',14), fill='white')
-        # self.account_canvas.create_text(600, 80, text= account['balance'].__str__(), font= ('Arial',14), fill='white')
+        self.trade_canvas.delete('all') 
 
+        self.trade_canvas.create_text(200, 40, text= 'TIMESTAMP', font= ('Arial',14), fill='lightgreen')
+        self.trade_canvas.create_text(400, 40, text= datetime.datetime.now().__str__(), font= ('Arial',14), fill='lightgreen')   
+        self.trade_canvas.create_text(200, 60, text= 'STATUS:', font= ('Arial',14), fill='lightgreen')
+        self.trade_canvas.create_text(400, 60, text= self.controller.bot.server_msg['status'].__str__(), font= ('Arial',14), fill='lightgreen')
+ 
+        self.trade_canvas.create_text(200, 190, text= 'MESSAGE:', font= ('Arial',14), fill='green')
+        self.trade_canvas.create_text(400, 190, text= self.controller.bot.server_msg['message'].__str__(), font= ('Arial',14), fill='white')
+        account =self.account 
+        self.account_canvas.delete('all')
+        self.account_canvas.create_text(300, 50, text= 'AccountID:', font= ('Arial',14), fill='white')
+        self.account_canvas.create_text(600, 50, text= account.__str__(), font= ('Arial',14), fill='white')
+ 
         # self.account_canvas.create_text(300, 250, text= 'last_modified_ledger:', font= ('Arial',14), fill='white')
         self.after(1000, self.updateMe)
 

@@ -1,6 +1,6 @@
 def my_function(param, param1):
     return param + param1
-    pass
+    
 
 
 def test_my_function():
