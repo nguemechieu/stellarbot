@@ -1,9 +1,9 @@
 stellar_sdk 
-mysqlclient
 scikit-learn
 requests
 pandas 
 qrcode
-bigquery
-opencv-python-headless
 Pillow
+ccxt
+ta
+mplfinance

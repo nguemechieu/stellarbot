@@ -1,0 +1,14 @@
+
+# if __name__ == '__main__':
+#     app = TradingWindow()
+    
+#     # Example of how to update the order book with dummy data
+#     example_orders = [
+#         {'price': '0.10', 'amount': '100', 'type': 'Bid'},
+#         {'price': '0.12', 'amount': '50', 'type': 'Ask'},
+#         {'price': '0.09', 'amount': '200', 'type': 'Bid'},
+#         {'price': '0.13', 'amount': '70', 'type': 'Ask'}
+#     ]
+    
+# #    app.update_order_book(example_orders)
+#     app.mainloop()
