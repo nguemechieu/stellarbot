@@ -7,3 +7,5 @@ Pillow
 ccxt
 ta
 mplfinance
+flake8==6.1.0
+pytest==7.4.2

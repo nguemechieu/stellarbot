@@ -1,6 +1,6 @@
 # This workflow installs Python dependencies, runs tests, and lints the codebase
 
-name: Python Application CI
+name: StellarBot CI
 
 on:
   push:
