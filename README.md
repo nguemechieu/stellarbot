@@ -2,7 +2,7 @@
 
 
 # Welcome to StellarBot
-![stellarbot](stellarBot.webp)
+![stellarbot](/src/images/stellarbot.png)
 
 [![Upload Python Package](https://github.com/nguemechieu/stellarbot/actions/workflows/python-publish.yml/badge.svg)](https://github.com/nguemechieu/stellarbot/actions/workflows/python-publish.yml)
 [![Docker Image CI](https://github.com/nguemechieu/stellarbot/actions/workflows/docker-image.yml/badge.svg)](https://github.com/nguemechieu/stellarbot/actions/workflows/docker-image.yml)
