@@ -27,7 +27,10 @@ RUN apt-get update && apt-get install -y python3-tk xvfb
 ENV DISPLAY=:99
 # Your application's entry point
 
-RUN apt-get update && apt-get upgrade
+
+# Ensure system packages are up to date
+RUN apt-get update && apt-get upgrade -y  # Fix: added -y flag
+
 RUN apt-get install -y xvfb
 EXPOSE  9000
 
