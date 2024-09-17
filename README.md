@@ -11,7 +11,7 @@
 
 StellarBot is a professional trading bot for the Stellar Network digital ledger. It allows you to execute trades on your own Stellar network using the standard protocol within the Stellar ecosystem. For more information on the Stellar Network, visit [Stellar Expert](https://stellar.expert/explorer/public/network-activity)
 
-
+[![StellarBot](https://github.com/nguemechieu/stellarbot/src/assests/stellarbot.png)]
 
 ## Installation Guide
 
