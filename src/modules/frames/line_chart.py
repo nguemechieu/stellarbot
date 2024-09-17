@@ -16,7 +16,7 @@ class LineChart(tk.Frame):
         # Ensure the 'Date' column is in datetime format before setting it as the index
         self.df = pd.DataFrame(df)
         self.df['Date'] = pd.to_datetime(self.df['Date'], errors='coerce')  # Convert Date column to datetime
-        self.df.dropna(subset=['Date'], inplace=True)  # Remove any rows with invalid dates
+        self.df.dropna(subset=['Date'])
         self.df.set_index('Date', inplace=True)
 
         # Setup UI components
@@ -75,7 +75,8 @@ class LineChart(tk.Frame):
 
     def save_chart(self):
         """Save the line chart as an image."""
-        file_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG files", "*.png")])
-        if file_path:
+        if file_path := filedialog.asksaveasfilename(
+            defaultextension=".png", filetypes=[("PNG files", "*.png")]
+        ):
             self.fig.savefig(file_path)
             print(f"Chart saved as {file_path}")

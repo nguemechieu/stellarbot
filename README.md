@@ -1,148 +1,147 @@
+
 # StellarBot
+<<<<<<< HEAD
 ## ------------- Your gateway to financial freedom -------------------------
 ![stellarbot](/src/assets/stellarbot.png)
+=======
+
+![stellarbot](src/images/stellarbot.png)
+>>>>>>> 6cc1074bcf8a085decb842ca447aea021894b137
 
 [![Upload Python Package](https://github.com/nguemechieu/stellarbot/actions/workflows/python-publish.yml/badge.svg)](https://github.com/nguemechieu/stellarbot/actions/workflows/python-publish.yml)
 [![Docker Image CI](https://github.com/nguemechieu/stellarbot/actions/workflows/docker-image.yml/badge.svg)](https://github.com/nguemechieu/stellarbot/actions/workflows/docker-image.yml)
-[![Continuous Integration Workflow](https://github.com/nguemechieu/stellarbot/actions/workflows/continuous-integration-workflow.yml/badge.svg)](https://github.com/nguemechieu/stellarbot/actions/workflows/continuous-integration/workflow.yml)
+[![Continuous Integration Workflow](https://github.com/nguemechieu/stellarbot/actions/workflows/continuous-integration-workflow.yml/badge.svg)](https://github.com/nguemechieu/stellarbot/actions/workflows/continuous-integration-workflow.yml)
 
-## Description
+---
 
+<<<<<<< HEAD
 StellarBot is a professional trading bot for the Stellar Network digital ledger. It allows you to execute trades on your own Stellar network using the standard protocol within the Stellar ecosystem. For more information on the Stellar Network, visit [Stellar Expert](https://stellar.expert/explorer/public/network-activity)
+=======
+## About StellarBot
+>>>>>>> 6cc1074bcf8a085decb842ca447aea021894b137
 
-Sure! Here is a detailed installation procedure for the Python application StellarBot:
+StellarBot is a robust and professional trading bot designed to execute trades on the Stellar Network, a leading decentralized payment system. Leverage the Stellar protocol to automate your trading strategies seamlessly.
 
-# Installation Procedure for StellarBot
+For more details on the Stellar Network, visit [Stellar Expert](https://stellar.expert/explorer/public/network-activity).
 
-## Prerequisites
+---
 
-Before installing StellarBot, ensure you have the following prerequisites:
+## Installation Guide
 
-1. **Python 3.9 or higher**: Download and install Python from the [official Python website](https://www.python.org/downloads/).
-2. **Git**: Download and install Git from the [official Git website](https://git-scm.com/downloads).
-3. **Docker** (optional): If you prefer using Docker, download and install Docker from the [official Docker website](https://www.docker.com/get-started).
+### Prerequisites
 
-## Step-by-Step Installation
+Ensure you have the following prerequisites installed before setting up StellarBot:
 
-### Step 1: Clone the Repository
+- **Python 3.9+**: [Download here](https://www.python.org/downloads/).
+- **Git**: [Install Git](https://git-scm.com/downloads).
+- **Docker** (optional): [Get Docker](https://www.docker.com/get-started) for containerized deployment.
 
-First, clone the StellarBot repository from GitHub to your local machine.
+### Step-by-Step Installation
 
-```bash
-git clone https://github.com/nguemechieu/stellarbot.git
-cd stellarbot
-```
+1. **Clone the Repository:**
+   ```bash
+   git clone https://github.com/nguemechieu/stellarbot.git
+   cd stellarbot
+   ```
 
-### Step 2: Create and Activate a Virtual Environment
+2. **Set Up a Virtual Environment:**
+   Create and activate a virtual environment for dependency management:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # Windows: `venv\Scripts\activate`
+   ```
 
-It is recommended to use a virtual environment to manage dependencies. Create and activate a virtual environment using the following commands:
+3. **Install Dependencies:**
+   Install required dependencies via `pip`:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-```
+4. **Configure StellarBot:**
+   Copy the sample configuration and customize it to your preferences:
+   ```bash
+   cp config.sample.json config.json
+   ```
 
-### Step 3: Install Dependencies
+5. **Run StellarBot:**
+   Start StellarBot using:
+   ```bash
+   python stellarbot.py
+   ```
 
-With the virtual environment activated, install the required dependencies using `pip`:
+---
 
-```bash
-pip install -r requirements.txt
-```
+### Docker Installation (Optional)
 
-### Step 4: Configure StellarBot
+1. **Build the Docker Image:**
+   ```bash
+   docker build -t stellarbot .
+   ```
 
-Create a configuration file for StellarBot. You can use the provided sample configuration file as a template:
+2. **Run the Docker Container:**
+   ```bash
+   docker run -d --name stellarbot stellarbot
+   ```
 
-```bash
-cp config.sample.json config.json
-```
+---
 
-Edit the `config.json` file with your preferred settings.
+## Commands
 
-### Step 5: Run StellarBot
-
-After configuring StellarBot, you can start the application using the following command:
-
-```bash
-python stellarbot.py
-```
-
-### Step 6: Using Docker (Optional)
-
-If you prefer running StellarBot using Docker, follow these steps:
-
-1. Build the Docker image:
-
-    ```bash
-    docker build -t stellarbot .
-    ```
-
-2. Run the Docker container:
-
-    ```bash
-    docker run -d --name stellarbot stellarbot
-    ```
-
-## Additional Commands
-
-- **Start StellarBot**: To start the bot.
+- **Start the bot**: 
   ```bash
   python stellarbot.py start
   ```
-
-- **Stop StellarBot**: To stop the bot.
+- **Stop the bot**:
   ```bash
   python stellarbot.py stop
   ```
-
-- **Check Status**: To check the current status of the bot.
+- **Check the bot’s status**:
   ```bash
   python stellarbot.py status
   ```
 
+For more commands, check the [Commands Documentation](docs/commands.md).
+
+---
+
 ## Troubleshooting
 
-If you encounter any issues during installation or while running StellarBot, please refer to the [issue tracker](https://github.com/nguemechieu/stellarbot/issues) on GitHub for assistance.
+If you encounter any issues during installation or while running StellarBot, please visit the [issue tracker](https://github.com/nguemechieu/stellarbot/issues) for support.
 
+---
 
+## Using Docker
 
-This installation procedure should help users set up and run StellarBot on their local machine. Feel free to adjust any specific details to match the actual configuration and setup requirements of StellarBot.
+For a containerized approach, pull the latest image and run StellarBot as a Docker container:
 
-### Using Docker
-
-To pull the Docker image and run StellarBot, use the following commands:
-
-```sh
+```bash
 docker pull nguemechieu/stellarbot:latest
 docker run -d --name stellarbot nguemechieu/stellarbot:latest
 ```
 
-## Commands
+---
 
-Here are some basic commands to get started with StellarBot:
+## Resources and Links
 
-- `start`: Starts the trading bot.
-- `stop`: Stops the trading bot.
-- `status`: Shows the current status of the bot.
-
-For a complete list of commands, refer to the [Commands Documentation](docs/commands.md).
-
-## Links
-
-- [Homepage](https://github.com/nguemechieu/stellarbot)
+- [StellarBot Repository](https://github.com/nguemechieu/stellarbot)
 - [Documentation](docs/README.md)
-- [Issues](https://github.com/nguemechieu/stellarbot/issues)
+- [Issue Tracker](https://github.com/nguemechieu/stellarbot/issues)
 - [Stellar Network Activity](https://stellar.expert/explorer/public/network-activity)
+
+---
 
 ## License
 
-StellarBot is licensed under the [GPLv3 License](LICENSE).
+StellarBot is released under the [GPLv3 License](LICENSE).
+
+---
 
 ## Contributing
 
-Contributions are welcome! Please read the [Contributing Guidelines](CONTRIBUTING.md) before submitting a pull request.
+We welcome contributions! Please read the [Contributing Guidelines](CONTRIBUTING.md) before submitting a pull request.
+
+---
 
 ## Contact
 
-For any inquiries, please contact [nguemechieu@live.com](mailto:nguemechieu@live.com).
+For further inquiries, reach out at [nguemechieu@live.com](mailto:nguemechieu@live.com).
