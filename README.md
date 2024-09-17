@@ -1,8 +1,6 @@
 # StellarBot
-
-
-# Welcome to StellarBot
-![stellarbot](/src/images/stellarbot.png)
+## ------------- Your gateway to financial freedom -------------------------
+![stellarbot](/src/assets/stellarbot.png)
 
 [![Upload Python Package](https://github.com/nguemechieu/stellarbot/actions/workflows/python-publish.yml/badge.svg)](https://github.com/nguemechieu/stellarbot/actions/workflows/python-publish.yml)
 [![Docker Image CI](https://github.com/nguemechieu/stellarbot/actions/workflows/docker-image.yml/badge.svg)](https://github.com/nguemechieu/stellarbot/actions/workflows/docker-image.yml)
@@ -10,7 +8,7 @@
 
 ## Description
 
-StellarBot is a professional trading bot for the Stellar Network digital ledger. It allows you to execute trades on your own Stellar network using the standard protocol within the Stellar ecosystem. For more information on the Stellar Network, visit [Stellar Expert](https://stellar.expert/explorer/public/network-activity
+StellarBot is a professional trading bot for the Stellar Network digital ledger. It allows you to execute trades on your own Stellar network using the standard protocol within the Stellar ecosystem. For more information on the Stellar Network, visit [Stellar Expert](https://stellar.expert/explorer/public/network-activity)
 
 Sure! Here is a detailed installation procedure for the Python application StellarBot:
 

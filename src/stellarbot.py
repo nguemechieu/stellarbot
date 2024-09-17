@@ -1,17 +1,14 @@
 import os
 import tkinter
-from datetime import datetime
-from tkinter import StringVar
-
-
 import platform
 import subprocess
+from modules.frames.home import Home
+from modules.frames.login import Login
+
+from modules.frames.about import About
+from modules.classes.db_manager import DatabaseManager
 
 
-from home import Home
-from login import Login
-from createAccount import CreateAccount
-from about import About
 
 if os.environ.get('DISPLAY','') == '':
     print('no display found. Using :0.0')
@@ -28,7 +25,21 @@ class StellarBot(tkinter.Tk):
         # Initialize the TradingBot class
         self.bot = None
         self.pages = {}
-        self.iconbitmap("./src/images/stellarbot.ico")
+        self.db=DatabaseManager('stellarBot.db').db
+
+        self.db.execute('''CREATE TABLE IF NOT EXISTS users ( 
+                            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+                            account_id VARCHAR NOT NULL UNIQUE ON CONFLICT REPLACE, 
+                            account_secret VARCHAR NOT NULL UNIQUE ON CONFLICT REPLACE,  
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+                            last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+        self.db.commit()
+       
+        
+        self.iconbitmap("src/assets/stellarbot.ico")
+        
+        self.updateMe()
         self.show_pages("Login")
         self.mainloop()
      
@@ -39,8 +50,8 @@ class StellarBot(tkinter.Tk):
         self.resizable(width=True, height=True)
         self.delete_frame()
 
-        if param in ['Login', 'CreateAccount','Home', 'About']:
-             self.frames = [Login, Home, CreateAccount, About]
+        if param in ['Login','Home', 'About']:
+             self.frames = [Login, Home,  About]
         for frame in self.frames:
             if param == frame.__name__:
                 frame = frame(self, self.controller)
@@ -56,10 +67,21 @@ class StellarBot(tkinter.Tk):
         os._exit(1)
 
     def updateMe(self): # This function is called every 1000 milliseconds. It updates the screen.
+        
+        
         self.update()
-       
-    
+        self.update_idletasks()
         self.after(1000, self.updateMe)
+    
+
+    def show_error_message(self, msg): # This function is called
+        # Display the error message in a label
+
+        destroy_message= tkinter.Message(self.master,text=msg)
+        destroy_message.config(bg='red', fg='white')
+        destroy_message.pack(fill=tkinter.BOTH, expand=True)
+        
+
 
 
 
@@ -92,7 +114,7 @@ if __name__ == "__main__":
      os.environ["DISPLAY"] = ":0"# Set the DISPLAY environment variable to point to the virtual display number you just created.
      print(os.environ["DISPLAY"])
     #  Clean up the Xvfb process when done
-    subprocess.Popen(f"kill -9 $(pgrep Xvfb)", shell=True)
+    subprocess.Popen("kill -9 $(pgrep Xvfb)", shell=True)
 
     print('StellarBot is running on ', check_os())
     StellarBot() # Run the StellarBot class

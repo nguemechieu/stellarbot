@@ -1,11 +1,12 @@
-stellar_sdk 
+stellar-sdk>=5.0.0
 scikit-learn
-requests
-pandas 
-qrcode
-Pillow
+requests>=2.25.0
+pandas>=1.2.0
+qrcode>=7.0
+Pillow>=8.0
 ccxt
 ta
 mplfinance
 flake8==6.1.0
 pytest==7.4.2
+cryptography
