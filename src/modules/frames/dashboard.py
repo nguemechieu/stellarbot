@@ -18,7 +18,6 @@ class Dashboard(QtWidgets.QWidget):
         self.controller = controller
 
         # Set layout and background
-        self.setStyleSheet("background-color: #1e2a38;")
         layout = QtWidgets.QVBoxLayout(self)
 
         # Create and style the canvas (QWidget in PyQt5)
@@ -28,7 +27,6 @@ class Dashboard(QtWidgets.QWidget):
         # Welcome Message
         welcome_label = QtWidgets.QLabel("Welcome to StellarBot Dashboard", self)
         welcome_label.setAlignment(QtCore.Qt.AlignCenter)
-        welcome_label.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
         layout.addWidget(welcome_label)
 
         self.lbl_text = QtWidgets.QLabel()
@@ -56,12 +54,10 @@ class Dashboard(QtWidgets.QWidget):
         buttons_layout = QtWidgets.QHBoxLayout()
 
         self.start_button = QtWidgets.QPushButton("START", self)
-        self.start_button.setStyleSheet("background-color: #4CAF50; color: white; font-size: 12px; font-weight: bold;")
         self.start_button.clicked.connect(self.start_bot)
         buttons_layout.addWidget(self.start_button)
 
         self.stop_button = QtWidgets.QPushButton("STOP", self)
-        self.stop_button.setStyleSheet("background-color: #F44336; color: white; font-size: 12px; font-weight: bold;")
         self.stop_button.clicked.connect(self.stop_bot)
         self.stop_button.setEnabled(False)
         buttons_layout.addWidget(self.stop_button)

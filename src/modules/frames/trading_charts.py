@@ -60,11 +60,9 @@ class TradingCharts(QtWidgets.QWidget):
         """Sets up the toolbar with controls for asset and chart type selection."""
         toolbar = QtWidgets.QWidget(self)
         toolbar_layout = QtWidgets.QHBoxLayout(toolbar)
-        toolbar.setStyleSheet("background-color: white;")
-
+      
         # Add asset selectors
         asset_label = QtWidgets.QLabel("Select Asset:", self)
-        asset_label.setStyleSheet("color: white; font-size: 14px; font-weight: bold;")
         toolbar_layout.addWidget(asset_label)
 
         self.assets_combobox1 = QtWidgets.QComboBox(self)
@@ -77,7 +75,6 @@ class TradingCharts(QtWidgets.QWidget):
 
         # Add chart type selector
         chart_type_label = QtWidgets.QLabel("Chart Type:", self)
-        chart_type_label.setStyleSheet("color: white; font-size: 14px; font-weight: bold;")
         toolbar_layout.addWidget(chart_type_label)
 
         self.chart_type_combobox = QtWidgets.QComboBox(self)
@@ -96,17 +93,14 @@ class TradingCharts(QtWidgets.QWidget):
 
         # Trading mode status
         self.status_label = QtWidgets.QLabel(f"Mode: {self.trading_mode}", self)
-        self.status_label.setStyleSheet("color: white; font-size: 14px; font-weight: bold;")
         toolbar_layout.addWidget(self.status_label)
-        toolbar.setStyleSheet("background-color: white;")
-
+      
      
         layout.addWidget(toolbar)
 
     def setup_content(self, layout):
         """Sets up the main content area where charts will be displayed."""
         content_frame = QtWidgets.QFrame(self)
-        content_frame.setStyleSheet("background-color: #2F4F4F;")
         content_frame.setContentsMargins(0, 0, 1540, 780)
         layout.addWidget(content_frame)
 
@@ -152,3 +146,4 @@ class TradingCharts(QtWidgets.QWidget):
             self.notebook.removeTab(self.notebook.currentIndex())
         else:
             QtWidgets.QMessageBox.information(self, "Info", "No more charts to remove.")
+   

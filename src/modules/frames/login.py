@@ -2,137 +2,118 @@ import os
 import re
 import csv
 import requests
-import qrcode
 from PyQt5 import QtGui, QtWidgets
 from stellar_sdk import Keypair
 from modules.classes.settings_manager import SettingsManager
 from modules.classes.stellar_client import StellarClient
 
-
 class Login(QtWidgets.QWidget):
-    """Stellar Network User Login Frame using PyQt5."""
-
+    """A professional Stellar Network User Login Interface using PyQt5."""
 
     def __init__(self, parent=None, controller=None):
+        """Initialize the Login widget and set up the UI."""
         super().__init__(parent)
         self.controller = controller
-
-        self.setGeometry(
-            0,
-            0,
-            1530,
-            780
-        )
-
-        # Load saved settings like account and secret keys
         self.settings = SettingsManager.load_settings()
-
-        # Set up styling and layout
-        self.set_ui()
+        self.setup_ui()
         self.populate_saved_settings()
 
-    def set_ui(self):
-        """Set up the UI layout and components."""
-        self.setStyleSheet("background-color: #1e2a38; color: white;")
-        self.setFixedSize(1530, 780)
+    def setup_ui(self):    # sourcery skip: class-extract-method
+        """Set up the layout, styling, and widgets."""
+        self.setWindowTitle("StellarBot Login")
+        self.setGeometry(0, 0, 1530, 780)
+        self.setStyleSheet("background-color: #f0f0f0;")
+        layout = QtWidgets.QVBoxLayout(self)
 
-        layout = QtWidgets.QVBoxLayout()
-
-        # Application name label
-        app_name_label = QtWidgets.QLabel("Welcome to StellarBot", self)
-        app_name_label.setFont(QtGui.QFont("Helvetica", 23, QtGui.QFont.Bold))
-        app_name_label.setStyleSheet("color: green;")
-        layout.addWidget(app_name_label)
-        layout.addSpacing(10)
-
-        # Title label
-        title_label = QtWidgets.QLabel("Stellar Network Login", self)
-        title_label.setFont(QtGui.QFont("Helvetica", 16, QtGui.QFont.Bold))
-        layout.addWidget(title_label)
-        layout.addSpacing(10)
-
-        # Account ID entry field
+        self._extracted_from_setup_ui_9("Welcome to StellarBot", 23, layout)
+        self._extracted_from_setup_ui_9("Stellar Network Login", 16, layout)
+        # Account ID Entry
         layout.addWidget(self.create_label("Account ID"))
         self.account_id_entry = QtWidgets.QLineEdit(self)
+        self.account_id_entry.setPlaceholderText("Enter your Stellar Account ID")
         layout.addWidget(self.account_id_entry)
 
-        # Secret Key entry field
+        # Secret Key Entry
         layout.addWidget(self.create_label("Secret Key"))
         self.secret_key_entry = QtWidgets.QLineEdit(self)
+        self.secret_key_entry.setPlaceholderText("Enter your Secret Key")
         self.secret_key_entry.setEchoMode(QtWidgets.QLineEdit.Password)
         layout.addWidget(self.secret_key_entry)
 
-        # Password visibility toggle button
+        # Toggle Password Visibility
         self.password_visibility_toggle = QtWidgets.QPushButton("Show", self)
         self.password_visibility_toggle.clicked.connect(self.toggle_password_visibility)
         layout.addWidget(self.password_visibility_toggle)
 
-        # Login button
+        # Login Button
         self.login_button = QtWidgets.QPushButton("Login", self)
+        self.login_button.setStyleSheet("background-color: #4CAF50; color: white; font-size: 14px;")
         self.login_button.clicked.connect(self.login)
         layout.addWidget(self.login_button)
 
-        # Create new account button
+        # Create New Account Button
         self.create_account_button = QtWidgets.QPushButton("Create New Account", self)
+        self.create_account_button.setStyleSheet("background-color: #2196F3; color: white; font-size: 14px;")
         self.create_account_button.clicked.connect(self.create_new_account)
         layout.addWidget(self.create_account_button)
 
-        # Remember Me checkbox
+        # Remember Me Checkbox
         self.remember_me = QtWidgets.QCheckBox("Remember Me", self)
         layout.addWidget(self.remember_me)
 
-        # Network connectivity status label
+        # Network Connectivity Status
         self.network_status_label = QtWidgets.QLabel("Checking network status...", self)
         layout.addWidget(self.network_status_label)
         self.check_network_connectivity()
 
-        # Info label for messages
+        # Info Label for displaying messages
         self.info_label = QtWidgets.QLabel("", self)
         layout.addWidget(self.info_label)
 
-        self.setLayout(layout)
-     
+    # TODO Rename this here and in `setup_ui`
+    def _extracted_from_setup_ui_9(self, arg0, arg1, layout):
+        # Application Name
+        app_name_label = QtWidgets.QLabel(arg0, self)
+        app_name_label.setFont(QtGui.QFont("Helvetica", arg1, QtGui.QFont.Bold))
+
+        layout.addWidget(app_name_label)
+        layout.addSpacing(20)
 
     def create_label(self, text):
-        """Helper method to create styled labels."""
-        label = QtWidgets.QLabel(self)
-        label.setText(text)
-        label.setStyleSheet("font-size: 14px;")
+        """Create a standardized label for fields."""
+        label = QtWidgets.QLabel(text, self)
+        label.setStyleSheet("font-size: 14px; color: #1c1c1c;")
         return label
 
     def populate_saved_settings(self):
-        """Populate fields with saved settings if available."""
+        """Populate fields with saved account ID and secret key if available."""
         if 'account_id' in self.settings:
             self.account_id_entry.setText(self.settings['account_id'])
-
         if 'secret_key' in self.settings:
             self.secret_key_entry.setText(self.settings['secret_key'])
-
         self.remember_me.setChecked(self.settings.get('remember_me', False))
 
     def check_network_connectivity(self):
-        """Check network connectivity to the Stellar Network and update the status."""
+        """Check network connectivity to the Stellar Network."""
         try:
             response = requests.get('https://horizon.stellar.org/assets')
             if response.status_code == 200:
-               self.update_network_status("Connected to Stellar Network", "color: green;", True)
-              
-               return True
-            
+                self.update_network_status("Connected to Stellar Network", "color: green;")
+                return True
             else:
-                self.update_network_status("Network Unreachable", "color: red;", False)
+                self.update_network_status("Network Unreachable", "color: red;")
                 return False
-        except Exception:
-            self.update_network_status("Network Unreachable", "color: red;", False)
+        except requests.RequestException:
+            self.update_network_status("Network Unreachable", "color: red;")
             return False
-    def update_network_status(self, message, style, connected):
+
+    def update_network_status(self, message, style):
         """Update the network status label."""
         self.network_status_label.setText(message)
         self.network_status_label.setStyleSheet(style)
-        return connected
 
     def login(self):
-        """Handle the login process using the provided Account ID and Secret Key."""
+        """Handle login logic and validate the Stellar account credentials."""
         account_id = self.account_id_entry.text()
         secret_key = self.secret_key_entry.text()
 
@@ -141,32 +122,20 @@ class Login(QtWidgets.QWidget):
             return
 
         if not self.is_valid_stellar_secret(secret_key):
-            self.update_info_label("Invalid Stellar Network Account Secret!", "red")
+            self.update_info_label("Invalid Stellar Network Secret!", "red")
             return
 
-        if not account_id or not secret_key:
-            self.update_info_label("Both Account ID and Secret Key are required!", "red")
-            return
-
-        self.update_info_label("Logging in...", "green")
-
-        # Check network connectivity before proceeding
         if not self.check_network_connectivity():
             self.update_info_label("Unable to connect to Stellar Network.", "red")
             return
 
         try:
-            # Initialize StellarClient and navigate to Home
+            # Initialize the Stellar client and transition to Home frame
             self.controller.bot = StellarClient(controller=self.controller, account_id=account_id, secret_key=secret_key)
             self.save_user_settings()
             self.controller.show_frame("Home")
         except Exception as e:
             self.update_info_label(f"An error occurred: {str(e)}", "red")
-
-    def update_info_label(self, message, color):
-        """Update the info label with a message and style."""
-        self.info_label.setText(message)
-        self.info_label.setStyleSheet(f"color: {color};")
 
     def save_user_settings(self):
         """Save user settings if 'Remember Me' is checked."""
@@ -178,70 +147,44 @@ class Login(QtWidgets.QWidget):
         SettingsManager.save_settings(settings)
 
     def create_new_account(self):
-        """Generate a new Stellar account and display it in a new window."""
+        """Generate a new Stellar account and display the details."""
         new_keypair = Keypair.random()
-
         new_account_window = QtWidgets.QDialog(self)
-        new_account_window.setWindowTitle("New Stellar Lumen's Account")
-        new_account_window.setGeometry(600, 300, 600, 500)
+        new_account_window.setWindowTitle("New Stellar Account")
+        layout = QtWidgets.QVBoxLayout(new_account_window)
 
-        layout = QtWidgets.QVBoxLayout()
-
-        title_label = QtWidgets.QLabel("Stellar Account Creation")
+        title_label = QtWidgets.QLabel("New Stellar Account Created", new_account_window)
         title_label.setFont(QtGui.QFont("Helvetica", 16, QtGui.QFont.Bold))
-        title_label.setStyleSheet("color: green;")
+        title_label.setStyleSheet("color: #1c1c1c;")
         layout.addWidget(title_label)
 
-        layout.addWidget(QtWidgets.QLabel("New Account Created"))
-        layout.addWidget(QtWidgets.QLabel(f"Account ID (Public Key): {new_keypair.public_key}"))
+        layout.addWidget(QtWidgets.QLabel(f"Account ID (Public Key): {new_keypair.public_key}", new_account_window))
+        layout.addWidget(QtWidgets.QLabel(f"Secret Key (Private Key): {new_keypair.secret}", new_account_window))
 
-        # Generate and display a QR code
-        self.display_qr_code(new_keypair.public_key, layout)
-
-        layout.addWidget(QtWidgets.QLabel(f"Secret Key (Private Key): {new_keypair.secret}"))
-
-        # Save to CSV button
-        save_button = QtWidgets.QPushButton("Save to CSV")
+        save_button = QtWidgets.QPushButton("Save to CSV", new_account_window)
         save_button.clicked.connect(lambda: self.save_account_to_csv(new_keypair.public_key, new_keypair.secret))
         layout.addWidget(save_button)
 
-        # Close button
-        close_button = QtWidgets.QPushButton("Close")
-        close_button.clicked.connect(
-            new_account_window.close()
-        )
+        close_button = QtWidgets.QPushButton("Close", new_account_window)
+        close_button.clicked.connect(new_account_window.close)
         layout.addWidget(close_button)
 
         new_account_window.setLayout(layout)
         new_account_window.exec_()
 
-    def display_qr_code(self, public_key, layout):
-        """Generate and display the QR code for the account's public key."""
-        try:
-            qr_code_image = qrcode.make(public_key)
-            qr_code_image.save("./src/images/account_id.png")
-            qr_code_pixmap = QtGui.QPixmap("./src/images/account_id.png")
-            qr_label = QtWidgets.QLabel()
-            qr_label.setPixmap(qr_code_pixmap)
-            layout.addWidget(qr_label)
-        except Exception as e:
-            layout.addWidget(QtWidgets.QLabel(f"Error generating QR code: {str(e)}"))
-
-    def save_account_to_csv(self, account_id: str, secret_key: str):
-        """Save the newly created Stellar account to a CSV file."""
-        file_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save New Account", "", "CSV files (*.csv)")
-        if not file_path:
-            return
-
-        try:
-            with open(file_path, mode='a', newline='') as file:
-                writer = csv.writer(file)
-                if os.path.getsize(file_path) == 0:  # If file is empty, write headers
-                    writer.writerow(["Account ID", "Secret Key"])
-                writer.writerow([account_id, secret_key])
-                QtWidgets.QMessageBox.information(self, "Saved", f"Account saved to {file_path}")
-        except Exception as e:
-            QtWidgets.QMessageBox.critical(self, "Error", f"Error saving account: {e}")
+    def save_account_to_csv(self, account_id, secret_key):
+        """Save the new Stellar account to a CSV file."""
+        file_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save New Account", "", "CSV Files (*.csv)")
+        if file_path:
+            try:
+                with open(file_path, mode='a', newline='') as file:
+                    writer = csv.writer(file)
+                    if os.path.getsize(file_path) == 0:  # Add header if file is empty
+                        writer.writerow(["Account ID", "Secret Key"])
+                    writer.writerow([account_id, secret_key])
+                    QtWidgets.QMessageBox.information(self, "Saved", f"Account saved to {file_path}")
+            except Exception as e:
+                QtWidgets.QMessageBox.critical(self, "Error", f"Error saving account: {e}")
 
     def is_valid_stellar_secret(self, secret_key: str) -> bool:
         """Validate the format of a Stellar secret key."""
@@ -259,3 +202,12 @@ class Login(QtWidgets.QWidget):
         else:
             self.secret_key_entry.setEchoMode(QtWidgets.QLineEdit.Password)
             self.password_visibility_toggle.setText("Show")
+
+    def update_info_label(self, message, color):
+        """Update the info label with a message and style."""
+        self.info_label.setText(message)
+        self.info_label.setStyleSheet(
+            f"color: {color};"
+            "font-size: 14px;"
+            "margin-top: 10px;"
+            "margin-bottom: 10px;")

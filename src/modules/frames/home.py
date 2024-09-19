@@ -33,6 +33,9 @@ class Home(QtWidgets.QWidget):
     def create_menu(self):
         """Create the menu bar with multiple useful tools and options."""
         menu_bar = QtWidgets.QMenuBar(self)
+        menu_bar.setStyleSheet(
+            "background-color: white;"
+        )
 
         # File Menu
         file_menu = menu_bar.addMenu("File")
@@ -86,8 +89,7 @@ class Home(QtWidgets.QWidget):
     def create_tabs(self):
         """Create the tabs and their respective frames."""
         tab_widget = QtWidgets.QTabWidget(self)
-        tab_widget.setStyleSheet("background-color: #1e2a38;")
-
+      
         # Helper to add each tab
         def add_tab(title, widget_class):
             tab = QtWidgets.QWidget()
