@@ -1,19 +1,13 @@
-import tkinter as tk
-from tkinter import ttk
+from PyQt5 import QtWidgets
 import pandas as pd
 import requests
 
-class Payments(tk.Frame):
-    def __init__(self, parent, controller):
+class Payments(QtWidgets.QWidget):
+    def __init__(self, parent=None, controller=None):
         super().__init__(parent)
         self.controller = controller
-        self.place(x=0, y=0, width=1530, height=780)
-        self.config(background='#1e2a38')
-
-        # Set up the styling for a professional look
-        self.style = ttk.Style()
-        self.style.configure("Treeview", font=("Helvetica", 10), rowheight=25)
-        self.style.configure("Treeview.Heading", font=("Helvetica", 12, "bold"))
+        self.setGeometry(0, 0, 1530, 780)
+        self.setStyleSheet("background-color: #1e2a38; color: white;")
 
         # Create widgets to display the payments information
         self.create_widgets()
@@ -22,33 +16,20 @@ class Payments(tk.Frame):
         self.update_payments_data()
 
     def create_widgets(self):
-        # Section: Payments Treeview
-        payments_frame = tk.Frame(self, bg="lightgrey", background='purple',border=14, relief=tk.RAISED, bd=2)
-        payments_frame.place(x=20, y=20, width=1500, height=700)
+        layout = QtWidgets.QVBoxLayout(self)
 
-        tk.Label(payments_frame, text="Payments", font=("Helvetica", 16, "bold"), bg="lightgrey").pack(pady=10)
-
-        # Treeview to display the payments data
-        self.payments_tree = ttk.Treeview(
-            payments_frame, 
-            columns=['id', 'type', 'created_at', 'transaction_hash', 'amount', 'asset_code', 'from', 'to'], 
-            show='headings'
+        # Section: Payments Table
+        self.payments_table = QtWidgets.QTableWidget(self)
+        self.payments_table.setColumnCount(8)
+        self.payments_table.setHorizontalHeaderLabels(
+            ['ID', 'Type', 'Created At', 'Transaction Hash', 'Amount', 'Asset Code', 'From Account', 'To Account']
         )
-        
-        self.payments_tree.heading('id', text='ID')
-        self.payments_tree.heading('type', text='Type')
-        self.payments_tree.heading('created_at', text='Created At')
-        self.payments_tree.heading('transaction_hash', text='Transaction Hash')
-        self.payments_tree.heading('amount', text='Amount')
-        self.payments_tree.heading('asset_code', text='Asset Code')
-        self.payments_tree.heading('from', text='From Account')
-        self.payments_tree.heading('to', text='To Account')
-
-        # Configure columns
-        for col in ['id', 'type', 'created_at', 'transaction_hash', 'amount', 'asset_code', 'from', 'to']:
-            self.payments_tree.column(col, width=150, anchor=tk.CENTER)
-        
-        self.payments_tree.pack(fill=tk.BOTH, expand=True)
+        self.payments_table.horizontalHeader().setStretchLastSection(True)
+        self.payments_table.setAlternatingRowColors(True)
+        self.payments_table.setStyleSheet(
+            "QHeaderView::section {background-color: lightgrey; font-weight: bold; font-size: 12pt;}"
+        )
+        layout.addWidget(self.payments_table)
 
     def update_payments_data(self):
         # Fetch payments data from the Stellar Horizon API
@@ -59,28 +40,26 @@ class Payments(tk.Frame):
         # Convert payments data to DataFrame
         payments_df = pd.json_normalize(payments_data)
 
-        # Clear the current data in the Treeview
-        for item in self.payments_tree.get_children():
-            self.payments_tree.delete(item)
+        # Clear the current data in the Table
+        self.payments_table.setRowCount(0)
 
-        # Insert new data into the Treeview
-        for _, row in payments_df.iterrows():
-            # Handling optional fields with fallback to 'N/A'
+        # Insert new data into the Table
+        for idx, row in payments_df.iterrows():
+            self.payments_table.insertRow(idx)
+
             amount = row.get('amount', 'N/A')
             asset_code = row.get('asset_code', 'native' if row.get('asset_type') == 'native' else 'N/A')
             from_account = row.get('from', row.get('source_account', 'N/A'))
             to_account = row.get('to', row.get('to_account', 'N/A'))
 
-            self.payments_tree.insert('', 'end', values=(
-                row.get('id', 'N/A'),
-                row.get('type', 'N/A'),
-                row.get('created_at', 'N/A'),
-                row.get('transaction_hash', 'N/A'),
-                amount,
-                asset_code,
-                from_account,
-                to_account
-            ))
-            self.payments_tree.update_idletasks()
-            self.payments_tree.update()
-           
+            self.payments_table.setItem(idx, 0, QtWidgets.QTableWidgetItem(str(row.get('id', 'N/A'))))
+            self.payments_table.setItem(idx, 1, QtWidgets.QTableWidgetItem(str(row.get('type', 'N/A'))))
+            self.payments_table.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(row.get('created_at', 'N/A'))))
+            self.payments_table.setItem(idx, 3, QtWidgets.QTableWidgetItem(str(row.get('transaction_hash', 'N/A'))))
+            self.payments_table.setItem(idx, 4, QtWidgets.QTableWidgetItem(str(amount)))
+            self.payments_table.setItem(idx, 5, QtWidgets.QTableWidgetItem(str(asset_code)))
+            self.payments_table.setItem(idx, 6, QtWidgets.QTableWidgetItem(str(from_account)))
+            self.payments_table.setItem(idx, 7, QtWidgets.QTableWidgetItem(str(to_account)))
+
+        self.payments_table.resizeColumnsToContents()
+

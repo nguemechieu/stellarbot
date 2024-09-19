@@ -1,71 +1,163 @@
-import tkinter
-import tkinter as tk
+from tkinter import Canvas
+from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtGui import QPainter, QBrush, QPen
+from PyQt5.QtCore import Qt
 from datetime import datetime
 import qrcode
-from PIL import Image, ImageTk
+from PIL import Image
 
-class Dashboard(tk.Frame):
-    """Dashboard frame displaying live data, control buttons, and QR code for account_id."""
+from modules.frames import InternetConnectionStatus
 
-    def __init__(self, parent, controller):
-        super().__init__(parent)
-        
+
+
+class Dashboard(QtWidgets.QWidget):
+    """Dashboard widget displaying live data, control buttons, and QR code for account_id."""
+
+    def __init__(self, parent=None, controller=None):
+        super(Dashboard, self).__init__(parent)
         self.controller = controller
-        # Light background for the dashboard frame
-        self.place(x=0, y=0, width=1530, height=780)
 
-        self.config(background='#1e2a38')
+        # Set layout and background
+        self.setStyleSheet("background-color: #1e2a38;")
+        layout = QtWidgets.QVBoxLayout(self)
 
-        # Create and style the canvas for the dashboard
-        self.canvas = tk.Canvas(parent, width=1430, height=600, border=23,borderwidth=3,background='black')
-        self.canvas.place(x=0, y=0)
+        # Create and style the canvas (QWidget in PyQt5)
+        self.lbl = QtWidgets.QLabel(self)
+        layout.addWidget(self.lbl)
+
+        # Welcome Message
+        welcome_label = QtWidgets.QLabel("Welcome to StellarBot Dashboard", self)
+        welcome_label.setAlignment(QtCore.Qt.AlignCenter)
+        welcome_label.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
+        layout.addWidget(welcome_label)
+
+        self.lbl_text = QtWidgets.QLabel()
+        self.lbl_text.setStyleSheet("color: white; font-size: 16px;")
+        self.lbl_text.setText(
+       f"Account ID: {self.controller.bot.account_id}\n"
+            f"Last Update: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            f"\nStatus: {self.controller.bot.server_msg['status']}\n"
+            f"Info: {self.controller.bot.server_msg['info']}\n"
+            f"Message: {self.controller.bot.server_msg['message']}"
+        )
+
+
+     
+    
+        layout.addWidget(self.lbl_text)
+       
+
+
+
+        # Create account ID QR code
+        self.create_qr_code("account_id")
 
         # Add server control buttons
-        self.toggled_button1 = tk.Button(self, bg='#4CAF50', fg='white', text="START", width=20, command=self.start_bot, font=("Helvetica", 12, "bold"))
-        self.toggled_button1.place(x=400, y=610)
-        self.toggled_button = tk.Button(self, bg='#F44336', fg='white', text='STOP', width=20, command=self.stop_bot, font=("Helvetica", 12, "bold"))
-        self.toggled_button.place(x=600, y=610)
+        buttons_layout = QtWidgets.QHBoxLayout()
 
-        self.image = tk.PhotoImage( "./account_id.png" )
+        self.start_button = QtWidgets.QPushButton("START", self)
+        self.start_button.setStyleSheet("background-color: #4CAF50; color: white; font-size: 12px; font-weight: bold;")
+        self.start_button.clicked.connect(self.start_bot)
+        buttons_layout.addWidget(self.start_button)
+
+        self.stop_button = QtWidgets.QPushButton("STOP", self)
+        self.stop_button.setStyleSheet("background-color: #F44336; color: white; font-size: 12px; font-weight: bold;")
+        self.stop_button.clicked.connect(self.stop_bot)
+        self.stop_button.setEnabled(False)
+        buttons_layout.addWidget(self.stop_button)
+
+        layout.addLayout(buttons_layout)
+
+        # Performance stats
+        self.create_performance_stats(layout)
+
+        # Display time and live data
+        self.timer = QtCore.QTimer(self)
+        self.timer.timeout.connect(self.updates)
+        self.timer.start(1000)
+
+    def create_qr_code(self, account_id):
+        """Create a QR code for the account ID and display it on the dashboard."""
+        qr = qrcode.QRCode(version=1, box_size=10, border=2)
+        qr.add_data(account_id)
+        qr.make(fit=True)
+        qr_img = qr.make_image(fill="black", back_color="white")
+
+        # Save and display QR code
+        qr_img.save("temp_qr.png")
+        img = Image.open("temp_qr.png")
+        img = img.resize((150, 150))
+        qt_img = QtGui.QPixmap("temp_qr.png")
+
+        qr_label = QtWidgets.QLabel(self)
+        qr_label.setPixmap(qt_img)
+        self._extracted_from_create_qr_code_16(qr_label, "background-color: #1e2a38;")
+        label = QtWidgets.QLabel("Account ID", self)
+        self._extracted_from_create_qr_code_16(
+            label, "color: white; font-size: 14px; font-weight: bold;"
+        )
         
-        account_id_label= tkinter.Label(self,image=self.image, width=200, height= 200)
-        account_id_label.place(x=500, y=90)
-                   
 
-        # Start automatic updates for dashboard
-        self.updates()
+    # TODO Rename this here and in `create_qr_code`
+    def _extracted_from_create_qr_code_16(self, arg0, arg1):
+        arg0.setAlignment(QtCore.Qt.AlignCenter)
+        arg0.setStyleSheet(arg1)
+        self.layout().addWidget(arg0)
 
-    def stop_bot(self):
-        """Stop the trading bot and update button states."""
-        self.toggled_button1.config(bg='#4CAF50', fg='white', state='normal', text='START')
-        self.toggled_button.config(bg='#F44336', fg='white', state='disabled', text='STOP')
-        self.controller.bot.stop()
+    def create_performance_stats(self, layout):
+        """Create a section to show performance stats such as total trades and profit."""
+        performance_group = QtWidgets.QGroupBox("Performance Stats")
+        performance_group.setStyleSheet("color: white; font-size: 16px; font-weight: bold; background-color: #2d3e50;")
+        performance_layout = QtWidgets.QVBoxLayout(performance_group)
+
+        stats = {
+            "Total Trades": "345",
+            "Profit": "$15,000",
+            "Win Rate": "75%"
+        }
+
+        for stat, value in stats.items():
+            stat_label = QtWidgets.QLabel(f"{stat}: {value}")
+            stat_label.setStyleSheet("color: #4CAF50; font-size: 12px; font-weight: bold;")
+            performance_layout.addWidget(stat_label)
+
+        layout.addWidget(performance_group)
 
     def start_bot(self):
         """Start the trading bot and update button states."""
-        self.toggled_button1.config(bg='gray', fg='yellow', state='disabled', text='START')
-        self.toggled_button.config(bg='#F44336', fg='yellow', state='normal', text='STOP')
+        self._extracted_from_stop_bot_3(
+            False, "background-color: gray; color: yellow;", True
+        )
         self.controller.bot.start()
 
+    def stop_bot(self):
+        """Stop the trading bot and update button states."""
+        self._extracted_from_stop_bot_3(
+            True, "background-color: #4CAF50; color: white;", False
+        )
+        self.controller.bot.stop()
+
+    # TODO Rename this here and in `start_bot` and `stop_bot`
+    def _extracted_from_stop_bot_3(self, arg0, arg1, arg2):
+        self.start_button.setEnabled(arg0)
+        self.start_button.setStyleSheet(arg1)
+        self.stop_button.setEnabled(arg2)
     def updates(self):
-        """Update the dashboard regularly with live data."""
-        self.canvas.delete("all")
-        self.canvas.create_text(450, 60, text="=========== Welcome to StellarBot ============", font=('Arial', 16, "italic"), fill='white')
-        self.canvas.create_text(250, 100, text="Time :", font=('Arial', 14), fill='green')
-        self.canvas.create_text(450, 100, text=str(datetime.now()), font=('Arial', 14), fill='white')
-        self.canvas.create_text(1200, 60, text="Version: 1.0", font=('Arial', 14), fill='white')
+     """Update the dashboard regularly with live data."""
+    # Create time and update labels
+     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # Display account details from controller's bot data
-        self.canvas.create_text(250, 200, text="Status:", font=('Arial', 14), fill='green')
-        self.canvas.create_text(450, 200, text=self.controller.bot.server_msg.get('status', 'N/A'), font=('Arial', 14), fill='white')
-        self.canvas.create_text(250, 300, text="Info:", font=('Arial', 14), fill='green')
-        self.canvas.create_text(650, 300, text=self.controller.bot.server_msg.get('info', 'N/A'), font=('Arial', 14), fill='white')
-        self.canvas.create_text(250, 500, text="Message:", font=('Arial', 14), fill='green')
-        self.canvas.create_text(650, 500, text=self.controller.bot.server_msg.get('message', 'N/A'), font=('Arial', 14), fill='white')
+    # Fetch the latest data from the bot's server messages
+     status = self.controller.bot.server_msg['status']
+     info = self.controller.bot.server_msg['info']
+     message = self.controller.bot.server_msg['message']
 
-        
-
-        # Schedule next update in 1 second
-
-    
-        self.after(1000, self.updates)
+    # Update the text label to reflect new data
+     self.lbl_text.setText(
+        f"Account ID: {self.controller.bot.account_id}\n"
+        f"Last Update: {current_time}\n"
+        f"Status: {status}\n"
+        f"Info: {info}\n"
+        f"Message: {message}"
+    )
+     self.lbl_text.adjustSize()  # Adjust the label size based on the new content

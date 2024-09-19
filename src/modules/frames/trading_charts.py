@@ -1,30 +1,29 @@
-import datetime
-import time
-import tkinter as tk
-from tkinter import ttk, messagebox
-import mplfinance as mpf
-import pandas as pd
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
+from PyQt5 import QtWidgets
 from modules.frames.bar_chart import BarChart
 from modules.frames.candles_stick_chart import CandlestickChart
 from modules.frames.heikin_ashi import HeikinAshi
 from modules.frames.line_chart import LineChart
 from modules.frames.renko import Renko
 
-class TradingCharts(tk.Frame):
+
+class TradingCharts(QtWidgets.QWidget):
     def __init__(self, parent=None, controller=None):
-        """Initialize the TradingApp class."""
+        """Initialize the TradingCharts class."""
         super().__init__(parent)
         self.controller = controller
-        self.parent = parent
-
-        # Trading mode can be set to 'Manual' or 'Auto'
         self.trading_mode = 'Manual'
+        self.chart_type = "candle"  # Default chart type
+        self.charts = {
+            'bar': BarChart,
+            'candle': CandlestickChart,
+            'heikin_ashi': HeikinAshi,
+            'line': LineChart,
+            'renko': Renko}
+        self.setGeometry(
+            0, 0, 1540, 780,  # x, y, width, height
+    
+        )
 
-        # Default chart type
-        self.chart_type = "candle"
-       
         # Sample data for testing
         self.data = {
             'Open': [100, 120, 90, 110, 130, 105, 115, 125, 140, 110],
@@ -33,101 +32,123 @@ class TradingCharts(tk.Frame):
             'Close': [105, 125, 100, 115, 135, 105, 115, 125, 140, 115],
             'Volume': [1000, 2000, 1500, 1800, 3000, 1500, 1800, 2500, 500, 1800],
             'Date': [
-
                 '2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04',
                 '2023-01-05', '2023-01-06', '2023-01-07', '2023-01-08',
                 '2023-01-09', '2023-01-10'
             ]
         }
 
-        # Set up the toolbar and content area
-        self.setup_toolbar()
-        self.setup_content()
+        # Layout for the whole widget
+        layout = QtWidgets.QVBoxLayout(self)
 
-        # Create a Notebook widget for managing multiple charts
-        self.notebook = ttk.Notebook(parent, width=1530, height=700)
-        self.notebook.pack(fill=tk.BOTH, expand=True, ipady=50)
+        # Setup toolbar and content
+        self.setup_toolbar(layout)
+        self.setup_content(layout)
 
-        # Initial chart tab setup
+        # Create a QTabWidget for managing charts
+        self.notebook = QtWidgets.QTabWidget(self)
+        self.notebook.setObjectName("notebook")
+        self.setGeometry(
+            0, 0, 1530, 780,  # x, y, width, height
+        )
+        layout.addWidget(self.notebook)
+
+        # Add the first chart by default
         self.add_chart()
-       
+
+    def setup_toolbar(self, layout):
+        """Sets up the toolbar with controls for asset and chart type selection."""
+        toolbar = QtWidgets.QWidget(self)
+        toolbar_layout = QtWidgets.QHBoxLayout(toolbar)
+        toolbar.setStyleSheet("background-color: white;")
+
+        # Add asset selectors
+        asset_label = QtWidgets.QLabel("Select Asset:", self)
+        asset_label.setStyleSheet("color: white; font-size: 14px; font-weight: bold;")
+        toolbar_layout.addWidget(asset_label)
+
+        self.assets_combobox1 = QtWidgets.QComboBox(self)
+        self.assets_combobox1.addItems(["BTC", "ETH", "LTC", "XRP", "ADA"])
+        toolbar_layout.addWidget(self.assets_combobox1)
+
+        self.assets_combobox2 = QtWidgets.QComboBox(self)
+        self.assets_combobox2.addItems(["USD", "EUR", "USDT", "BTC"])
+        toolbar_layout.addWidget(self.assets_combobox2)
+
+        # Add chart type selector
+        chart_type_label = QtWidgets.QLabel("Chart Type:", self)
+        chart_type_label.setStyleSheet("color: white; font-size: 14px; font-weight: bold;")
+        toolbar_layout.addWidget(chart_type_label)
+
+        self.chart_type_combobox = QtWidgets.QComboBox(self)
+        self.chart_type_combobox.addItems(["candle", "line", "bar", "renko", "heikin-ashi"])
+        self.chart_type_combobox.currentIndexChanged.connect(self.update_chart_type)
+        toolbar_layout.addWidget(self.chart_type_combobox)
+
+        # Add buttons with icons
+        add_chart_button = QtWidgets.QPushButton("Add Chart", self)
+        add_chart_button.clicked.connect(self.add_chart)
+        toolbar_layout.addWidget(add_chart_button)
+
+        remove_chart_button = QtWidgets.QPushButton("Remove Chart", self)
+        remove_chart_button.clicked.connect(self.remove_chart)
+        toolbar_layout.addWidget(remove_chart_button)
+
+        # Trading mode status
+        self.status_label = QtWidgets.QLabel(f"Mode: {self.trading_mode}", self)
+        self.status_label.setStyleSheet("color: white; font-size: 14px; font-weight: bold;")
+        toolbar_layout.addWidget(self.status_label)
+        toolbar.setStyleSheet("background-color: white;")
+
+     
+        layout.addWidget(toolbar)
+
+    def setup_content(self, layout):
+        """Sets up the main content area where charts will be displayed."""
+        content_frame = QtWidgets.QFrame(self)
+        content_frame.setStyleSheet("background-color: #2F4F4F;")
+        content_frame.setContentsMargins(0, 0, 1540, 780)
+        layout.addWidget(content_frame)
 
     def add_chart(self):
-        """Adds a chart to the notebook."""
-        selected_asset = self.assets_combobox1.get() + "/" + self.assets_combobox2.get()
-        new_tab = ttk.Frame(self.notebook, width=1500, height=300, border=4)
-        new_tab.pack(fill=tk.BOTH, expand=True)
-        self.notebook.add(new_tab, text=f"{selected_asset} Chart")
+        """Adds a new chart tab to the QTabWidget."""
+        selected_asset = f"{self.assets_combobox1.currentText()}/{self.assets_combobox2.currentText()}"
 
-        # Add the appropriate chart based on selected chart type
+        new_tab = QtWidgets.QWidget()
+       # new_tab.setStyleSheet("background-color : #FFFFFF;")
+        new_tab.setGeometry( 
+            0, 0, 1530, 780  # Set the size of the tab to the full width and height of the content frame
+        )
+        tab_layout = QtWidgets.QVBoxLayout(new_tab)
+
+
+        tab_layout.addWidget(QtWidgets.QLabel(f"{selected_asset} Chart", self))
+
+        # Add chart based on selection
         if self.chart_type == "candle":
-            chart = CandlestickChart(new_tab, self.controller, self.data)
-            chart.pack()
+            CandlestickChart(new_tab, self.controller, self.data)
         elif self.chart_type == "line":
-            chart = LineChart(new_tab, self.controller, self.data)
-            chart.pack()
+            LineChart(new_tab, self.data)
         elif self.chart_type == "bar":
-            chart = BarChart(new_tab, self.controller, self.data)
-            chart.pack()
+            BarChart(new_tab, self.controller, self.data)
         elif self.chart_type == "renko":
-            chart = Renko(new_tab, self.controller, self.data)
-            chart.pack()
+            Renko(new_tab, self.controller, self.data)
         elif self.chart_type == "heikin-ashi":
-            chart = HeikinAshi(new_tab, self.controller, self.data)
-            chart.pack()
+            HeikinAshi(new_tab, self.controller, self.data)
         else:
-            messagebox.showerror("Error", "Invalid chart type selected.")
+            QtWidgets.QMessageBox.critical(self, "Error", "Invalid chart type selected.")
             return
 
-    def update_chart_type(self, event):
-        """Update the chart type when the user selects a new option from the ComboBox."""
-        self.chart_type = self.chart_type_combobox.get()
+        self.notebook.addTab(new_tab, f"{selected_asset} Chart")
+
+    def update_chart_type(self):
+        """Updates the chart type and refreshes the chart when a new type is selected."""
+        self.chart_type = self.chart_type_combobox.currentText()
         self.add_chart()
-            
-    def setup_toolbar(self):
-        """Sets up the toolbar with various buttons for trading actions."""
-        toolbar = tk.Frame(self.parent, bd=3, relief=tk.RAISED, background='purple', height=30, width=1510)
-        toolbar.pack(side=tk.TOP, fill=tk.X)
-
-        # Asset ComboBox for asset selection
-        self.assets_combobox1 = ttk.Combobox(toolbar, values=[
-            "BTC", "ETH", "LTC", "XRP", "BCH", "ADA", "XLM", "TRX", "DASH", "ZEC", "USD", "USDC", "PAX", "EUR"
-        ])
-        self.assets_combobox1.current(0)
-        self.assets_combobox1.pack(side=tk.LEFT, padx=2, pady=2)
-
-        self.assets_combobox2 = ttk.Combobox(toolbar, values=[
-            "USD", "ETH", "LTC", "XRP", "BCH", "ADA", "XLM", "TRX", "DASH", "ZEC", "USD", "USDC", "PAX"
-        ])
-        self.assets_combobox2.current(0)
-        self.assets_combobox2.pack(side=tk.LEFT, padx=2, pady=2)
-
-        # Chart Type ComboBox for chart type selection
-        self.chart_type_combobox = ttk.Combobox(toolbar, values=[
-            "candle", "line", "bar", "renko", "heikin-ashi"
-        ])
-        self.chart_type_combobox.current(0)
-        self.chart_type_combobox.pack(side=tk.LEFT, padx=2, pady=2)
-        self.chart_type_combobox.bind("<<ComboboxSelected>>", self.update_chart_type)
-
-        # Buttons for adding and removing charts
-        chart_button = tk.Button(toolbar, text="Add Chart", relief=tk.RAISED, command=self.add_chart)
-        chart_button.pack(side=tk.LEFT, padx=2, pady=2)
-
-        remove_chart_button = tk.Button(toolbar, text="Remove Chart", relief=tk.RAISED, command=self.remove_chart)
-        remove_chart_button.pack(side=tk.LEFT, padx=2, pady=2)
-
-        # Status Label to display the current mode
-        self.status_label = tk.Label(toolbar, text=f"Mode: {self.trading_mode}", bg='green', relief=tk.FLAT)
-        self.status_label.pack(side=tk.RIGHT, padx=2, pady=2)
-
-    def setup_content(self):
-        """Sets up the main content area where charts will be displayed."""
-        content = tk.Frame(self, height=780, width=1500)
-        content.pack(fill=tk.BOTH, expand=True)
 
     def remove_chart(self):
-        """Removes the currently selected chart."""
-        if len(self.notebook.tabs()) > 0:
-            current_tab = self.notebook.select()
-            self.notebook.forget(current_tab)
+        """Removes the currently selected chart tab."""
+        if self.notebook.count() > 0:
+            self.notebook.removeTab(self.notebook.currentIndex())
+        else:
+            QtWidgets.QMessageBox.information(self, "Info", "No more charts to remove.")

@@ -29,7 +29,7 @@ class MarketData:
             volume = self.get_volume()
             candles.append(
                 (
-                    start_date + ' ' + str(i),
+                    f'{start_date} {str(i)}',
                     open_price,
                     high_price,
                     low_price,

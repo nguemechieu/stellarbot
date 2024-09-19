@@ -1,136 +1,145 @@
-
-import tkinter as tk
-from tkinter import PhotoImage, ttk
-
+import re
+from PyQt5 import QtWidgets, QtGui, QtCore
 import pandas as pd
 
 
+class Wallet(QtWidgets.QWidget):
+    """Stellar wallet widget displaying balance, transactions, and payment options."""
 
-class Wallet(tk.Frame):
-    """Stellar wallet frame displaying balance, transactions, and payment options."""
-
-    def __init__(self, parent, controller):
+    def __init__(self, parent=None, controller=None):
         super().__init__(parent)
         self.controller = controller
-        self.config(background='#1e2a38')
+        self.setGeometry(0, 0, 1530, 780)
+        self.setStyleSheet("background-color: #1e2a38; color: white;")
+
         # Layout for the wallet
-        self.place(x=0, y=0, width=1530, height=780)
-        
-        # Title
-        self.wallet_title = tk.Label(self, text="Stellar Wallet", font=("Helvetica", 24), fg='white', bg='#1e2a38')    
-        self.wallet_title.place(x=20, y=20)
-
-        # Balance Display
-        self.balance_label = tk.Label(self, text="Balance:", font=("Helvetica", 16), fg='white', bg='#1e2a38')
-        self.balance_label.place(x=20, y=80)
-        self.balance_amount_label = tk.Label(self, text="Loading...", font=("Helvetica", 16), fg='orange', bg='#1e2a38')
-        self.balance_amount_label.place(x=120, y=80)
-
-        # Transaction History
-        self.transaction_history_label = tk.Label(self, text="Transaction Details", font=("Helvetica", 18), fg='white', bg='#1e2a38')
-        self.transaction_history_label.place(x=20, y=140)
-        
-        # Transaction Table with extended details
-        self.transaction_table = ttk.Treeview(self, columns=("ID", "Paging Token", "Hash", "Successful", "Created At", "Ledger"), show="headings", height=20)
-        self.transaction_table.config(height=600)
-
-        self.transaction_table.heading("ID", text="ID")
-        
-
-        self.transaction_table.heading("Paging Token", text="Paging Token")
-        self.transaction_table.heading("Hash", text="Hash")
-        self.transaction_table.heading("Successful", text="Successful")
-        self.transaction_table.heading("Created At", text="Created At")
-        self.transaction_table.heading("Ledger", text="Ledger")
-        self.transaction_table.column("ID", width=100)
-        self.transaction_table.column("Paging Token", width=100)
-        self.transaction_table.column("Hash", width=100)
-        self.transaction_table.column("Successful", width=100)
-        self.transaction_table.column("Created At", width=100)
-        self.transaction_table.column("Ledger", width=100)
-        self.transaction_table.place(x=20, y=180)
-
-        # Transaction Details Section
-        self.transaction_details_label = tk.Label(self, text="Transaction Metadata", font=("Helvetica", 18), fg='white', bg='#1e2a38')
-        self.transaction_details_label.place(x=600, y=140)
-
-        # Transaction Metadata text area
-        self.transaction_details_text = tk.Text(self, height=600, width=200,font= ("Helvetica",14), fg='white', bg='#1e2a38')
-        self.transaction_details_text.place(x=600, y=180)
-
-        # Send Payment Section
-        self.send_payment_label = tk.Label(self, text="Send Payment", font=("Helvetica", 18), fg='white', bg='#1e2a38')
-        self.send_payment_label.place(x=600, y=520)
-        
-        # Recipient Entry
-        self.recipient_label = tk.Label(self, text="Recipient Account ID", font=("Helvetica", 14), fg='white', bg='#1e2a38')
-        self.recipient_label.place(x=600, y=560)
-        self.recipient_entry = tk.Entry(self, width=50)
-        self.recipient_entry.place(x=800, y=560)
-
-        # Amount Entry
-        self.amount_label = tk.Label(self, text="Amount", font=("Helvetica", 14), fg='white', bg='#1e2a38')
-        self.amount_label.place(x=600, y=600)
-        self.amount_entry = tk.Entry(self, width=20)
-        self.amount_entry.place(x=800, y=600)
-
-        # Asset Entry (e.g., XLM, USDC)
-        self.asset_label = tk.Label(self, text="Asset (e.g., XLM)", font=("Helvetica", 14), fg='white', bg='#1e2a38')
-        self.asset_label.place(x=600, y=640)
-        self.asset_entry = tk.Entry(self, width=20)
-        self.asset_entry.place(x=800, y=640)
-
-        # Send Payment Button
-        self.send_button = tk.Button(self, text="Send Payment", command=lambda:self.send_payment, bg='#4CAF50', fg='white', font=("Helvetica", 14))
-        self.send_button.place(x=800, y=680)
+        self.create_widgets()
 
         # Start auto-refresh for wallet data
         self.refresh_wallet_data()
-      
+
+    def create_widgets(self):
+        """Create and arrange the widgets."""
+        layout = QtWidgets.QVBoxLayout(self)
+
+        # Title
+        self.wallet_title = QtWidgets.QLabel("Stellar Wallet", self)
+        self.wallet_title.setStyleSheet("font-size: 24pt; color: white;")
+        layout.addWidget(self.wallet_title, alignment=QtCore.Qt.AlignLeft)
+
+        # Balance Display
+        self.balance_label = QtWidgets.QLabel("Balance:", self)
+        self.balance_label.setStyleSheet("font-size: 16pt; color: white;")
+        layout.addWidget(self.balance_label)
+
+        self.balance_amount_label = QtWidgets.QLabel("Loading...", self)
+        self.balance_amount_label.setStyleSheet("font-size: 16pt; color: orange;")
+        layout.addWidget(self.balance_amount_label)
+
+        # Transaction History Table
+        self.transaction_table = QtWidgets.QTableWidget(self)
+        self.transaction_table.setColumnCount(6)
+        self.transaction_table.setHorizontalHeaderLabels(["ID", "Paging Token", "Hash", "Successful", "Created At", "Ledger"])
+        self.transaction_table.setColumnWidth(0, 100)
+        self.transaction_table.setColumnWidth(1, 100)
+        self.transaction_table.setColumnWidth(2, 100)
+        self.transaction_table.setColumnWidth(3, 100)
+        self.transaction_table.setColumnWidth(4, 100)
+        self.transaction_table.setColumnWidth(5, 100)
+        layout.addWidget(self.transaction_table)
+
+        # Transaction Details Section
+        self.transaction_details_label = QtWidgets.QLabel("Transaction Metadata", self)
+        self.transaction_details_label.setStyleSheet("font-size: 18pt; color: white;")
+        layout.addWidget(self.transaction_details_label)
+
+        # Transaction Metadata text area
+        self.transaction_details_text = QtWidgets.QTextEdit(self)
+        self.transaction_details_text.setFixedHeight(100)
+        layout.addWidget(self.transaction_details_text)
+
+        # Send Payment Section
+        self.send_payment_label = QtWidgets.QLabel("Send Payment", self)
+        self.send_payment_label.setStyleSheet("font-size: 18pt; color: white;")
+        layout.addWidget(self.send_payment_label)
+
+        # Recipient Account ID
+        self.recipient_label = QtWidgets.QLabel("Recipient Account ID", self)
+        layout.addWidget(self.recipient_label)
+        self.recipient_entry = QtWidgets.QLineEdit(self)
+        layout.addWidget(self.recipient_entry)
+
+        # Amount Entry
+        self.amount_label = QtWidgets.QLabel("Amount", self)
+        layout.addWidget(self.amount_label)
+        self.amount_entry = QtWidgets.QLineEdit(self)
+        layout.addWidget(self.amount_entry)
+
+        # Asset Entry
+        self.asset_label = QtWidgets.QLabel("Asset (e.g., XLM)", self)
+        layout.addWidget(self.asset_label)
+        self.asset_entry = QtWidgets.QLineEdit(self)
+        layout.addWidget(self.asset_entry)
+
+        # Send Payment Button
+        self.send_button = QtWidgets.QPushButton("Send Payment", self)
+        self.send_button.setStyleSheet("background-color: #4CAF50; color: white; font-size: 14pt;")
+        self.send_button.clicked.connect(self.send_payment)
+        layout.addWidget(self.send_button)
+
+        self.setLayout(layout)
 
     def refresh_wallet_data(self):
         """Refresh the wallet data like balance and transaction history."""
         # Get balance and update UI
         balance = pd.read_csv('ledger_accounts.csv')
-        self.balance_amount_label.config(
-            text=f"${balance['balance']}"
-        )
+        self.balance_amount_label.setText(f"${balance['balance'][0]}")  # Assuming balance is in the first row
 
         # Get transaction history and update table
-        transactions = self.controller.bot.trading_engine.get_transactions()  # Example method
-        for row in self.transaction_table.get_children():
-            self.transaction_table.delete(row)
-        
-        for  transaction in transactions:
+        transactions = pd.read_csv('ledger_transactions.csv')
+        self.transaction_table.setRowCount(0)  # Clear previous data
 
-            
-            self.transaction_table.insert('', 'end', values=(
-                transaction["id"], 
+        for idx, transaction in transactions.iterrows():
+            self._extracted_from_refresh_wallet_data_12(idx, transaction)
 
-                transaction["paging_token"], 
-                transaction["hash"],
-                transaction["successful"],
-                transaction["created_at"],
-                transaction["ledger"]
-                
-            ))
-       
-        account_id_label = tk.Label(self,  width=200, height=200)
-        account_id_label.place(x=800, y=50)
-  
+    # TODO Rename this here and in `refresh_wallet_data`
+    def _extracted_from_refresh_wallet_data_12(self, idx, transaction):
+        self.transaction_table.insertRow(idx)
+        self.transaction_table.setItem(idx, 0, QtWidgets.QTableWidgetItem(str(transaction.get('id', 'N/A'))))
+        self.transaction_table.setItem(idx, 1, QtWidgets.QTableWidgetItem(str(transaction.get('paging_token', 'N/A'))))
+        self.transaction_table.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(transaction.get('hash', 'N/A'))))
+        self.transaction_table.setItem(idx, 3, QtWidgets.QTableWidgetItem(str(transaction.get('successful', 'N/A'))))
+        self.transaction_table.setItem(idx, 4, QtWidgets.QTableWidgetItem(str(transaction.get('created_at', 'N/A'))))
+        self.transaction_table.setItem(idx, 5, QtWidgets.QTableWidgetItem(str(transaction.get('ledger', 'N/A'))))
+
     def send_payment(self):
-     """Send a payment to a recipient."""
-     recipient_account_id = self.recipient_entry.get()
-     amount = self.amount_entry.get()
-     asset = self.asset_entry.get()
+        """Send a payment to a recipient."""
+        recipient_account_id = self.recipient_entry.text()
 
-     
-     if not recipient_account_id or not amount or not asset:
-         tk.Message(self,text="Please fill in all required fields.")
-         return
-     
-     if not self.controller.bot.trading_engine.send_payment(recipient_account_id, amount, asset):
-         tk.Message(self,text="Failed to send payment.")
-         return
-     
-  
+        #Verify that the recipient address is correct for the transaction
+        if not self.verify_address(self.recipient_entry.text()):
+            QtWidgets.QMessageBox.warning(self, "Invalid Address", "Please enter a valid Stellar address.")
+            return
+
+
+
+        amount = self.amount_entry.text()
+        asset = self.asset_entry.text()
+
+        if not recipient_account_id or not amount or not asset:
+            QtWidgets.QMessageBox.warning(self, "Input Error", "Please fill in all required fields.")
+            return
+
+        if not self.controller.bot.trading_engine.send_payment(recipient_account_id, amount, asset):
+            QtWidgets.QMessageBox.critical(self, "Payment Error", "Failed to send payment.")
+            return
+
+        QtWidgets.QMessageBox.information(self, "Payment Sent", "Payment sent successfully.")
+    
+    def verify_address(self, address):
+        """Check if the given address is a valid Stellar address."""
+        #Check if the address matches the stell address regex pattern
+
+
+        # For simplicity, let's assume this is a valid regex pattern
+        return re.match(r'G[A-Fa-f0-9]{55}', address)

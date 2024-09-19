@@ -4,14 +4,19 @@ import os
 # Read requirements.txt for install_requires
 def read_requirements():
     """Read requirements.txt and return as a list of dependencies."""
-    with open('requirements.txt') as req_file:
-        return req_file.readlines()
+    try:
+        with open('requirements.txt') as req_file:
+            # Filter out empty lines and comments
+            return [line.strip() for line in req_file if line.strip() and not line.startswith('#')]
+    except FileNotFoundError:
+        print("requirements.txt not found, no dependencies installed.")
+        return []
 
 setup(
     name='stellarbot',
     version='1.0.2',
     description='StellarBot is a professional trading bot that interacts with the Stellar network.',
-    author='Nguemechieu',
+    author='Noel Martial Nguemechieu',
     author_email='nguemechieu@live.com',
     packages=find_packages(where='src'),  # Find packages in the 'src' folder
     package_dir={'': 'src'},  # Tells setuptools that the packages are under 'src'

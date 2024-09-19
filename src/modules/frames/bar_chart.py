@@ -1,63 +1,86 @@
-import tkinter as tk
-from tkinter import ttk, filedialog
-from tkinter import messagebox
+import sys
 import pandas as pd
 import mplfinance as mpf
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from PyQt5.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog, QMessageBox, QApplication)
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 
-class BarChart(tk.Frame):
-    """A Tkinter frame for displaying a bar chart using mplfinance."""
+class BarChart(QWidget):
+    """A PyQt5 widget for displaying a bar chart using mplfinance."""
 
-    def __init__(self, parent, controller=None, df=None):
-        """Initialize the Bar chart frame."""
+    def __init__(self, parent=None, controller=None, df=None):
+        """Initialize the Bar chart widget."""
         super().__init__(parent)
         self.controller = controller
+        self.setGeometry(
+            0, 0,1530,780
+        )
 
         # Ensure the 'Date' column is in datetime format before setting it as the index
         self.df = pd.DataFrame(df)
         self.df['Date'] = pd.to_datetime(self.df['Date'], errors='coerce')  # Convert 'Date' column to datetime
-        self.df.dropna(subset=['Date'], inplace=True)  # Remove any rows with invalid dates
+        self.df.dropna(subset=['Date'], inplace=True)
         self.df.set_index('Date', inplace=True)
 
-        # Setup UI components
+        # Setup the UI components
         self.setup_ui()
 
     def setup_ui(self):
         """Setup the UI with buttons and chart."""
-        toolbar = tk.Frame(self, bd=2, relief=tk.RAISED, bg='gray')
-        toolbar.pack(side=tk.TOP, fill=tk.X)
+        layout = QVBoxLayout(self)
 
-        # Buttons for chart management
-        add_chart_button = tk.Button(toolbar, text="Add Chart", command=self.add_chart)
-        add_chart_button.pack(side=tk.LEFT, padx=5, pady=5)
+        # Toolbar for buttons
+        toolbar_layout = QHBoxLayout()
+        
+        # Add chart button
+        add_chart_button = QPushButton("Add Chart")
+        add_chart_button.clicked.connect(self.add_chart)
+        toolbar_layout.addWidget(add_chart_button)
 
-        remove_chart_button = tk.Button(toolbar, text="Remove Chart", command=self.remove_chart)
-        remove_chart_button.pack(side=tk.LEFT, padx=5, pady=5)
+        # Remove chart button
+        remove_chart_button = QPushButton("Remove Chart")
+        remove_chart_button.clicked.connect(self.remove_chart)
+        toolbar_layout.addWidget(remove_chart_button)
 
-        refresh_button = tk.Button(toolbar, text="Refresh Data", command=self.refresh_chart)
-        refresh_button.pack(side=tk.LEFT, padx=5, pady=5)
+        # Refresh button
+        refresh_button = QPushButton("Refresh Data")
+        refresh_button.clicked.connect(self.refresh_chart)
+        toolbar_layout.addWidget(refresh_button)
 
-        save_button = tk.Button(toolbar, text="Save Chart", command=self.save_chart)
-        save_button.pack(side=tk.LEFT, padx=5, pady=5)
+        # Save chart button
+        save_button = QPushButton("Save Chart")
+        save_button.clicked.connect(self.save_chart)
+        toolbar_layout.addWidget(save_button)
+
+        # Add the toolbar layout to the main layout
+        layout.addLayout(toolbar_layout)
 
         # Create the bar chart
+        self.canvas = None
         self.create_bar_chart()
+
+        # Set the main layout
+        self.setLayout(layout)
 
     def create_bar_chart(self):
         """Create and display the bar chart."""
         try:
             # Generate the bar chart using mplfinance
-            self.fig, self.ax = mpf.plot(self.df, type='ohlc', style='charles', title='Bar Chart',
-                                         ylabel='Price', volume=True, returnfig=True)
+            fig, ax = mpf.plot(self.df, type='ohlc', style='charles', title='Bar Chart',
+                               ylabel='Price', volume=True, returnfig=True)
 
-            # Embed the chart into Tkinter using FigureCanvasTkAgg
-            self.canvas = FigureCanvasTkAgg(self.fig, master=self)
-            self.canvas.draw()
-            self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+            # Embed the chart into PyQt5 using FigureCanvasQTAgg
+            if self.canvas is not None:
+                self.layout().removeWidget(self.canvas)
+                self.canvas.deleteLater()
+
+            self.canvas = FigureCanvas(fig)
+            self.layout().addWidget(self.canvas)
 
         except Exception as e:
             print(f"Error generating chart: {e}")
-            messagebox.showerror("Error", f"Error generating chart: {e}")
+            QMessageBox.critical(self, "Error", f"Error generating chart: {e}")
 
     def add_chart(self):
         """Simulate adding a new chart (placeholder functionality)."""
@@ -75,7 +98,22 @@ class BarChart(tk.Frame):
 
     def save_chart(self):
         """Save the bar chart as an image."""
-        file_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG files", "*.png")])
+        file_path, _ = QFileDialog.getSaveFileName(self, "Save Chart", "", "PNG Files (*.png)")
         if file_path:
-            self.fig.savefig(file_path)
+            self.canvas.figure.savefig(file_path)
             print(f"Chart saved as {file_path}")
+
+
+# Example usage if running as a standalone application
+if __name__ == "__main__":
+    # Sample Data
+    df = {
+        'Date': pd.date_range(start='2023-01-01', periods=10, freq='D'),
+        'Open': [100, 120, 90, 110, 130, 105, 115, 125, 140, 110],
+        'High': [110, 130, 105, 125, 145, 115, 125, 135, 150, 120],
+        'Low': [90, 100, 85, 95, 115, 85, 95, 105, 120, 90],
+        'Close': [105, 125, 100, 115, 135, 105, 115, 125, 140, 115],
+        'Volume': [1000, 2000, 1500, 1800, 3000, 1500, 1800, 2500, 500, 1800]
+    }
+
+  

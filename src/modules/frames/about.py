@@ -1,18 +1,24 @@
-import tkinter as tk
+from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QApplication
+from PyQt5.QtCore import Qt
+import sys
 
-class About(tk.Frame):
-    def __init__(self, parent, controller):
+class About(QWidget):
+    def __init__(self, parent=None, controller=None):
         super().__init__(parent)
         self.controller = controller
- 
-        
+
         # Set the background color
-        self.configure(bg='#1e2a38')
-        
+        self.setStyleSheet("background-color: #1e2a38;")
+
+        # Create the layout
+        layout = QVBoxLayout()
+
         # Title label
-        title = tk.Label(self, text="About StellarBot", font=("Helvetica", 24), fg="white", bg="#1e2a38")
-        title.pack(pady=20)
-        self.place(x=0, y=0, width=1530, height=780)
+        title = QLabel("About StellarBot", self)
+        title.setStyleSheet("color: white; font-size: 24px; font-family: Helvetica;")
+        title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title)
+        
         # About description
         about_text = """
         StellarBot is an open-source project aimed at providing a 
@@ -25,11 +31,25 @@ class About(tk.Frame):
 
         Author: nguemechieu
         GitHub: https://github.com/nguemechieu/stellarbot
-        
         """
-        about_label = tk.Label(self, text=about_text, font=("Helvetica", 14), fg="white", bg="#1e2a38", justify="left")
-        about_label.pack(pady=20)
-        
+        about_label = QLabel(about_text, self)
+        about_label.setStyleSheet("color: white; font-size: 14px; font-family: Helvetica;")
+        about_label.setAlignment(Qt.AlignLeft)
+        about_label.setWordWrap(True)
+        layout.addWidget(about_label)
+
         # Back button to navigate to other frames
-        back_button = tk.Button(self, text="Back", command=lambda: controller.show_frame("Home"), bg="white", fg="#1e2a38")
-        back_button.pack(pady=10)
+        back_button = QPushButton("Back", self)
+        back_button.setStyleSheet("background-color: white; color: #1e2a38;")
+        back_button.clicked.connect(self.go_back)
+        layout.addWidget(back_button)
+
+        self.setLayout(layout)
+
+    def go_back(self):
+        """Handle back button click to navigate to home frame."""
+        if self.controller:
+            self.controller.show_frame("Home")
+        
+        sys.exit()
+

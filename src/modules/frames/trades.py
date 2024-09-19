@@ -1,59 +1,55 @@
-import tkinter as tk
-from tkinter import ttk
+from PyQt5 import QtWidgets, QtCore
+import pandas as pd
 
-
-class Trades(tk.Frame):
-    """Frame to display trades from Stellar."""
-    def __init__(self, parent, controller):
+class Trades(QtWidgets.QWidget):
+    """Widget to display trades from Stellar."""
+    
+    def __init__(self, parent=None, controller=None):
         super().__init__(parent)
         self.controller = controller
-        self.configure(bg="#f8f9fa")  # Light background for a clean look
-        self.place(x=0, y=0, width=1530, height=780)
+
+        self.setGeometry(
+            0, 0,1530,780
+        )
+        self.setStyleSheet("background-color: #f8f9fa;")
+        layout = QtWidgets.QVBoxLayout(self)
+
         # Title label
-        title_label = tk.Label(self, text="Trades", font=("Helvetica", 18, "bold"), fg="#343a40", bg="#f8f9fa")
-        title_label.pack(pady=20)
-        self.config(background='#1e2a38')
+        title_label = QtWidgets.QLabel("Trades", self)
+        title_label.setAlignment(QtCore.Qt.AlignCenter)
+        title_label.setStyleSheet("color: #343a40; font-size: 18px; font-weight: bold;")
+        layout.addWidget(title_label)
 
-        # Create the treeview (table) to display the trades
-        columns = ("id", "buyer", "seller", "sold_asset", "bought_asset", "amount", "price")
-        self.tree = ttk.Treeview(self, columns=columns, show="headings", height=15)
+        # Create the table (QTableWidget) to display the trades
+        self.table = QtWidgets.QTableWidget(self)
+        self.table.setColumnCount(7)
+        self.table.setHorizontalHeaderLabels(["Trade ID", "Buyer", "Seller", "Sold Asset", "Bought Asset", "Amount", "Price"])
+        self.table.setEditTriggers(QtWidgets.QTableWidget.NoEditTriggers)  # Prevent editing
+        layout.addWidget(self.table)
 
-        # Define column headers
-        self.tree.heading("id", text="Trade ID")
-        self.tree.heading("buyer", text="Buyer")
-        self.tree.heading("seller", text="Seller")
-        self.tree.heading("sold_asset", text="Sold Asset")
-        self.tree.heading("bought_asset", text="Bought Asset")
-        self.tree.heading("amount", text="Amount")
-        self.tree.heading("price", text="Price")
+        # Load trade data from CSV
+        self.trades = pd.read_csv('ledger_trades.csv')
 
-        # Set column widths
-        self.tree.column("id", width=100)
-        self.tree.column("buyer", width=200)
-        self.tree.column("seller", width=200)
-        self.tree.column("sold_asset", width=150)
-        self.tree.column("bought_asset", width=150)
-        self.tree.column("amount", width=100)
-        self.tree.column("price", width=100)
+        # Populate the table with data
+        self.update_trades_data()
 
-        # Pack the treeview into the frame
-        self.tree.pack(pady=20, fill="x")
+    def update_trades_data(self):
+        """Fetch and display trades data in the table."""
+        self.table.setRowCount(0)  # Clear existing data
 
-        self.trades=self.controller.bot.trading_engine.get_trades()
+        # Populate the table with data from the DataFrame
+        for idx, row in self.trades.iterrows():
+            self.table.insertRow(idx)
+            self.table.setItem(idx, 0, QtWidgets.QTableWidgetItem(str(row.get("id", "N/A"))))
+            self.table.setItem(idx, 1, QtWidgets.QTableWidgetItem(row.get("buyer", "N/A")))
+            self.table.setItem(idx, 2, QtWidgets.QTableWidgetItem(row.get("seller", "N/A")))
+            self.table.setItem(idx, 3, QtWidgets.QTableWidgetItem(row.get("sold_asset", "N/A")))
+            self.table.setItem(idx, 4, QtWidgets.QTableWidgetItem(row.get("bought_asset", "N/A")))
+            self.table.setItem(idx, 5, QtWidgets.QTableWidgetItem(str(row.get("amount", 0))))
+            self.table.setItem(idx, 6, QtWidgets.QTableWidgetItem(str(row.get("price", 0))))
 
-        # Display trades in the treeview
-        for k,row in self.trades.iterrows():
-            self.tree.insert("", "end", values=(
-                row["id"],
-                row.get('buyer', 'N/A'),
-                  row.get("seller", 'N/A'),
-                 row.get("sold_asset", 'N/A'),
-                 row.get("bought_asset", 'N/A'),
-                 row.get("amount", 0),
-                 row.get("price", 0)  # Fetch asset details for each trade
-              
-            ))
-            # Fetch asset details for each trade
-           
+        # Automatically resize columns
+        self.table.resizeColumnsToContents()
 
-
+        # Schedule the next update
+        QtCore.QTimer.singleShot(1000, self.update_trades_data)

@@ -1,22 +1,22 @@
-import tkinter as tk
-from tkinter import ttk, filedialog
-from tkinter import messagebox
+import sys
 import pandas as pd
 import mplfinance as mpf
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from PyQt5.QtWidgets import QMainWindow, QApplication, QVBoxLayout, QWidget, QPushButton, QFileDialog, QHBoxLayout
 
-class LineChart(tk.Frame):
-    """A Tkinter frame for displaying a line chart using mplfinance."""
+class LineChart(QWidget):
+    """A PyQt5 widget for displaying a line chart using mplfinance."""
 
-    def __init__(self, parent, controller=None, df=None):
-        """Initialize the line chart frame."""
+    def __init__(self, parent=None, df=None):
+        """Initialize the line chart widget."""
         super().__init__(parent)
-        self.controller = controller
-
+        self.setGeometry(
+            0, 0,1530,780
+        )
         # Ensure the 'Date' column is in datetime format before setting it as the index
         self.df = pd.DataFrame(df)
-        self.df['Date'] = pd.to_datetime(self.df['Date'], errors='coerce')  # Convert Date column to datetime
-        self.df.dropna(subset=['Date'])
+        self.df['Date'] = pd.to_datetime(self.df['Date'], errors='coerce')  # Convert 'Date' column to datetime
+        self.df.dropna(subset=['Date'], inplace=True)
         self.df.set_index('Date', inplace=True)
 
         # Setup UI components
@@ -24,21 +24,30 @@ class LineChart(tk.Frame):
 
     def setup_ui(self):
         """Setup the UI with buttons and chart."""
-        toolbar = tk.Frame(self, bd=2, relief=tk.RAISED, bg='gray')
-        toolbar.pack(side=tk.TOP, fill=tk.X)
+        # Create layout for the widget
+        layout = QVBoxLayout(self)
+
+        # Create toolbar layout for buttons
+        toolbar = QHBoxLayout()
 
         # Buttons for chart management
-        add_chart_button = tk.Button(toolbar, text="Add Chart", command=self.add_chart)
-        add_chart_button.pack(side=tk.LEFT, padx=5, pady=5)
+        add_chart_button = QPushButton("Add Chart", self)
+        add_chart_button.clicked.connect(self.add_chart)
+        toolbar.addWidget(add_chart_button)
 
-        remove_chart_button = tk.Button(toolbar, text="Remove Chart", command=self.remove_chart)
-        remove_chart_button.pack(side=tk.LEFT, padx=5, pady=5)
+        remove_chart_button = QPushButton("Remove Chart", self)
+        remove_chart_button.clicked.connect(self.remove_chart)
+        toolbar.addWidget(remove_chart_button)
 
-        refresh_button = tk.Button(toolbar, text="Refresh Data", command=self.refresh_chart)
-        refresh_button.pack(side=tk.LEFT, padx=5, pady=5)
+        refresh_button = QPushButton("Refresh Data", self)
+        refresh_button.clicked.connect(self.refresh_chart)
+        toolbar.addWidget(refresh_button)
 
-        save_button = tk.Button(toolbar, text="Save Chart", command=self.save_chart)
-        save_button.pack(side=tk.LEFT, padx=5, pady=5)
+        save_button = QPushButton("Save Chart", self)
+        save_button.clicked.connect(self.save_chart)
+        toolbar.addWidget(save_button)
+
+        layout.addLayout(toolbar)
 
         # Create the line chart
         self.create_line_chart()
@@ -50,14 +59,13 @@ class LineChart(tk.Frame):
             self.fig, self.ax = mpf.plot(self.df, type='line', style='charles', title='Line Chart',
                                          ylabel='Price', volume=True, returnfig=True)
 
-            # Embed the chart into Tkinter using FigureCanvasTkAgg
-            self.canvas = FigureCanvasTkAgg(self.fig, master=self)
+            # Embed the chart into PyQt5 using FigureCanvas
+            self.canvas = FigureCanvas(self.fig)
+            self.layout().addWidget(self.canvas)
             self.canvas.draw()
-            self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
         except Exception as e:
             print(f"Error generating chart: {e}")
-            messagebox.showerror("Error", f"Error generating chart: {e}")
 
     def add_chart(self):
         """Simulate adding a new chart (placeholder functionality)."""
@@ -75,8 +83,7 @@ class LineChart(tk.Frame):
 
     def save_chart(self):
         """Save the line chart as an image."""
-        if file_path := filedialog.asksaveasfilename(
-            defaultextension=".png", filetypes=[("PNG files", "*.png")]
-        ):
+        file_path, _ = QFileDialog.getSaveFileName(self, "Save Chart", "", "PNG files (*.png);;All Files (*)")
+        if file_path:
             self.fig.savefig(file_path)
             print(f"Chart saved as {file_path}")

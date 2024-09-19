@@ -1,142 +1,179 @@
-import csv
 import os
 import re
-import tkinter as tk
-from tkinter import StringVar, ttk, messagebox, filedialog
-import qrcode
+import csv
 import requests
+import qrcode
+from PyQt5 import QtGui, QtWidgets
 from stellar_sdk import Keypair
 from modules.classes.settings_manager import SettingsManager
 from modules.classes.stellar_client import StellarClient
 
 
-class Login(tk.Frame):
-    """Stellar Network User Login Frame."""
+class Login(QtWidgets.QWidget):
+    """Stellar Network User Login Frame using PyQt5."""
 
-    def __init__(self, parent, controller=None):
+
+    def __init__(self, parent=None, controller=None):
         super().__init__(parent)
         self.controller = controller
+
+        self.setGeometry(
+            0,
+            0,
+            1530,
+            780
+        )
 
         # Load saved settings like account and secret keys
         self.settings = SettingsManager.load_settings()
 
-        # Set background color and frame size
-        self.configure(bg='#1e2a38')
-        self.place(x=0, y=0, width=1530, height=780)
+        # Set up styling and layout
+        self.set_ui()
+        self.populate_saved_settings()
 
-        # Set styling for the frame
-        self.style = ttk.Style()
-        self.style.configure("Treeview", font=("Helvetica", 10), rowheight=25)
-        self.style.configure("Treeview.Heading", font=("Helvetica", 12, "bold"))
+    def set_ui(self):
+        """Set up the UI layout and components."""
+        self.setStyleSheet("background-color: #1e2a38; color: white;")
+        self.setFixedSize(1530, 780)
+
+        layout = QtWidgets.QVBoxLayout()
 
         # Application name label
-        self.app_name_label = tk.Label(self, text="Welcome to StellarBot", font=("Helvetica", 23, "bold"), bg='#1e2a38', fg='green')
-        self.app_name_label.pack(pady=20)
+        app_name_label = QtWidgets.QLabel("Welcome to StellarBot", self)
+        app_name_label.setFont(QtGui.QFont("Helvetica", 23, QtGui.QFont.Bold))
+        app_name_label.setStyleSheet("color: green;")
+        layout.addWidget(app_name_label)
+        layout.addSpacing(10)
 
         # Title label
-        self.title_label = tk.Label(self, text="Stellar Network Login", font=("Helvetica", 16, "bold"), bg='#1e2a38', fg='white')
-        self.title_label.pack(pady=20)
+        title_label = QtWidgets.QLabel("Stellar Network Login", self)
+        title_label.setFont(QtGui.QFont("Helvetica", 16, QtGui.QFont.Bold))
+        layout.addWidget(title_label)
+        layout.addSpacing(10)
 
         # Account ID entry field
-        self.account_id_label = tk.Label(self, text="Account ID", font=("Helvetica", 12), bg='#1e2a38', fg='white')
-        self.account_id_label.pack(pady=10)
-        self.account_id = StringVar()
-        self.account_id_entry = tk.Entry(self, textvariable=self.account_id, font=("Helvetica", 12), width=40)
-        self.account_id_entry.pack(pady=10)
-
-        # Set the saved account ID if available
-        if 'account_id' in self.settings:
-            self.account_id.set(self.settings['account_id'])
+        layout.addWidget(self.create_label("Account ID"))
+        self.account_id_entry = QtWidgets.QLineEdit(self)
+        layout.addWidget(self.account_id_entry)
 
         # Secret Key entry field
-        self.secret_key_label = tk.Label(self, text="Secret Key", font=("Helvetica", 12), bg='#1e2a38', fg='white')
-        self.secret_key_label.pack(pady=10)
-        self.secret_id = StringVar()
-        self.secret_key_entry = tk.Entry(self, textvariable=self.secret_id, font=("Helvetica", 12), width=40, show='*')
-        self.secret_key_entry.pack(pady=10)
-
-        # Set the saved secret key if available
-        if 'secret_key' in self.settings:
-            self.secret_id.set(self.settings['secret_key'])
+        layout.addWidget(self.create_label("Secret Key"))
+        self.secret_key_entry = QtWidgets.QLineEdit(self)
+        self.secret_key_entry.setEchoMode(QtWidgets.QLineEdit.Password)
+        layout.addWidget(self.secret_key_entry)
 
         # Password visibility toggle button
-        self.password_visibility_toggle = tk.Button(self, text="Show", font=("Helvetica", 12), bg='gray', fg='white', command=self.toggle_password_visibility)
-        self.password_visibility_toggle.pack(pady=10)
+        self.password_visibility_toggle = QtWidgets.QPushButton("Show", self)
+        self.password_visibility_toggle.clicked.connect(self.toggle_password_visibility)
+        layout.addWidget(self.password_visibility_toggle)
 
         # Login button
-        self.login_button = tk.Button(self, text="Login", font=("Helvetica", 12), bg='gray', fg='white', command=self.login)
-        self.login_button.pack(pady=20)
+        self.login_button = QtWidgets.QPushButton("Login", self)
+        self.login_button.clicked.connect(self.login)
+        layout.addWidget(self.login_button)
 
         # Create new account button
-        self.create_account_button = tk.Button(self, text="Create New Account", font=("Helvetica", 12), bg='blue', fg='white', command=self.create_new_account)
-        self.create_account_button.pack(pady=20)
+        self.create_account_button = QtWidgets.QPushButton("Create New Account", self)
+        self.create_account_button.clicked.connect(self.create_new_account)
+        layout.addWidget(self.create_account_button)
 
         # Remember Me checkbox
-        self.remember_me = tk.BooleanVar(value=self.settings.get('remember_me', False))
-        self.remember_me_checkbox = tk.Checkbutton(self, text="Remember Me", font=("Helvetica", 12), bg='#1e2a38', fg='white', variable=self.remember_me)
-        self.remember_me_checkbox.pack(pady=10)
+        self.remember_me = QtWidgets.QCheckBox("Remember Me", self)
+        layout.addWidget(self.remember_me)
 
         # Network connectivity status label
-        self.network_status_label = tk.Label(self, text="Checking network status...", font=("Helvetica", 12), bg='#1e2a38', fg='orange')
-        self.network_status_label.pack(pady=10)
-        self.connectivity = self.check_network_connectivity()
+        self.network_status_label = QtWidgets.QLabel("Checking network status...", self)
+        layout.addWidget(self.network_status_label)
+        self.check_network_connectivity()
 
-        # Info label to display messages
-        self.info_label = tk.Label(self, text="", font=("Helvetica", 12), bg='#1e2a38', fg='white')
-        self.info_label.pack(pady=5)
+        # Info label for messages
+        self.info_label = QtWidgets.QLabel("", self)
+        layout.addWidget(self.info_label)
+
+        self.setLayout(layout)
+     
+
+    def create_label(self, text):
+        """Helper method to create styled labels."""
+        label = QtWidgets.QLabel(self)
+        label.setText(text)
+        label.setStyleSheet("font-size: 14px;")
+        return label
+
+    def populate_saved_settings(self):
+        """Populate fields with saved settings if available."""
+        if 'account_id' in self.settings:
+            self.account_id_entry.setText(self.settings['account_id'])
+
+        if 'secret_key' in self.settings:
+            self.secret_key_entry.setText(self.settings['secret_key'])
+
+        self.remember_me.setChecked(self.settings.get('remember_me', False))
 
     def check_network_connectivity(self):
         """Check network connectivity to the Stellar Network and update the status."""
         try:
-            response = requests.get('https://horizon.stellar.org')
+            response = requests.get('https://horizon.stellar.org/assets')
             if response.status_code == 200:
-                self.network_status_label.config(text="Connected to Stellar Network", fg='green')
-                return True
+               self.update_network_status("Connected to Stellar Network", "color: green;", True)
+              
+               return True
+            
             else:
-                self.network_status_label.config(text="Network Unreachable", fg='red')
+                self.update_network_status("Network Unreachable", "color: red;", False)
                 return False
         except Exception:
-            self.network_status_label.config(text="Network Unreachable", fg='red')
+            self.update_network_status("Network Unreachable", "color: red;", False)
             return False
+    def update_network_status(self, message, style, connected):
+        """Update the network status label."""
+        self.network_status_label.setText(message)
+        self.network_status_label.setStyleSheet(style)
+        return connected
 
     def login(self):
         """Handle the login process using the provided Account ID and Secret Key."""
-        if not self.is_valid_stellar_account_id(self.account_id.get()):
-            self.info_label.config(text="Invalid Stellar Network Account ID!", fg='red')
+        account_id = self.account_id_entry.text()
+        secret_key = self.secret_key_entry.text()
+
+        if not self.is_valid_stellar_account_id(account_id):
+            self.update_info_label("Invalid Stellar Network Account ID!", "red")
             return
-        
-        if not self.is_valid_stellar_secret(self.secret_id.get()):
-            self.info_label.config(text="Invalid Stellar Network Account Secret!", fg='red')
+
+        if not self.is_valid_stellar_secret(secret_key):
+            self.update_info_label("Invalid Stellar Network Account Secret!", "red")
             return
-        
-        if not self.account_id.get() or not self.secret_id.get():
-            self.info_label.config(text="Both Account ID and Secret Key are required!", fg='red')
+
+        if not account_id or not secret_key:
+            self.update_info_label("Both Account ID and Secret Key are required!", "red")
             return
-        
+
+        self.update_info_label("Logging in...", "green")
+
+        # Check network connectivity before proceeding
+        if not self.check_network_connectivity():
+            self.update_info_label("Unable to connect to Stellar Network.", "red")
+            return
+
         try:
-            self.info_label.config(text="Logging in...", fg='green')
-
-            # Check network connectivity
-            if not self.connectivity:
-                self.info_label.config(text="Unable to connect to Stellar Network. Please check your internet connection.", fg='red')
-                return
-
-            # Initialize StellarClient
-            self.controller.bot = StellarClient(controller=self.controller, account_id=self.account_id.get(), secret_key=self.secret_id.get())
-            self.controller.show_pages("Home")
-
-            # Save user settings if "Remember Me" is checked
+            # Initialize StellarClient and navigate to Home
+            self.controller.bot = StellarClient(controller=self.controller, account_id=account_id, secret_key=secret_key)
             self.save_user_settings()
-
+            self.controller.show_frame("Home")
         except Exception as e:
-            self.info_label.config(text=f"Error: {e}", fg='red')
+            self.update_info_label(f"An error occurred: {str(e)}", "red")
+
+    def update_info_label(self, message, color):
+        """Update the info label with a message and style."""
+        self.info_label.setText(message)
+        self.info_label.setStyleSheet(f"color: {color};")
 
     def save_user_settings(self):
-        """Save user settings like account ID and secret key if 'Remember Me' is checked."""
+        """Save user settings if 'Remember Me' is checked."""
         settings = {
-            'remember_me': self.remember_me.get(),
-            'account_id': self.account_id.get() if self.remember_me.get() else '',
-            'secret_key': self.secret_id.get() if self.remember_me.get() else ''
+            'remember_me': self.remember_me.isChecked(),
+            'account_id': self.account_id_entry.text() if self.remember_me.isChecked() else '',
+            'secret_key': self.secret_key_entry.text() if self.remember_me.isChecked() else ''
         }
         SettingsManager.save_settings(settings)
 
@@ -144,95 +181,81 @@ class Login(tk.Frame):
         """Generate a new Stellar account and display it in a new window."""
         new_keypair = Keypair.random()
 
-        # Create new account window
-        new_account_window = tk.Toplevel(self)
-        new_account_window.geometry("600x700")  # Increase window size for better display
-        new_account_window.title("New Stellar Lumen's Account")
-        new_account_window.configure(bg='#1e2a38')
+        new_account_window = QtWidgets.QDialog(self)
+        new_account_window.setWindowTitle("New Stellar Lumen's Account")
+        new_account_window.setGeometry(600, 300, 600, 500)
 
-        tk.Label(new_account_window, text="Stellar Account Creation", font=("Helvetica", 16, "bold"), bg='#1e2a38', fg='green').pack(pady=20)
+        layout = QtWidgets.QVBoxLayout()
 
-        # Display the account information
-        tk.Label(new_account_window, text="New Account Created", font=("Helvetica", 14, "bold"), bg='#1e2a38', fg='white').pack(pady=10)
-        tk.Label(new_account_window, text="Account ID (Public Key):", font=("Helvetica", 12), bg='#1e2a38', fg='white').pack(pady=5)
-        account_id_label = tk.Entry(new_account_window, font=("Helvetica", 12), width=60)  # Increased width for long keys
-        account_id_label.insert(0, new_keypair.public_key)
-        account_id_label.config(state='readonly')  # Set to read-only
-        account_id_label.pack(pady=5)
+        title_label = QtWidgets.QLabel("Stellar Account Creation")
+        title_label.setFont(QtGui.QFont("Helvetica", 16, QtGui.QFont.Bold))
+        title_label.setStyleSheet("color: green;")
+        layout.addWidget(title_label)
 
-        # Generate and display a QR code for the account ID
-        try:
-            self.display_qr_code(new_keypair, new_account_window)
-        except Exception as e:
-            print(f"Error generating QR code: {e}")
-            tk.Label(new_account_window, text=f"Error generating QR code: {e}", font=("Helvetica", 12), bg='#1e2a38', fg='red').pack(pady=5)
-            return
+        layout.addWidget(QtWidgets.QLabel("New Account Created"))
+        layout.addWidget(QtWidgets.QLabel(f"Account ID (Public Key): {new_keypair.public_key}"))
 
-        tk.Label(new_account_window, text="Secret Key (Private Key):", font=("Helvetica", 12), bg='#1e2a38', fg='white').pack(pady=5)
-        secret_key_label = tk.Entry(new_account_window, font=("Helvetica", 12), width=60, show="*")  # Increased width for long keys
-        secret_key_label.insert(0, new_keypair.secret)
-        secret_key_label.config(state='readonly')  # Set to read-only
-        secret_key_label.pack(pady=5)
+        # Generate and display a QR code
+        self.display_qr_code(new_keypair.public_key, layout)
 
-        # Save button
-        save_button = tk.Button(new_account_window, text="Save to CSV", font=("Helvetica", 12), bg='green', fg='white',
-                                command=lambda: self.save_account_to_csv(new_keypair.public_key, new_keypair.secret))
-        save_button.pack(pady=10)
+        layout.addWidget(QtWidgets.QLabel(f"Secret Key (Private Key): {new_keypair.secret}"))
+
+        # Save to CSV button
+        save_button = QtWidgets.QPushButton("Save to CSV")
+        save_button.clicked.connect(lambda: self.save_account_to_csv(new_keypair.public_key, new_keypair.secret))
+        layout.addWidget(save_button)
 
         # Close button
-        close_button = tk.Button(new_account_window, text="Close", font=("Helvetica", 12), bg='red', fg='white', command=new_account_window.destroy)
-        close_button.pack(pady=10)
+        close_button = QtWidgets.QPushButton("Close")
+        close_button.clicked.connect(
+            new_account_window.close()
+        )
+        layout.addWidget(close_button)
 
-    def display_qr_code(self, new_keypair, new_account_window):
-        """Generate and display a QR code for the new Stellar account."""
-        # Generate QR code for account ID
-        qr_code_image = qrcode.make(new_keypair.public_key)
-        qr_code_path = "./src/images/account_id.png"
-        qr_code_image.save(qr_code_path)
+        new_account_window.setLayout(layout)
+        new_account_window.exec_()
 
-        # Display QR code
-        qr_code_label = tk.Label(new_account_window, text="Scan this QR code and add 2 XLM or more to activate your account:", font=("Helvetica", 12), bg='#1e2a38', fg='white')
-        qr_code_label.pack(pady=5)
-        qr_code_image = tk.PhotoImage(file=qr_code_path)
-
-        qr_code_display = tk.Label(new_account_window, image=qr_code_image, bg='#1e2a38')
-        qr_code_display.image = qr_code_image  # Keep a reference to the image to prevent garbage collection
-        qr_code_display.pack(pady=2)
+    def display_qr_code(self, public_key, layout):
+        """Generate and display the QR code for the account's public key."""
+        try:
+            qr_code_image = qrcode.make(public_key)
+            qr_code_image.save("./src/images/account_id.png")
+            qr_code_pixmap = QtGui.QPixmap("./src/images/account_id.png")
+            qr_label = QtWidgets.QLabel()
+            qr_label.setPixmap(qr_code_pixmap)
+            layout.addWidget(qr_label)
+        except Exception as e:
+            layout.addWidget(QtWidgets.QLabel(f"Error generating QR code: {str(e)}"))
 
     def save_account_to_csv(self, account_id: str, secret_key: str):
         """Save the newly created Stellar account to a CSV file."""
-        file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")], title="Save New Account")
-
+        file_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save New Account", "", "CSV files (*.csv)")
         if not file_path:
-            return  # User canceled the save dialog
-
-        file_exists = os.path.isfile(file_path)
+            return
 
         try:
             with open(file_path, mode='a', newline='') as file:
                 writer = csv.writer(file)
-                if not file_exists:
-                    writer.writerow(["Account ID", "Secret Key"])  # Write header if the file doesn't exist yet
+                if os.path.getsize(file_path) == 0:  # If file is empty, write headers
+                    writer.writerow(["Account ID", "Secret Key"])
                 writer.writerow([account_id, secret_key])
-                messagebox.showinfo("Saved", f"Account saved to {file_path}")
+                QtWidgets.QMessageBox.information(self, "Saved", f"Account saved to {file_path}")
         except Exception as e:
-            messagebox.showerror("Error", f"Error saving account: {e}")
+            QtWidgets.QMessageBox.critical(self, "Error", f"Error saving account: {e}")
 
     def is_valid_stellar_secret(self, secret_key: str) -> bool:
         """Validate the format of a Stellar secret key."""
-        pattern = r'^S[ABCDEFGHIJKLMNOPQRSTUVWXYZ234567]{55}$'
-        return bool(re.match(pattern, secret_key))
+        return bool(re.match(r'^S[ABCDEFGHIJKLMNOPQRSTUVWXYZ234567]{55}$', secret_key))
 
     def is_valid_stellar_account_id(self, account_id: str) -> bool:
         """Validate the format of a Stellar account ID."""
-        pattern = r'^G[A-Z2-7]{55}$'
-        return bool(re.match(pattern, account_id))
+        return bool(re.match(r'^G[A-Z2-7]{55}$', account_id))
 
     def toggle_password_visibility(self):
         """Toggle the visibility of the Secret Key entry field."""
-        if self.secret_key_entry['show'] == '*':
-            self.secret_key_entry.config(show='')
-            self.password_visibility_toggle.config(text="Hide")
+        if self.secret_key_entry.echoMode() == QtWidgets.QLineEdit.Password:
+            self.secret_key_entry.setEchoMode(QtWidgets.QLineEdit.Normal)
+            self.password_visibility_toggle.setText("Hide")
         else:
-            self.secret_key_entry.config(show='*')
-            self.password_visibility_toggle.config(text="Show")
+            self.secret_key_entry.setEchoMode(QtWidgets.QLineEdit.Password)
+            self.password_visibility_toggle.setText("Show")

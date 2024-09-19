@@ -95,7 +95,9 @@ class DataFetcher:
         if response.status_code!=200:
             logging.error(
                 f"Error fetching account data: {response.status_code}"
+
             )
+            
             return []
         
         return response.json()
@@ -103,32 +105,28 @@ class DataFetcher:
 
     def get_effects(self, account_id):
         
-        effets_data =self.server.effects().for_account(account_id).limit(200).call()
-        return effets_data['_embedded']['records']
+     return self.server.effects().for_account(account_id).limit(200).call()['_embedded']['records']
+        
 
     def get_offers(self, account_id):
-        offers = self.server.offers().for_account(account_id).limit(200).call()['_embedded']['records']
-        return offers
+        return self.server.offers().for_account(account_id).limit(200).call()['_embedded']['records']
+     
     
     def get_orderbook(self, base_asset, counter_asset):
-        orderbook = self.server.orderbook(base_asset, counter_asset).call()
-        return orderbook
+       return self.server.orderbook(base_asset, counter_asset).call()
+        
     
     def get_ledger(self):
         return self.server.ledgers().limit(200).call()
         
     
     def get_operations(self, account_id):
-        operations = self.server.operations().for_account(account_id).limit(200).call()['_embedded']['records']
-        return operations
+        return self.server.operations().for_account(account_id).limit(200).call()['_embedded']['records']
+     
     
     def get_trades(self, account_id):
         trades = self.server.trades().for_account(account_id).limit(200).call()['_embedded']['records']
-        trades_df =pd.DataFrame(trades)
-        trades_df.to_csv('trades.csv',index= False)
-
-        
-        return trades_df
+        return trades
     
    
 

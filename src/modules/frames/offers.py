@@ -1,59 +1,51 @@
-import tkinter as tk
-from tkinter import ttk
-import pandas as pd
-import requests
+from PyQt5 import QtWidgets, QtCore
 
-class Offers(tk.Frame):
-    """Frame to display offers from Stellar."""
+class Offers(QtWidgets.QWidget):
+    """Widget to display offers from Stellar."""
 
-    def __init__(self, parent, controller):
-        super().__init__(parent)
+    def __init__(self, parent=None, controller=None):
+        super(Offers, self).__init__(parent)
         self.controller = controller
-        self.configure(bg="#f8f9fa")  # Light background for a clean look
-        self.place(x=0, y=0, width=1530, height=780)
+        self.setStyleSheet("background-color: #f8f9fa;")  # Light background for a clean look
+        self.setGeometry(0, 0, 1530, 780)
+
+        # Main layout for the widget
+        layout = QtWidgets.QVBoxLayout(self)
 
         # Title label
-        title_label = tk.Label(self, text="Offers", font=("Helvetica", 18, "bold"), fg="#343a40", bg="#f8f9fa")
-        title_label.pack(pady=20)
+        title_label = QtWidgets.QLabel("Offers", self)
+        title_label.setStyleSheet("font-size: 18pt; font-weight: bold; color: #343a40;")
+        layout.addWidget(title_label)
 
-        # Create the treeview (table) to display the offers
-        columns = ("id", "seller", "selling_asset", "buying_asset", "amount", "price")
-        self.tree = ttk.Treeview(self, columns=columns, show="headings", height=15)
-
-        # Define column headers
-        self.tree.heading("id", text="Offer ID")
-        self.tree.heading("seller", text="Seller")
-        self.tree.heading("selling_asset", text="Selling Asset")
-        self.tree.heading("buying_asset", text="Buying Asset")
-        self.tree.heading("amount", text="Amount")
-        self.tree.heading("price", text="Price")
-
-        # Set column widths
-        self.tree.column("id", width=100)
-        self.tree.column("seller", width=200)
-        self.tree.column("selling_asset", width=150)
-        self.tree.column("buying_asset", width=150)
-        self.tree.column("amount", width=100)
-        self.tree.column("price", width=100)
-        self.config(background='#1e2a38')
-
-        # Pack the treeview into the frame
-        self.tree.pack(pady=20, fill="x")
+        # Create the table widget to display the offers
+        self.table = QtWidgets.QTableWidget(self)
+        self.table.setColumnCount(6)
+        self.table.setHorizontalHeaderLabels(["Offer ID", "Seller", "Selling Asset", "Buying Asset", "Amount", "Price"])
+        self.table.horizontalHeader().setStretchLastSection(True)
+        layout.addWidget(self.table)
 
         # Fetch and display offers
         self.update_offers()
 
+        # Automatically update the offers every 60 seconds
+        self.timer = QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update_offers)
+        self.timer.start(60000)  # 60 seconds
+
     def fetch_offers(self):
-        """Fetch offer data from Stellar API and populate the treeview."""
+        """Fetch offer data from Stellar API and populate the table."""
         try:
             # Get the offer data from the trading engine's get_offers() method
             offers_data = self.controller.bot.trading_engine.get_offers()
 
-            # Clear the current data in the Treeview
-            self.tree.delete(*self.tree.get_children())
+            # Clear the current data in the table
+            self.table.setRowCount(0)
 
-            # Format and insert offers into the treeview
+            # Format and insert offers into the table
             for offer in offers_data:
+                row_position = self.table.rowCount()
+                self.table.insertRow(row_position)
+                
                 offer_id = offer.get("id")
                 seller = offer.get("seller")
                 selling_asset = self.format_asset(offer["selling"])
@@ -61,8 +53,13 @@ class Offers(tk.Frame):
                 amount = offer.get("amount")
                 price = offer.get("price")
 
-                # Insert into the Treeview
-                self.tree.insert("", "end", values=(offer_id, seller, selling_asset, buying_asset, amount, price))
+                # Insert into the table
+                self.table.setItem(row_position, 0, QtWidgets.QTableWidgetItem(str(offer_id)))
+                self.table.setItem(row_position, 1, QtWidgets.QTableWidgetItem(seller))
+                self.table.setItem(row_position, 2, QtWidgets.QTableWidgetItem(selling_asset))
+                self.table.setItem(row_position, 3, QtWidgets.QTableWidgetItem(buying_asset))
+                self.table.setItem(row_position, 4, QtWidgets.QTableWidgetItem(str(amount)))
+                self.table.setItem(row_position, 5, QtWidgets.QTableWidgetItem(str(price)))
 
         except Exception as e:
             print(f"Error fetching offers: {e}")
@@ -76,5 +73,3 @@ class Offers(tk.Frame):
     def update_offers(self):
         """Fetch and display new offers since the last update."""
         self.fetch_offers()
-        # Automatically update the offers every 60 seconds (you can adjust the time)
-        self.after(60000, self.update_offers)

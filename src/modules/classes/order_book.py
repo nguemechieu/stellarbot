@@ -64,22 +64,24 @@ def fetch_market_data(base_asset, counter_asset):
     params = {k: v for k, v in params.items() if v is not None}
 
     try:
-        response = requests.get(url, params=params)
-        response.raise_for_status()
-
-        # Get bids and asks from the API response
-        data = response.json()
-        bids_data = data.get('bids', [])
-        asks_data = data.get('asks', [])
-
-        # Populate the schema
-        market_schema.populate_bids(bids_data)
-        market_schema.populate_asks(asks_data)
-        return market_schema.get_schema()
-
+        return _extracted_from_fetch_market_data_18(url, params, market_schema)
     except requests.exceptions.RequestException as e:
         print(f"Error fetching market data: {e}")
         return None
+
+def _extracted_from_fetch_market_data_18(url, params, market_schema):
+    response = requests.get(url, params=params)
+    response.raise_for_status()
+
+    # Get bids and asks from the API response
+    data = response.json()
+    bids_data = data.get('bids', [])
+    asks_data = data.get('asks', [])
+
+    # Populate the schema
+    market_schema.populate_bids(bids_data)
+    market_schema.populate_asks(asks_data)
+    return market_schema.get_schema()
 
 
 class OrderBook(tk.Frame):
@@ -120,20 +122,27 @@ class OrderBook(tk.Frame):
         self.base_asset_var = tk.StringVar(value="XLM")  # Default to XLM as base asset
         self.counter_asset_var = tk.StringVar(value="USD")  # Default to USD as counter asset
 
-        tk.Label(self, text="Base Asset", font=("Helvetica", 12), fg="white", bg="#1e2a38").grid(row=3, column=0)
-
-        self.base_asset_dropdown = ttk.Combobox(self, state="readonly")
-        self.base_asset_dropdown['values'] = self.assets_list.get('code')
-        self.base_asset_dropdown.grid(row=4, column=0, padx=10, pady=10)
-
-        tk.Label(self, text="Counter Asset", font=("Helvetica", 12), fg="white", bg="#1e2a38").grid(row=3, column=1)
-        self.counter_asset_dropdown = ttk.Combobox(self, state="readonly")
-        self.counter_asset_dropdown['values'] = self.assets_list.get('code')
-        self.counter_asset_dropdown.grid(row=4, column=1, padx=10, pady=10)
-
+        self.base_asset_dropdown = self._extracted_from_create_widgets_23(
+            "Base Asset", 0
+        )
+        self.counter_asset_dropdown = self._extracted_from_create_widgets_23(
+            "Counter Asset", 1
+        )
         # Button to refresh order book
         self.refresh_button = tk.Button(self, text="Refresh", font=("Helvetica", 12), command=self.fetch_order_book)
         self.refresh_button.grid(row=5, column=0, columnspan=2, pady=10)
+
+    # TODO Rename this here and in `create_widgets`
+    def _extracted_from_create_widgets_23(self, text, column):
+        tk.Label(
+            self, text=text, font=("Helvetica", 12), fg="white", bg="#1e2a38"
+        ).grid(row=3, column=column)
+
+        result = ttk.Combobox(self, state="readonly")
+        result['values'] = self.assets_list.get('code')
+        result.grid(row=4, column=column, padx=10, pady=10)
+
+        return result
 
     def fetch_order_book(self):
         # Get the selected assets from the dropdowns
@@ -157,12 +166,9 @@ class OrderBook(tk.Frame):
             'asset_type': counter_asset['anchorAssetType']
         }
 
-        
 
-        # Fetch the order book data
-        order_book_data = fetch_market_data(base_asset, counter_asset)
 
-        if order_book_data:
+        if order_book_data := fetch_market_data(base_asset, counter_asset):
             # Clear previous entries
             self.bids_listbox.delete(0, tk.END)
             self.asks_listbox.delete(0, tk.END)
