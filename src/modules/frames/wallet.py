@@ -1,13 +1,26 @@
 import re
-from PyQt5 import QtWidgets, QtGui, QtCore
+
 import pandas as pd
+from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtWidgets import QFrame
 
 
-class Wallet(QtWidgets.QWidget):
+class Wallet(QFrame):
     """Stellar wallet widget displaying balance, transactions, and payment options."""
 
     def __init__(self, parent=None, controller=None):
         super().__init__(parent)
+        self.send_button = None
+        self.wallet_title = None
+        self.amount_entry = None
+        self.transaction_details_label = None
+        self.amount_label = None
+        self.transaction_details_text = None
+        self.send_payment_label = None
+        self.transaction_type_label = None
+        self.transaction_type_combobox = None
+        self.transaction_history_label = None
+        self.transaction_history_table = None
         self.controller = controller
         self.setGeometry(0, 0, 1530, 780)
         self.setStyleSheet("background-color: #1e2a38; color: white;")

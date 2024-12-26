@@ -9,7 +9,7 @@ class DatabaseManager:
     """
     def __init__(self, db_path="stellarBot.db"):
         """
-        Initializes the DatabaseManager instance with a SQLite connection.
+        Initializes the DatabaseManager instance with an SQLite connection.
 
         Parameters:
         - db_path (str): Path to the SQLite database file. Defaults to 'stellarBot.db'.

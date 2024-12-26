@@ -1,15 +1,20 @@
 from PyQt5 import QtWidgets
-from modules.frames.bar_chart import BarChart
-from modules.frames.candles_stick_chart import CandlestickChart
-from modules.frames.heikin_ashi import HeikinAshi
-from modules.frames.line_chart import LineChart
-from modules.frames.renko import Renko
+
+from src.modules.frames.bar_chart import BarChart
+from src.modules.frames.candles_stick_chart import CandlestickChart
+from src.modules.frames.heikin_ashi import HeikinAshi
+from src.modules.frames.line_chart import LineChart
+from src.modules.frames.renko import Renko
 
 
 class TradingCharts(QtWidgets.QWidget):
     def __init__(self, parent=None, controller=None):
         """Initialize the TradingCharts class."""
-        super().__init__(parent)
+        super().__init__(parent,controller)
+        self.status_label = None
+        self.assets_combobox2 = None
+        self.chart_type_combobox = None
+        self.assets_combobox1 = None
         self.controller = controller
         self.trading_mode = 'Manual'
         self.chart_type = "candle"  # Default chart type

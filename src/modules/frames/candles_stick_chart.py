@@ -1,4 +1,5 @@
 from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QWidget, QFrame
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
@@ -7,7 +8,7 @@ from matplotlib.figure import Figure
 import pandas as pd
 import mplfinance as mpf
 
-class CandlestickChart(QtWidgets.QWidget):
+class CandlestickChart(QFrame):
     """A PyQt5 widget for displaying a Candlestick chart using mplfinance."""
 
     def __init__(self, parent=None, controller=None, df=None):

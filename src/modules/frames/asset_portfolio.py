@@ -1,17 +1,32 @@
-from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QFrame
 
 
-class AssetPortfolio(QtWidgets.QWidget):
+class Portfolio(QFrame):
     def __init__(self, parent=None, controller=None):
         """Initialize the Asset Portfolio widget."""
-        super(AssetPortfolio, self).__init__(parent)
+        super().__init__(parent)
+
+        # Initialize the controller for this widget
+        # This allows the widget to communicate with the main application
+        # and access its data and methods.
+        # Replace this with the actual controller object when using this code in a real application.
+        # For example, if you're using a Qt application, you might have something like this:
+        # self.controller = QtCore.QObject.connect(parent, QtCore.SIGNAL("update_asset_portfolio_signal"), self.update_asset_portfolio)
+        # In the main application, you would emit this signal when the asset portfolio data changes.
+        # And in this widget, you would connect to it and update the UI accordingly.
+        # self.controller = parent  # In a real application, replace this with the actual controller object.
+        #
+        # In this example, we're just using a dummy controller for demonstration purposes
+
         self.controller = controller
         self.setGeometry(
             0, 0,1530,780
         )
         self.setStyleSheet("background-color: #EAECEE;")
         # Main layout for the widget
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QtWidgets.QVBoxLayout(parent)
+
 
         # Create and arrange the labels and entries for the asset portfolio
         self.create_widgets(layout)

@@ -1,7 +1,9 @@
 from PyQt5 import QtWidgets, QtCore
 import pandas as pd
+from PyQt5.QtWidgets import QFrame
 
-class Effects(QtWidgets.QWidget):
+
+class Effects(QFrame):
     def __init__(self, parent=None, controller=None):
         super().__init__(parent)
         self.controller = controller
@@ -37,7 +39,9 @@ class Effects(QtWidgets.QWidget):
 
     def update_effects_data(self):
         """Fetch and display effects data."""
-        effects_data = self.controller.bot.get_effects_data()
+        effects_data = self.controller.bot.get_effects()
+        if not effects_data:
+            return  # No effects data available
 
         # Convert effects data to DataFrame
         effects_df = pd.json_normalize(effects_data)

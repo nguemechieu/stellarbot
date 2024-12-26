@@ -21,3 +21,4 @@ class SettingsManager:
             with open(cls.SETTINGS_FILE, 'r') as f:
                 return json.load(f)
         return {}
+

@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import pandas as pd
 import requests
+from PyQt5.QtWidgets import QWidget
 from stellar_sdk import Asset
 
 
@@ -83,107 +84,3 @@ def _extracted_from_fetch_market_data_18(url, params, market_schema):
     market_schema.populate_asks(asks_data)
     return market_schema.get_schema()
 
-
-class OrderBook(tk.Frame):
-    def __init__(self, parent, controller):
-        super().__init__(parent)
-        self.controller = controller
-        self.place(x=0, y=0, width=1530, height=780)
-
-        # Load the asset list
-        self.assets_list = pd.read_csv('ledger_assets.csv')
-
-        # Stellar Network Settings
-        self.server = self.controller.bot.server
-        self.config(background='#1e2a38')
-
-        # Create and arrange widgets in the frame
-        self.create_widgets()
-
-    def create_widgets(self):
-        self.title_label = tk.Label(self, text="Order Book", font=("Helvetica", 18), pady=10, fg="white", bg="#1e2a38")
-        self.title_label.grid(row=0, column=0, columnspan=3)
-
-        # Labels for bids and asks
-        self.bids_label = tk.Label(self, text="Bids", font=("Helvetica", 14), fg="white", bg="#1e2a38")
-        self.bids_label.grid(row=1, column=0, padx=10, pady=5)
-
-        self.asks_label = tk.Label(self, text="Asks", font=("Helvetica", 14), fg="white", bg="#1e2a38")
-        self.asks_label.grid(row=1, column=1, padx=10, pady=5)
-
-        # Listboxes for bids and asks
-        self.bids_listbox = tk.Listbox(self, height=15, width=40)
-        self.bids_listbox.grid(row=2, column=0, padx=10, pady=10)
-
-        self.asks_listbox = tk.Listbox(self, height=15, width=40)
-        self.asks_listbox.grid(row=2, column=1, padx=10, pady=10)
-
-        # Dropdown for base and counter assets
-        self.base_asset_var = tk.StringVar(value="XLM")  # Default to XLM as base asset
-        self.counter_asset_var = tk.StringVar(value="USD")  # Default to USD as counter asset
-
-        self.base_asset_dropdown = self._extracted_from_create_widgets_23(
-            "Base Asset", 0
-        )
-        self.counter_asset_dropdown = self._extracted_from_create_widgets_23(
-            "Counter Asset", 1
-        )
-        # Button to refresh order book
-        self.refresh_button = tk.Button(self, text="Refresh", font=("Helvetica", 12), command=self.fetch_order_book)
-        self.refresh_button.grid(row=5, column=0, columnspan=2, pady=10)
-
-    # TODO Rename this here and in `create_widgets`
-    def _extracted_from_create_widgets_23(self, text, column):
-        tk.Label(
-            self, text=text, font=("Helvetica", 12), fg="white", bg="#1e2a38"
-        ).grid(row=3, column=column)
-
-        result = ttk.Combobox(self, state="readonly")
-        result['values'] = self.assets_list.get('code')
-        result.grid(row=4, column=column, padx=10, pady=10)
-
-        return result
-
-    def fetch_order_book(self):
-        # Get the selected assets from the dropdowns
-        base_asset_code = self.base_asset_var.get()
-        counter_asset_code = self.counter_asset_var.get()
-
-        # Filter the selected base asset details
-        base_asset = self.assets_list[self.assets_list['code'] == base_asset_code].iloc[0]
-        counter_asset = self.assets_list[self.assets_list['code'] == counter_asset_code].iloc[0]
-
-        # Construct asset details for base and counter assets
-        base_asset = {
-            'asset_code': base_asset['code'],
-            'asset_issuer': base_asset['issuer'],
-            'asset_type': base_asset['anchorAssetType']
-        }
-
-        counter_asset = {
-            'asset_code': counter_asset['code'],
-            'asset_issuer': counter_asset['issuer'],
-            'asset_type': counter_asset['anchorAssetType']
-        }
-
-
-
-        if order_book_data := fetch_market_data(base_asset, counter_asset):
-            # Clear previous entries
-            self.bids_listbox.delete(0, tk.END)
-            self.asks_listbox.delete(0, tk.END)
-
-            # Display bids
-            for bid in order_book_data['bids']:
-                price = bid['price']
-                amount = bid['amount']
-                self.bids_listbox.insert(tk.END, f"Price: {price}, Amount: {amount}")
-
-            # Display asks
-            for ask in order_book_data['asks']:
-                price = ask['price']
-                amount = ask['amount']
-                self.asks_listbox.insert(tk.END, f"Price: {price}, Amount: {amount}")
-        else:
-            self.bids_listbox.insert(tk.END, "Error fetching bids")
-            self.asks_listbox.insert(tk.END, "Error fetching asks")

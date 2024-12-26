@@ -1,82 +1,97 @@
+import csv
 import os
 import re
-import csv
+
+import pandas as pd
 import requests
 from PyQt5 import QtGui, QtWidgets
 from stellar_sdk import Keypair
-from modules.classes.settings_manager import SettingsManager
-from modules.classes.stellar_client import StellarClient
 
-class Login(QtWidgets.QWidget):
+from src.modules.classes.settings_manager import SettingsManager
+from src.modules.classes.stellar_client import StellarClient
+
+
+class SQLAlchemyError (Exception) :
+    """A custom exception for SQLAlchemy errors."""
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+    pass
+
+
+class Login(QtWidgets.QFrame):
     """A professional Stellar Network User Login Interface using PyQt5."""
 
     def __init__(self, parent=None, controller=None):
         """Initialize the Login widget and set up the UI."""
         super().__init__(parent)
+        self.parent = parent
         self.controller = controller
+
+
+        self.account_id_entry = QtWidgets.QLineEdit(self)
+        self.secret_key_entry = QtWidgets.QLineEdit(self)
+        self.password_visibility_toggle = QtWidgets.QPushButton("Show", self)
+        self.remember_me = QtWidgets.QCheckBox("Remember Me", self)
+        self.login_button = QtWidgets.QPushButton("Login", self)
+        self.create_account_button = QtWidgets.QPushButton("Create New Account", self)
+        self.network_status_label = QtWidgets.QLabel("Checking network status...", self)
+
+        self.info_label = QtWidgets.QLabel("", self)
+
         self.settings = SettingsManager.load_settings()
         self.setup_ui()
         self.populate_saved_settings()
 
-    def setup_ui(self):    # sourcery skip: class-extract-method
+    def setup_ui(self):
         """Set up the layout, styling, and widgets."""
-        self.setWindowTitle("StellarBot Login")
-        self.setGeometry(0, 0, 1530, 780)
-        self.setStyleSheet("background-color: #f0f0f0;")
         layout = QtWidgets.QVBoxLayout(self)
 
-        self._extracted_from_setup_ui_9("Welcome to StellarBot", 23, layout)
-        self._extracted_from_setup_ui_9("Stellar Network Login", 16, layout)
+        # Application and Login labels
+        self.add_title_label("Welcome to StellarBot", 23, layout)
+        self.add_title_label("Stellar Network Login", 16, layout)
+
         # Account ID Entry
         layout.addWidget(self.create_label("Account ID"))
-        self.account_id_entry = QtWidgets.QLineEdit(self)
         self.account_id_entry.setPlaceholderText("Enter your Stellar Account ID")
         layout.addWidget(self.account_id_entry)
 
         # Secret Key Entry
         layout.addWidget(self.create_label("Secret Key"))
-        self.secret_key_entry = QtWidgets.QLineEdit(self)
         self.secret_key_entry.setPlaceholderText("Enter your Secret Key")
         self.secret_key_entry.setEchoMode(QtWidgets.QLineEdit.Password)
         layout.addWidget(self.secret_key_entry)
 
         # Toggle Password Visibility
-        self.password_visibility_toggle = QtWidgets.QPushButton("Show", self)
         self.password_visibility_toggle.clicked.connect(self.toggle_password_visibility)
         layout.addWidget(self.password_visibility_toggle)
 
         # Login Button
-        self.login_button = QtWidgets.QPushButton("Login", self)
         self.login_button.setStyleSheet("background-color: #4CAF50; color: white; font-size: 14px;")
         self.login_button.clicked.connect(self.login)
         layout.addWidget(self.login_button)
 
         # Create New Account Button
-        self.create_account_button = QtWidgets.QPushButton("Create New Account", self)
         self.create_account_button.setStyleSheet("background-color: #2196F3; color: white; font-size: 14px;")
         self.create_account_button.clicked.connect(self.create_new_account)
         layout.addWidget(self.create_account_button)
 
         # Remember Me Checkbox
-        self.remember_me = QtWidgets.QCheckBox("Remember Me", self)
         layout.addWidget(self.remember_me)
 
         # Network Connectivity Status
-        self.network_status_label = QtWidgets.QLabel("Checking network status...", self)
         layout.addWidget(self.network_status_label)
         self.check_network_connectivity()
 
         # Info Label for displaying messages
-        self.info_label = QtWidgets.QLabel("", self)
         layout.addWidget(self.info_label)
 
-    # TODO Rename this here and in `setup_ui`
-    def _extracted_from_setup_ui_9(self, arg0, arg1, layout):
-        # Application Name
-        app_name_label = QtWidgets.QLabel(arg0, self)
-        app_name_label.setFont(QtGui.QFont("Helvetica", arg1, QtGui.QFont.Bold))
-
-        layout.addWidget(app_name_label)
+    def add_title_label(self, text, font_size, layout):
+        """Add a title label to the layout."""
+        label = QtWidgets.QLabel(text, self)
+        label.setFont(QtGui.QFont("Helvetica", font_size, QtGui.QFont.Bold))
+        layout.addWidget(label)
         layout.addSpacing(20)
 
     def create_label(self, text):
@@ -116,6 +131,8 @@ class Login(QtWidgets.QWidget):
         """Handle login logic and validate the Stellar account credentials."""
         account_id = self.account_id_entry.text()
         secret_key = self.secret_key_entry.text()
+        self.controller.account_id = account_id
+        self.controller.secret_key = secret_key
 
         if not self.is_valid_stellar_account_id(account_id):
             self.update_info_label("Invalid Stellar Network Account ID!", "red")
@@ -130,13 +147,65 @@ class Login(QtWidgets.QWidget):
             return
 
         try:
-            # Initialize the Stellar client and transition to Home frame
-            self.controller.bot = StellarClient(controller=self.controller, account_id=account_id, secret_key=secret_key)
+            self.controller.bot = StellarClient(controller=self.controller)
+            self.controller.assets_info = self.controller.bot.get_assets()
+            pd_f=pd.DataFrame(self.controller.assets_info)
+            pd_f.to_csv('stellar_assets.csv', index=False)
+            # save to a database
+            self.save_assets_to_database()
+
+
             self.save_user_settings()
             self.controller.show_frame("Home")
         except Exception as e:
             self.update_info_label(f"An error occurred: {str(e)}", "red")
 
+    def save_assets_to_database(self):
+      try:
+        # Initialize Stellar client and fetch assets
+        self.controller.bot = StellarClient(controller=self.controller)
+        self.controller.assets_info = self.controller.bot.get_assets()
+
+        # Convert asset info to a DataFrame
+        assets_df = pd.DataFrame(self.controller.assets_info)
+
+        # Log and save the assets information to CSV
+        assets_df.to_csv('stellar_assets.csv', index=False)
+        self.controller.logger.info(f"Assets saved to CSV")
+
+        # Prepare an asset list for insertion into the database
+        list_assets = [{'asset_code': asset['asset_code'], 'asset_issuer': asset['asset_issuer']} for asset in self.controller.assets_info]
+        assets_for_db_df = pd.DataFrame(list_assets)
+
+        # Save to the database in two steps (accounts and assets)
+        with self.controller.db as con:
+            self._save_to_db(con, assets_for_db_df, schema="accounts", table_name="stellar_assets")
+            self._save_to_db(con, assets_for_db_df, schema="assets", table_name="stellar_assets")
+
+        # Update info label and transition to Home
+        self.update_info_label("Login successful!", "green")
+        self.save_user_settings()
+        self.controller.show_frame("Home")
+
+      except SQLAlchemyError as db_error:
+        # Handle database-specific errors
+        self.update_info_label(f"Database error: {str(db_error)}", "red")
+        self.controller.logger.error(f"Database error: {str(db_error)}")
+      except Exception as e:
+        # Catch-all for other exceptions
+        self.update_info_label(f"An error occurred: {str(e)}", "red")
+        self.controller.logger.error(f"Error: {str(e)}")
+
+    def _save_to_db(self, con, data_frame, schema, table_name):
+      """Helper function to save DataFrame to the database."""
+      try:
+        # Save DataFrame to the specified schema and table
+        data_frame.to_sql(name=table_name, con=con, schema=schema, index=False, if_exists='replace')
+        self.controller.logger.info(f"Assets saved to {schema}.{table_name} table.")
+      except SQLAlchemyError as db_error:
+        # Log database-specific errors and re-raise them
+         self.controller.logger.error(f"Error saving assets to {schema}.{table_name}: {str(db_error)}")
+         raise db_error
     def save_user_settings(self):
         """Save user settings if 'Remember Me' is checked."""
         settings = {
@@ -153,13 +222,9 @@ class Login(QtWidgets.QWidget):
         new_account_window.setWindowTitle("New Stellar Account")
         layout = QtWidgets.QVBoxLayout(new_account_window)
 
-        title_label = QtWidgets.QLabel("New Stellar Account Created", new_account_window)
-        title_label.setFont(QtGui.QFont("Helvetica", 16, QtGui.QFont.Bold))
-        title_label.setStyleSheet("color: #1c1c1c;")
-        layout.addWidget(title_label)
-
-        layout.addWidget(QtWidgets.QLabel(f"Account ID (Public Key): {new_keypair.public_key}", new_account_window))
-        layout.addWidget(QtWidgets.QLabel(f"Secret Key (Private Key): {new_keypair.secret}", new_account_window))
+        layout.addWidget(QtWidgets.QLabel("New Stellar Account Created", self))
+        layout.addWidget(QtWidgets.QLabel(f"Account ID (Public Key): {new_keypair.public_key}", self))
+        layout.addWidget(QtWidgets.QLabel(f"Secret Key (Private Key): {new_keypair.secret}", self))
 
         save_button = QtWidgets.QPushButton("Save to CSV", new_account_window)
         save_button.clicked.connect(lambda: self.save_account_to_csv(new_keypair.public_key, new_keypair.secret))
@@ -179,7 +244,7 @@ class Login(QtWidgets.QWidget):
             try:
                 with open(file_path, mode='a', newline='') as file:
                     writer = csv.writer(file)
-                    if os.path.getsize(file_path) == 0:  # Add header if file is empty
+                    if os.path.getsize(file_path) == 0:
                         writer.writerow(["Account ID", "Secret Key"])
                     writer.writerow([account_id, secret_key])
                     QtWidgets.QMessageBox.information(self, "Saved", f"Account saved to {file_path}")
@@ -206,8 +271,4 @@ class Login(QtWidgets.QWidget):
     def update_info_label(self, message, color):
         """Update the info label with a message and style."""
         self.info_label.setText(message)
-        self.info_label.setStyleSheet(
-            f"color: {color};"
-            "font-size: 14px;"
-            "margin-top: 10px;"
-            "margin-bottom: 10px;")
+        self.info_label.setStyleSheet(f"color: {color}; font-size: 14px; margin-top: 10px; margin-bottom: 10px;")

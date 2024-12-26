@@ -18,7 +18,7 @@ class MarketData:
     def get_ohlcv(self, interval: str, start_date: str, end_date: str) -> list:
         return self._extracted_from_get_ohlcv_3(start_date)
 
-    # TODO Rename this here and in `get_candles` and `get_ohlcv`
+
     def _extracted_from_get_ohlcv_3(self, start_date):
         candles = []
         for i in range(100):

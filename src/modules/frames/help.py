@@ -1,6 +1,8 @@
 from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtWidgets import QFrame
 
-class Help(QtWidgets.QWidget):
+
+class Help(QFrame):
     """Help Frame providing users with information and resources about the application."""
 
     def __init__(self, parent=None, controller=None):
@@ -34,7 +36,7 @@ class Help(QtWidgets.QWidget):
         # Add contact information at the bottom
         contact_label = QtWidgets.QLabel(
             "For additional support, contact us at support@stellarbot.com or visit our "
-            "[website](https://stellarbot.com)."
+            "[website](https://stellarbot.org)."
         )
         contact_label.setStyleSheet("color: #003366; font-size: 14px;")
         contact_label.setWordWrap(True)
@@ -51,6 +53,10 @@ class Help(QtWidgets.QWidget):
             1000, 20, 20,20  # Set the position and size of the back button
         )
         layout.addWidget(back_button)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addStretch(
+            1
+        )
         
     def go_back(self):
         """Handle back button click to navigate to home frame."""

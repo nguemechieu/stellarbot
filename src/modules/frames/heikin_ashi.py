@@ -1,19 +1,18 @@
-import sys
 import pandas as pd
-import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+
+from PyQt5.QtWidgets import QVBoxLayout, QWidget, QFrame
+from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.patches import Rectangle
-from PyQt5.QtWidgets import QMainWindow, QApplication, QVBoxLayout, QWidget
 
-class HeikinAshi(QWidget):
+
+class HeikinAshi(QFrame):
     def __init__(self, parent=None, controller=None,df=None):
         """Initialize the Heikin-Ashi chart frame."""
         super().__init__(parent)
         self.controller = controller
-        self.setGeometry(
-            0, 0,1530,780
-        )
+
         if df is None:
             df = {}
 

@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-import os
 
 # Read requirements.txt for install_requires
 def read_requirements():
@@ -18,7 +17,7 @@ setup(
     description='StellarBot is a professional trading bot that interacts with the Stellar network.',
     author='Noel Martial Nguemechieu',
     author_email='nguemechieu@live.com',
-    packages=find_packages(where='src'),  # Find packages in the 'src' folder
+    packages=find_packages(where='.'),  # Find packages in the 'src' folder
     package_dir={'': 'src'},  # Tells setuptools that the packages are under 'src'
     install_requires=read_requirements(),  # Use the requirements.txt file
     zip_safe=False,

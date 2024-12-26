@@ -1,13 +1,9 @@
-from tkinter import Canvas
-from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtGui import QPainter, QBrush, QPen
-from PyQt5.QtCore import Qt
 from datetime import datetime
-import qrcode
-from PIL import Image
 
-from modules.frames import InternetConnectionStatus
-
+from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtWidgets import QPushButton
+from qrcode.compat.pil import Image
+from qrcode.main import QRCode
 
 
 class Dashboard(QtWidgets.QWidget):
@@ -15,6 +11,12 @@ class Dashboard(QtWidgets.QWidget):
 
     def __init__(self, parent=None, controller=None):
         super(Dashboard, self).__init__(parent)
+
+        self.start_button = QPushButton("START", self)
+        self.start_button.setStyleSheet("background-color: #333; color: green;")
+        self.stop_button = QPushButton("STOP", self)
+        self.stop_button.setStyleSheet("background-color: #333; color: red;")
+
         self.controller = controller
 
         # Set layout and background
@@ -32,36 +34,32 @@ class Dashboard(QtWidgets.QWidget):
         self.lbl_text = QtWidgets.QLabel()
         self.lbl_text.setStyleSheet("color: white; font-size: 16px;")
         self.lbl_text.setText(
-       f"Account ID: {self.controller.bot.account_id}\n"
+            f"Account ID: {self.controller.bot.account_id}\n"
             f"Last Update: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
             f"\nStatus: {self.controller.bot.server_msg['status']}\n"
             f"Info: {self.controller.bot.server_msg['info']}\n"
             f"Message: {self.controller.bot.server_msg['message']}"
         )
 
-
-     
-    
         layout.addWidget(self.lbl_text)
-       
-
-
-
         # Create account ID QR code
         self.create_qr_code("account_id")
-
         # Add server control buttons
-        buttons_layout = QtWidgets.QHBoxLayout()
+        buttons_layout = QtWidgets.QHBoxLayout(self)
 
-        self.start_button = QtWidgets.QPushButton("START", self)
+
         self.start_button.clicked.connect(self.start_bot)
-        buttons_layout.addWidget(self.start_button)
-
-        self.stop_button = QtWidgets.QPushButton("STOP", self)
         self.stop_button.clicked.connect(self.stop_bot)
-        self.stop_button.setEnabled(False)
-        buttons_layout.addWidget(self.stop_button)
+        if self.controller.bot.server_msg['status'] == "RUNNING":
+            self.start_button.setEnabled(False)
+            self.stop_button.setEnabled(True)
+        else:
+            self.start_button.setEnabled(True)
 
+            self.stop_button.setEnabled(False)
+
+        buttons_layout.addWidget(self.start_button)
+        buttons_layout.addWidget(self.stop_button)
         layout.addLayout(buttons_layout)
 
         # Performance stats
@@ -74,7 +72,8 @@ class Dashboard(QtWidgets.QWidget):
 
     def create_qr_code(self, account_id):
         """Create a QR code for the account ID and display it on the dashboard."""
-        qr = qrcode.QRCode(version=1, box_size=10, border=2)
+
+        qr = QRCode(version=1, box_size=10, border=2)
         qr.add_data(account_id)
         qr.make(fit=True)
         qr_img = qr.make_image(fill="black", back_color="white")
@@ -82,7 +81,7 @@ class Dashboard(QtWidgets.QWidget):
         # Save and display QR code
         qr_img.save("temp_qr.png")
         img = Image.open("temp_qr.png")
-        img = img.resize((150, 150))
+        img.resize((150, 150))
         qt_img = QtGui.QPixmap("temp_qr.png")
 
         qr_label = QtWidgets.QLabel(self)
@@ -92,7 +91,7 @@ class Dashboard(QtWidgets.QWidget):
         self._extracted_from_create_qr_code_16(
             label, "color: white; font-size: 14px; font-weight: bold;"
         )
-        
+
 
     # TODO Rename this here and in `create_qr_code`
     def _extracted_from_create_qr_code_16(self, arg0, arg1):
@@ -120,17 +119,11 @@ class Dashboard(QtWidgets.QWidget):
         layout.addWidget(performance_group)
 
     def start_bot(self):
-        """Start the trading bot and update button states."""
-        self._extracted_from_stop_bot_3(
-            False, "background-color: gray; color: yellow;", True
-        )
+
         self.controller.bot.start()
 
     def stop_bot(self):
-        """Stop the trading bot and update button states."""
-        self._extracted_from_stop_bot_3(
-            True, "background-color: #4CAF50; color: white;", False
-        )
+
         self.controller.bot.stop()
 
     # TODO Rename this here and in `start_bot` and `stop_bot`
@@ -139,21 +132,21 @@ class Dashboard(QtWidgets.QWidget):
         self.start_button.setStyleSheet(arg1)
         self.stop_button.setEnabled(arg2)
     def updates(self):
-     """Update the dashboard regularly with live data."""
-    # Create time and update labels
-     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        """Update the dashboard regularly with live data."""
+        # Create time and update labels
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Fetch the latest data from the bot's server messages
-     status = self.controller.bot.server_msg['status']
-     info = self.controller.bot.server_msg['info']
-     message = self.controller.bot.server_msg['message']
+        # Fetch the latest data from the bot's server messages
+        status = self.controller.bot.server_msg['status']
+        info = self.controller.bot.server_msg['info']
+        message = self.controller.bot.server_msg['message']
 
-    # Update the text label to reflect new data
-     self.lbl_text.setText(
-        f"Account ID: {self.controller.bot.account_id}\n"
-        f"Last Update: {current_time}\n"
-        f"Status: {status}\n"
-        f"Info: {info}\n"
-        f"Message: {message}"
-    )
-     self.lbl_text.adjustSize()  # Adjust the label size based on the new content
+        # Update the text label to reflect new data
+        self.lbl_text.setText(
+            f"Account ID: {self.controller.bot.account_id}\n"
+            f"Last Update: {current_time}\n"
+            f"Status: {status}\n"
+            f"Info: {info}\n"
+            f"Message: {message}"
+        )
+        self.lbl_text.adjustSize()  # Adjust the label size based on the new content

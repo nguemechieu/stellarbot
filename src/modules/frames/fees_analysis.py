@@ -1,8 +1,8 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QVBoxLayout, QFormLayout, QApplication
+from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QVBoxLayout, QFormLayout, QApplication, QFrame
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 
-class FeeAnalysis(QWidget):
+class FeeAnalysis(QFrame):
     def __init__(self, parent=None):
         """Initialize the Fee Analysis widget."""
         super().__init__(parent)

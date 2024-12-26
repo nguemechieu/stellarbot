@@ -1,12 +1,14 @@
 from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QFrame
 
-class OrderHistory(QtWidgets.QWidget):
+
+class OrdersHistory(QFrame):
     def __init__(self, parent=None, controller=None):
         """Initialize the Order History widget."""
         super().__init__(parent)
         self.controller = controller
-        self.setGeometry(0, 0, 1530, 780)
-        self.setStyleSheet("background-color: #F5F5F5;")
+        self.setGeometry(0, 0, 530, 780)
+
 
         # Main layout for the widget
         layout = QtWidgets.QVBoxLayout(self)

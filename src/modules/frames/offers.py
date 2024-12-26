@@ -1,13 +1,14 @@
 from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtWidgets import QFrame
 
-class Offers(QtWidgets.QWidget):
+
+class Offers(QFrame):
     """Widget to display offers from Stellar."""
 
     def __init__(self, parent=None, controller=None):
-        super(Offers, self).__init__(parent)
+        super().__init__(parent)
         self.controller = controller
-        self.setStyleSheet("background-color: #f8f9fa;")  # Light background for a clean look
-        self.setGeometry(0, 0, 1530, 780)
+
 
         # Main layout for the widget
         layout = QtWidgets.QVBoxLayout(self)
@@ -35,13 +36,19 @@ class Offers(QtWidgets.QWidget):
     def fetch_offers(self):
         """Fetch offer data from Stellar API and populate the table."""
         try:
+
+
+
             # Get the offer data from the trading engine's get_offers() method
-            offers_data = self.controller.bot.trading_engine.get_offers()
+            offers_data = self.controller.bot.get_offers()
+            if offers_data is None:
+                print("No offers found")
+                return
 
             # Clear the current data in the table
             self.table.setRowCount(0)
 
-            # Format and insert offers into the table
+            # Format and insert offer into the table
             for offer in offers_data:
                 row_position = self.table.rowCount()
                 self.table.insertRow(row_position)
@@ -63,6 +70,7 @@ class Offers(QtWidgets.QWidget):
 
         except Exception as e:
             print(f"Error fetching offers: {e}")
+            self.controller.server_msg['message'] = f"Error fetching offers: {e}"
 
     def format_asset(self, asset):
         """Helper function to format the asset data."""

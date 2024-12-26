@@ -1,8 +1,10 @@
 from PyQt5 import QtWidgets
 import pandas as pd
 import requests
+from PyQt5.QtWidgets import QFrame
 
-class Payments(QtWidgets.QWidget):
+
+class Payments(QFrame):
     def __init__(self, parent=None, controller=None):
         super().__init__(parent)
         self.controller = controller

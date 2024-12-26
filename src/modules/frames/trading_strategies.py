@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5 import QtWidgets, QtCore
 
 class TradingStrategies(QtWidgets.QWidget):
     def __init__(self, parent=None, controller=None):

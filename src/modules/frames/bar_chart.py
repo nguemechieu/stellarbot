@@ -1,12 +1,13 @@
 import sys
 import pandas as pd
 import mplfinance as mpf
-from PyQt5.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog, QMessageBox, QApplication)
+from PyQt5.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog, QMessageBox, QApplication,
+                             QFrame)
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
-class BarChart(QWidget):
+class BarChart(QFrame):
     """A PyQt5 widget for displaying a bar chart using mplfinance."""
 
     def __init__(self, parent=None, controller=None, df=None):
