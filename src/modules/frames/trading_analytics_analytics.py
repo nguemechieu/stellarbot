@@ -2,15 +2,13 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtWidgets import QFrame
 
 
-class  TradingAnalytics(QFrame):
+class  TradingAnalysis(QFrame):
     def __init__(self, parent=None, controller=None):
         """Initialize the Performance Analytics widget."""
         super().__init__(parent)
         self.controller = controller
 
-        self.setGeometry(
-            10, 10, 1500, 780
-        )
+
 
         # Main layout for the widget
         layout = QtWidgets.QVBoxLayout(self)
@@ -103,7 +101,6 @@ class  TradingAnalytics(QFrame):
         )
         return frame
 
-    # TODO Rename this here and in `create_widgets` and `create_section_frame`
     def _extracted_from_create_section_frame_66(self, arg0, arg1, arg2, arg3):
         equity_curve_placeholder = QtWidgets.QLabel(arg0, arg1)
         equity_curve_placeholder.setStyleSheet(arg2)

@@ -19,18 +19,16 @@ class Learning(object):
         self.symbol = ''
         self.fibonacci = {}
 
-    def get_signal(self, symbol: str ):
+    def get_signal(self, data: pd.DataFrame):
         
-        self.symbol = symbol
 
         #Making sure that the symbol is in the list
-        data =pd.read_csv('ledger_candles.csv')
 
         if data is None:
-            print(f'No data found for {symbol}')
+            print(f'No data found ')
             return 0
         while data.shape[0] < 100:
-            print(f'No data found for {symbol}')
+            print(f'No data found ')
             return 0
 
 
@@ -186,3 +184,52 @@ class Learning(object):
             return -1
 
         return 0
+
+    def learn_from_data(self, df):
+
+        self.price = df['close'].values[-1]
+        high = df['high'].values[-1]
+        low = df['low'].values[-1]
+        fib_levels = {
+            0.236: df['close'].values[-1] - (0.236 * (df['close'].values[-1] - df['low'].values[-1])),
+            0.382: df['close'].values[-1] - (0.382 * (df['close'].values[-1] - df['low'].values[-1])),
+            0.500: df['close'].values((high - low)),
+            0.618: df['close'].values[-1] - (0.618 * (df['close'].values[-1] - df['low'].values[-1])),
+            0.786: df['close'].values[-1] - (0.786 * (df['close'].values[-1] - df['low'].values[-1]))
+        }
+        self.fibonacci = fib_levels.__str__()
+        if df.shape[0] < 100:
+            return 0
+        new_features = df[['SMA50', 'SMA200', 'RSI']]
+        y = df['Signal']
+        if not  os.path.exists('model.pkl'):
+            # Model Training
+            model = RandomForestClassifier(n_estimators=100, random_state=42)
+            model.fit(new_features, y)
+            pickle.dump(model, open('model.pkl', 'wb'))
+            print('Model trained successfully.')
+            return 0
+        model = pickle.load(open('model.pkl', 'rb'))
+        y_pred = model.predict(new_features)
+        accuracy = accuracy_score(y, y_pred)
+        print(f'Model Accuracy: {accuracy}')
+        score = accuracy_score(df['Signal'], y_pred)
+        print(f'Model Accuracy: {score}')
+        signal = y_pred[-1]
+        fibo_signal = 0
+        if signal == 1 and accuracy > 95:
+            print(f'Signal Buy: {signal}')
+            return 1
+        elif signal == 0 and accuracy > 95:
+            print(f'Signal Sell: {signal}')
+            return -1
+        elif fibo_signal == 1:
+            print(f'Fibo Signal Buy: {fibo_signal}')
+            return 1
+        elif fibo_signal == -1:
+            print(f'Fibo Signal Sell: {fibo_signal}')
+            return -1
+
+        return 0
+
+

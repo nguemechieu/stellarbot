@@ -18,7 +18,6 @@ class Preferences(QtWidgets.QWidget):
         # Create the Back button
         back_button = QtWidgets.QPushButton("Back", self)
         back_button.clicked.connect(self.go_back)
-        back_button.setStyleSheet("background-color: #2E2E2E; color: white; font-size: 12pt; font-weight: bold; border: none;")
         layout.addWidget(back_button)
 
         # Create the settings and preferences section

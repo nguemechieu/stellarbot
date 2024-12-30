@@ -1,12 +1,14 @@
 from PyQt5 import QtWidgets,  QtCore
+from PyQt5.QtWidgets import QFrame
 
-class RiskManagement(QtWidgets.QWidget):
+
+class RiskManagement(QFrame):
     def __init__(self, parent=None, controller=None):
         """Initialize the Risk Management widget."""
         super().__init__(parent)
         self.controller = controller
         self.setGeometry(0, 0, 1530, 780)
-        self.setStyleSheet("background-color: #F5F5F5;")
+
 
         # Main layout for the widget
         layout = QtWidgets.QVBoxLayout(self)
@@ -18,7 +20,6 @@ class RiskManagement(QtWidgets.QWidget):
         """Create and arrange widgets for the risk management section."""
         # Risk Management Section
         risk_management_frame = QtWidgets.QFrame(self)
-        risk_management_frame.setStyleSheet("background-color: #D3D3D3; border: 1px solid #003366;")
         risk_management_frame.setFixedHeight(200)
         layout.addWidget(risk_management_frame)
 

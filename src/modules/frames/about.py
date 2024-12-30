@@ -1,15 +1,11 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QApplication
+from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QApplication, QFrame
 from PyQt5.QtCore import Qt
 import sys
 
-class About(QWidget):
+class About(QFrame):
     def __init__(self, parent=None, controller=None):
         super().__init__(parent)
         self.controller = controller
-
-        # Set the background color
-        self.setStyleSheet("background-color: #1e2a38;")
-
         # Create the layout
         layout = QVBoxLayout()
 

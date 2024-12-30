@@ -1,69 +1,78 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QVBoxLayout, QFormLayout, QApplication, QFrame
+from PyQt5.QtWidgets import QFrame, QLabel, QLineEdit, QVBoxLayout, QFormLayout
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 
-class FeeAnalysis(QFrame):
-    def __init__(self, parent=None):
+
+class FeesAnalysis(QFrame):
+    def __init__(self, parent=None, controller=None):
         """Initialize the Fee Analysis widget."""
         super().__init__(parent)
-        self.setGeometry(
-            0, 0,1530,780
-        )
-        # Set up the main layout for the widget
+        self.controller = controller
+
+        # Retrieve fee data from the controller
+        self.fees_data = self.controller.fees_stats # Assuming fees_stats is a property of the controller
+
+        # Set up the layout and UI components
+        self._initialize_ui()
+
+    def _initialize_ui(self):
+        """Set up the user interface for the Fee Analysis widget."""
+        # Main layout
         main_layout = QVBoxLayout()
 
-        # Create the title label for the fee analysis section
-        title_label = QLabel("Fee Analysis")
-        title_label.setFont(QFont("Arial", 16, QFont.Bold))
-        title_label.setAlignment(Qt.AlignLeft)
-        title_label.setStyleSheet("color: #2874A6; font-weight: bold;")  # QSS for title styling
+        # Add title
+        title_label = self._create_title_label("Fee Analysis")
         main_layout.addWidget(title_label)
 
-        # Create a form layout for the fee details
-        form_layout = QFormLayout()
-
-        # Create and add Total Fees Paid field
-        self.total_fees = self.create_readonly_entry("$500")
-        form_layout.addRow("Total Fees Paid (Spread, Commission):", self.total_fees)
-
-        # Create and add Average Fee Per Trade field
-        self.avg_fee = self.create_readonly_entry("$5")
-        form_layout.addRow("Average Fee Per Trade:", self.avg_fee)
-
-        # Create and add Fee Impact on Performance field
-        self.fee_impact = self.create_readonly_entry("-1.5%")
-        form_layout.addRow("Fee Impact on Performance:", self.fee_impact)
-
-        # Add the form layout to the main layout
+        # Add a fee details form
+        form_layout = self._create_fee_details_form()
         main_layout.addLayout(form_layout)
 
         # Set the layout for the widget
         self.setLayout(main_layout)
 
-        # Apply global QSS styling to the widget
-        self.setStyleSheet("""
-            QWidget {
-                background-color: #F2F4F4;
-            }
-            QLineEdit {
-                background-color: #D5DBDB;
-                color: #2874A6;
-                font-size: 14px;
-                font-weight: bold;
-                padding: 5px;
-                border: 1px solid #2874A6;
-            }
-            QLabel {
-                color: #2874A6;
-                font-size: 14px;
-            }
-        """)
+    def _create_title_label(self, text):
+        """Helper function to create a title label."""
+        label = QLabel(text)
+        label.setFont(QFont("Arial", 16, QFont.Bold))
+        label.setAlignment(Qt.AlignLeft)
+        label.setStyleSheet("color: #2874A6; font-weight: bold;")  # QSS for title styling
+        return label
 
-    def create_readonly_entry(self, value):
-        """Helper function to create a read-only QLineEdit with pre-filled value."""
-        entry = QLineEdit()
-        entry.setText(value)
+    def _create_fee_details_form(self):
+        """Helper function to create a form layout with fee details."""
+        form_layout = QFormLayout(self)
+
+        # Extract relevant details from the fees_data
+        fee_charged = self.fees_data.get('fee_charged', {})
+        max_fee = self.fees_data.get('max_fee', {})
+
+        # Add fields to the form layout
+        form_layout.addRow("Last Ledger:", self._create_readonly_entry(self.fees_data.get('last_ledger', 'N/A')))
+        form_layout.addRow("Base Fee (Last Ledger):", self._create_readonly_entry(self.fees_data.get('last_ledger_base_fee', 'N/A')))
+        form_layout.addRow("Ledger Capacity Usage:", self._create_readonly_entry(self.fees_data.get('ledger_capacity_usage', 'N/A')))
+
+        # Fee Charged Details
+        form_layout.addRow("Fee Charged (Min):", self._create_readonly_entry(fee_charged.get('min', 'N/A')))
+        form_layout.addRow("Fee Charged (Max):", self._create_readonly_entry(fee_charged.get('max', 'N/A')))
+        form_layout.addRow("Fee Charged (Mode):", self._create_readonly_entry(fee_charged.get('mode', 'N/A')))
+        form_layout.addRow("Fee Charged (P99):", self._create_readonly_entry(fee_charged.get('p99', 'N/A')))
+
+        # Max Fee Details
+        form_layout.addRow("Max Fee (Min):", self._create_readonly_entry(max_fee.get('min', 'N/A')))
+        form_layout.addRow("Max Fee (Max):", self._create_readonly_entry(max_fee.get('max', 'N/A')))
+        form_layout.addRow("Max Fee (Mode):", self._create_readonly_entry(max_fee.get('mode', 'N/A')))
+        form_layout.addRow("Max Fee (P99):", self._create_readonly_entry(max_fee.get('p99', 'N/A')))
+
+        return form_layout
+
+    def _create_readonly_entry(self, value):
+        """Helper function to create a read-only QLineEdit with a pre-filled value."""
+        entry = QLineEdit(self)
+        entry.setText(str(value))
         entry.setReadOnly(True)
         entry.setAlignment(Qt.AlignCenter)
         return entry
+
+
 

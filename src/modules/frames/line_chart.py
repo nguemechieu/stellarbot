@@ -23,7 +23,7 @@ class LineChart(QWidget):
         self.setup_ui()
 
     def setup_ui(self):
-        """Setup the UI with buttons and chart."""
+        """Set up the UI with buttons and chart."""
         # Create layout for the widget
         layout = QVBoxLayout(self)
 

@@ -11,13 +11,13 @@ class Trades(QWidget):
         self.setGeometry(
             0, 0,1530,780
         )
-        self.setStyleSheet("background-color: #f8f9fa;")
+
         layout = QtWidgets.QVBoxLayout(parent)
 
         # Title label
         title_label = QtWidgets.QLabel("Trades", self)
         title_label.setAlignment(QtCore.Qt.AlignCenter)
-        title_label.setStyleSheet("color: #343a40; font-size: 18px; font-weight: bold;")
+
         layout.addWidget(title_label)
 
         # Create the table (QTableWidget) to display the trades
@@ -38,15 +38,15 @@ class Trades(QWidget):
         self.table.setRowCount(0)  # Clear existing data
 
         # Populate the table with data from the DataFrame
-        # for idx, row in self.trades.iterrows():
-        #     self.table.insertRow(idx)
-        #     self.table.setItem(idx, 0, QtWidgets.QTableWidgetItem(str(row.get("id", "N/A"))))
-        #     self.table.setItem(idx, 1, QtWidgets.QTableWidgetItem(row.get("buyer", "N/A")))
-        #     self.table.setItem(idx, 2, QtWidgets.QTableWidgetItem(row.get("seller", "N/A")))
-        #     self.table.setItem(idx, 3, QtWidgets.QTableWidgetItem(row.get("sold_asset", "N/A")))
-        #     self.table.setItem(idx, 4, QtWidgets.QTableWidgetItem(row.get("bought_asset", "N/A")))
-        #     self.table.setItem(idx, 5, QtWidgets.QTableWidgetItem(str(row.get("amount", 0))))
-        #     self.table.setItem(idx, 6, QtWidgets.QTableWidgetItem(str(row.get("price", 0))))
+        for idx, row in self.trades:
+            self.table.insertRow(idx)
+            self.table.setItem(idx, 0, QtWidgets.QTableWidgetItem(str(row.get("id", "N/A"))))
+            self.table.setItem(idx, 1, QtWidgets.QTableWidgetItem(row.get("buyer", "N/A")))
+            self.table.setItem(idx, 2, QtWidgets.QTableWidgetItem(row.get("seller", "N/A")))
+            self.table.setItem(idx, 3, QtWidgets.QTableWidgetItem(row.get("sold_asset", "N/A")))
+            self.table.setItem(idx, 4, QtWidgets.QTableWidgetItem(row.get("bought_asset", "N/A")))
+            self.table.setItem(idx, 5, QtWidgets.QTableWidgetItem(str(row.get("amount", 0))))
+            self.table.setItem(idx, 6, QtWidgets.QTableWidgetItem(str(row.get("price", 0))))
 
         # Automatically resize columns
         self.table.resizeColumnsToContents()

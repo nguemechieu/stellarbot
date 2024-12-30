@@ -6,11 +6,11 @@
     font-size: 16px;
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
-    padding: 15px;
+
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+
 }
 
 QGroupBox {
@@ -74,8 +74,9 @@ QVBoxLayout{
     padding: 0;
     border: none;
     border-top: 2px solid #45d16f;
-    background-color: rgba(255, 255, 255, 0.06);
+    background-color: rgb(107, 208, 227);
     display: flex;
+    color: white;
 }
 QTabWidget{
     margin: 0;
@@ -101,9 +102,9 @@ QLineEdit:focus {
 QLabel {
     font-size: 14px;
     font-weight: 600;
-    background-color: #3ba8b8;
+    background-color: #45d16f;
 
-    color: #45d16f;
+    color: #ffffff;
     margin-bottom: 5px;
 }
 

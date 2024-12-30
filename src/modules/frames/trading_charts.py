@@ -1,4 +1,5 @@
 from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QFrame
 
 from src.modules.frames.bar_chart import BarChart
 from src.modules.frames.candles_stick_chart import CandlestickChart
@@ -7,17 +8,17 @@ from src.modules.frames.line_chart import LineChart
 from src.modules.frames.renko import Renko
 
 
-class TradingCharts(QtWidgets.QWidget):
+class TradingCharts(QFrame):
     def __init__(self, parent=None, controller=None):
         """Initialize the TradingCharts class."""
-        super().__init__(parent,controller)
+        super().__init__(parent)
         self.status_label = None
         self.assets_combobox2 = None
         self.chart_type_combobox = None
         self.assets_combobox1 = None
         self.controller = controller
         self.trading_mode = 'Manual'
-        self.chart_type = "candle"  # Default chart type
+        self.chart_type = "line"  # Default chart type
         self.charts = {
             'bar': BarChart,
             'candle': CandlestickChart,
@@ -44,14 +45,14 @@ class TradingCharts(QtWidgets.QWidget):
         }
 
         # Layout for the whole widget
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QtWidgets.QVBoxLayout(parent)
 
         # Setup toolbar and content
         self.setup_toolbar(layout)
         self.setup_content(layout)
 
         # Create a QTabWidget for managing charts
-        self.notebook = QtWidgets.QTabWidget(self)
+        self.notebook = QtWidgets.QTabWidget()
         self.notebook.setObjectName("notebook")
         self.setGeometry(
             0, 0, 1530, 780,  # x, y, width, height

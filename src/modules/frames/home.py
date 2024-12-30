@@ -1,18 +1,29 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTabWidget, QFrame, QMenuBar
 
 from src.modules.frames.account_overview import AccountOverview
-from src.modules.frames.asset_portfolio import Portfolio
 from src.modules.frames.dashboard import Dashboard
 from src.modules.frames.effects import Effects
+from src.modules.frames.fees_analysis import FeesAnalysis
 from src.modules.frames.offers import Offers
-from src.modules.frames.trades import Trades
+from src.modules.frames.order_history import OrdersHistory
+from src.modules.frames.payments import Payments
+from src.modules.frames.risk_management import RiskManagement
+from src.modules.frames.trading_analytics_analytics import TradingAnalysis
+from src.modules.frames.trading_charts import TradingCharts
+from src.modules.frames.trading_strategies import TradingStrategies
 from src.modules.frames.transaction import Transaction
+from src.modules.frames.trusted_assets import TrustedAsset
 from src.modules.frames.wallet import Wallet
 
 
 class Home(QFrame):
     def __init__(self, parent, controller):
-        super().__init__(parent)
+     super().__init__(parent)
+     try:
+        self.setFrameShape(QFrame.StyledPanel)
+        self.setFrameShadow(QFrame.Raised)
+        self.setContentsMargins(0, 0, 0, 0)
+        self.setGeometry(0, 0, 1530, 780)
         self.menu_bar = None
         self.tab_widget = None
         self.controller = controller
@@ -21,10 +32,14 @@ class Home(QFrame):
 
 
         self.init_menu_bar()
-        self.init_tabs()
-        self.layout.addStretch(2)
+
+        self.setLayout(self.layout)
+     except Exception as e:
+        self.controller.logger.error(f"Error initializing Home widget: {e}", exc_info=True)
 
     def init_menu_bar(self):
+
+
         self.menu_bar = QMenuBar(self)
         self.layout.addWidget(self.menu_bar)
         # File Menu
@@ -77,34 +92,39 @@ class Home(QFrame):
 
         help_menu = self.menu_bar.addMenu("Help")
         help_menu.addAction("About")
+        self.menu_bar.setNativeMenuBar(True) # Enable native menu bar on macOS
+
+        self.init_tabs()
+
 
     def init_tabs(self):
         self.tab_widget = QTabWidget()
         self.tab_widget.setTabPosition(QTabWidget.North)
-        self.layout.addWidget(self.tab_widget)
 
         tab_frames = {
-            "Dashboard": Dashboard,
-            "Account Overview": AccountOverview,
-            # "Market Data": MarketData,
-            # "Performance": Performance,
-            # "Orders": Orders,
-            #
-
-            "Trades": Trades,
+           "Dashboard": Dashboard,
+           "Account Overview": AccountOverview,
+            "Trusted Assets": TrustedAsset,
+            # # "Market Depth": MarketDepth,
+             "Charting":  TradingCharts,
+            "Risk Management": RiskManagement,
             "Offers": Offers,
-             "Effects": Effects,
-            "Portfolio": Portfolio,
+            "Effects": Effects,
+            "Order History": OrdersHistory,
+            "Trading Analysis": TradingAnalysis,
+            "Trading Strategies":TradingStrategies,
             "Transactions": Transaction,
-            "Wallet": Wallet,
-            # "Account History": AccountHistory,
-            # # "Address Book": AddressBook,
-
+            "Payments": Payments,
+            "Fees Analysis": FeesAnalysis,
+            "Ledger": Wallet
         }
 
         for tab_name, tab_class in tab_frames.items():
             tab = self.create_tab(tab_class)
+
             self.tab_widget.addTab(tab, tab_name)
+
+        self.layout.addWidget(self.tab_widget)
 
     def create_tab(self, tab_class):
         tab = QWidget()
@@ -126,3 +146,4 @@ class Home(QFrame):
             layout.addWidget(frame)
 
         return tab
+

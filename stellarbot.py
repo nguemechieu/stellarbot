@@ -1,18 +1,32 @@
 import logging
 import sys
+import traceback
 
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QVBoxLayout, QMainWindow
-from tensorflow.python.trackable.asset import Asset
+from PyQt5.QtWidgets import QVBoxLayout, QMainWindow, QSystemTrayIcon, QMenu, QMessageBox
+from stellar_sdk import Server, Asset
 
 from src.modules.classes.db_manager import DatabaseManager
 from src.modules.classes.settings_manager import SettingsManager
+from src.modules.classes.stellar_client import StellarClient
 from src.modules.frames.about import About
 from src.modules.frames.help import Help
 from src.modules.frames.home import Home
 from src.modules.frames.login import Login
 from src.modules.frames.preferences import Preferences
+# Global exception hook
+def exception_hook(exc_type, exc_value, exc_traceback):
+    """Log uncaught exceptions and display an error dialog."""
+    if issubclass(exc_type, KeyboardInterrupt):
+        # Allow keyboard interrupt to exit the app
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+    logging.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+    # Optionally, you can display a message box here
+    QMessageBox.critical(None, "Error", f"An unexpected error occurred:\n{exc_value}")
+
+sys.excepthook = exception_hook
 
 
 class StellarBot(QMainWindow):
@@ -21,7 +35,7 @@ class StellarBot(QMainWindow):
     def __init__(self):
         """Initialize StellarBot with database setup, UI setup, and frame management."""
         super().__init__()
-
+# https://dashboard.stellar.org/api/v2/lumens/
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -30,35 +44,43 @@ class StellarBot(QMainWindow):
         self.db = DatabaseManager('StellarBot.db').db
         # Initialize the bot object
 
-        self.amount = 10
+
         self.price = 0.05
         self.login_frame = None
+        self.trade_strategy=None
         self.preferences_frame = None
         self.help_frame = None
         self.about_frame = None
         self.current_frame = None
-        self.current_account_id = None
-        self.current_secret_key = None
-        self.current_server = None
-        self.current_keypair = None
-        self.current_account = None
-        self.current_base_asset = None
-        self.current_counter_asset = None
-        self.current_server_msg = None
-        self.time_frame_selected = "H1"
-        self.server_thread = None
+        self.account_id =None
+        self.data_fetcher = None
+        self.secret_key = None
+        self.selected_strategy=None
+        self.available_strategies=None
+        self.account=None
 
-        self.keep_running = False
+
+        self.marketdata= None
+        self.server_horizon_url = "https://horizon.stellar.org"
+        self.server = Server(self.server_horizon_url)
+
+        self.time_frame_selected = "H1"
+        self.ledger_entries = None
+        self.fees=None
+        self.data_fetcher=None
+
+        self.keep_running = True
+        self.balances={}
         #Create the database tables assets if not already exists
         self.db.execute("""CREATE TABLE IF NOT EXISTS assets (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT DEFAULT CURRENT_TIMESTAMP,
             asset_code TEXT NOT NULL UNIQUE,
             asset_issuer TEXT NOT NULL UNIQUE,
                    image TEXT NOT NULL  DEFAULT 'default.png'
         )""")
         self.db.execute(
             """CREATE TABLE IF NOT EXISTS ohlcv_data (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id INTEGER PRIMARY KEY AUTOINCREMENT DEFAULT CURRENT_TIMESTAMP,
                 account_id TEXT NOT NULL,
                 open_time TEXT NOT NULL,
                 close_time TEXT NOT NULL,
@@ -67,36 +89,87 @@ class StellarBot(QMainWindow):
                 close TEXT NOT NULL,
                 volume TEXT NOT NULL
             ) """)
-
-
         self.db.commit()
-
-
         # Initialize the bot object
-        self.bot = None
-        self.amount = 10
-        self.price = 0.05
-        self.login_frame = None
-        self.preferences_frame = None
-        self.help_frame = None
-        self.about_frame = None
-        self.current_frame = None
-        self.current_account_id = None
-        self.current_secret_key = None
-        self.current_server = None
 
-        self.assets :{{}:Asset}= self.db.execute(
-            "SELECT * FROM assets"
-        ).fetchall()
+        self.amount = 10
+        self.server_thread = None
+        self.keep_running = False
+        self.server_msg = {
+            "status": "Idle",
+            "message": "",
+            "info": "",
+            "error": "",
+            "total_trades": 0,
+            "average_price": 0.0,
+            "total_balance": 0.0,
+            "profit": 0.0,
+            "win_rate": 0.0,
+            "total_fees": 0.0,
+            "trade_count": 0,
+            "total_assets": 0,
+            "total_balances": 0,
+            "total_offers": 0,
+            "total_effects": 0,
+            "total_transactions": 0
+        }
+        self.base_asset = Asset.native()
+
+        #centre.io public address GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN
+        self.counter_asset = Asset("USDC", "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN")
+        self.assets ={ "assets":{(self.base_asset, self.counter_asset): {
+            "price": 0.0,
+            "balance": 0.0,
+            "offers": 0,
+            "effects": 0,
+            "transactions": 0,
+            "orderbook": {
+                "bids": [],
+                "asks": []
+            },
+            "candles": [],
+            "trades": [],
+            "balances": {},
+            "ledger": {
+                "operations": []
+            },
+            "transaction_history": [],
+            "transaction_details": {},
+            "account_details": {
+                "balances": [],
+                "offers": [],
+                "effects": [],
+                "transactions": []
+            }}
+        }
+        }
+
+        self.telegram_chat_id = None
+
+        self.telegram_token = None
+
+        self.account_details={}
+        self.secret_key=None
+        self.selected_strategy=None
+        self.trades=None
+        self.offers=None
+        self.assets=None
+        self.transactions=None
+        self.effects=None
+        self.orderbook=None
+        self.fees_stats={
+            "total_fees": 0.0,
+            "total_fee_percent": 0.0,
+            "average_fee": 0.0,
+            "fee_distribution": {}
+
+        }
+        self.ohlcv_data=None
+        self.transaction_history={}
+        self.transaction_details={}
+
         # Set the main window geometry and style
-        self.secret_key = ""
-        self.account_id = ""
-        self.server=None
-        self.keypair =None
-        self.account=None
-        self.base_asset = Asset("XLM")
-        self.counter_asset = Asset("USDC")
-        self.server_msg = {'message': 'N/A', 'status': 'OFF', 'info': 'N/A'}
+
         self.time_frame_selected = "H1"
 
         # Set the main window geometry and style
@@ -104,6 +177,7 @@ class StellarBot(QMainWindow):
         self.setWindowIcon(QtGui.QIcon("stellarbot.ico"))
         self.setUpdatesEnabled(True)
         self.settings_manager = SettingsManager()
+        self.bot=None
 
         if not self.db:
             self.logger.error("Failed to connect to the database.")
@@ -130,8 +204,8 @@ class StellarBot(QMainWindow):
                                 last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
             self.db.commit()
-        except Exception as e:
-            self.logger.error(f"Database error: {e}")
+        except Exception as ex:
+            self.logger.error(f"Database error: {ex}")
             self.show_error_message("An error occurred while setting up the database.")
 
     def init_ui(self):
@@ -143,7 +217,8 @@ class StellarBot(QMainWindow):
         frame_classes = {
             'Login': Login,
             'Home': Home,
-            'Preferences': Preferences,
+            'Preferences': Preferences,"Settings": SettingsManager,
+
             'About': About,
             'Help': Help
         }
@@ -166,7 +241,8 @@ class StellarBot(QMainWindow):
         frame.setToolTip(f"StellarBot - {page_name}")
         self.current_frame = frame  # Store the current frame for future use
         self.setCentralWidget(frame)
-        self.logger.info(f"Switched to {page_name} page")
+        self.logger.info(f"open  to {page_name} page")
+        frame.update()
         self.show()
 
     def delete_frame(self):
@@ -187,9 +263,36 @@ class StellarBot(QMainWindow):
         """Exit the application."""
         self.close()
 
+    def send_notification(self,message: str):
+        """Send a notification message using the system's notification system."""
+        title = "Live Trading"  # Example title
+
+        # Example implementation using the QMessageBox
+        error_dialog = QtWidgets.QMessageBox(self)
+        error_dialog.setWindowTitle(title)
+        error_dialog.setText(message)
+        error_dialog.exec_()
+
+        # Example implementation using the QNotification
+        # Note: This requires the application to have permission to display notifications
+        # notification = QNotification(title, message)
+        # notification.setStandardIcon(QNotification.Information)
+        # notification.show()
+        # Example implementation using the QSystemTrayIcon
+        tray_icon = QSystemTrayIcon(self)
+        tray_icon.setContextMenu(QMenu())
+        tray_icon.show()
+
+        notification = QSystemTrayIcon.MessageIcon.Information
+        tray_icon.showMessage(title, message, notification)
+
+
+
 
 if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
+  app = QtWidgets.QApplication(sys.argv)
+  try:
+
 
     # Create and run the StellarBot application
     stellar_bot = StellarBot()  # Initialize the application
@@ -199,8 +302,10 @@ if __name__ == "__main__":
         stellar_bot.setStyleSheet(file.read())
     stellar_bot.setWindowIcon(QIcon("stellarbot.ico"))
     stellar_bot.setWindowFilePath("StellarBot")
-
     stellar_bot.setWindowIconText("StellarBot")
     stellar_bot.setWindowTitle("StellarBot")
     stellar_bot.show()  # Show the application
     app.exec_()  # Execute the application
+  except Exception as e:
+    exception_hook(type(e), e, traceback.format_exc())
+    sys.exit(app.exec_())

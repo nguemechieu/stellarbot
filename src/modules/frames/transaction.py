@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QPushButton, QLabel, QLineEdit, QVBoxLayout, QComboB
 class Transaction(QFrame):
     def __init__(self, parent=None, controller=None):
         super().__init__(parent)
+        self.source_entry = None
         self.title_label = None
         self.source_label = None
         self.controller = controller  # Application controller to access bot and other relevant data
@@ -26,7 +27,7 @@ class Transaction(QFrame):
         self.source_label = QLabel("Source Account:", self)
         layout.addWidget(self.source_label)
         self.source_entry = QLineEdit(self)
-        self.source_entry.setText(self.controller.bot.account_id)
+        self.source_entry.setText(self.controller.account_id)
         self.source_entry.setReadOnly(True)
         layout.addWidget(self.source_entry)
 

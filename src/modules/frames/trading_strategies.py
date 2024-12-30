@@ -5,11 +5,6 @@ class TradingStrategies(QtWidgets.QWidget):
         """Initialize the Trading Strategies widget."""
         super().__init__(parent)
         self.controller = controller
-        
-        self.setGeometry(
-            0, 0,1530,780
-        )
-       
 
         # Layout for the widget
         layout = QtWidgets.QVBoxLayout(self)
@@ -86,11 +81,11 @@ class TradingStrategies(QtWidgets.QWidget):
     def create_frame(self, bg_color, title):
         """Create a styled frame with a title label."""
         frame = QtWidgets.QFrame(self)
-       # frame.setStyleSheet(f"background-color: {bg_color}; border: 2px solid #003366;")
+
       #  frame.setFixedSize(600, 250)
 
         title_label = QtWidgets.QLabel(title, frame)
-        title_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #003366;")
+
         title_label.setGeometry(10, 10, 200, 30)
 
         return frame

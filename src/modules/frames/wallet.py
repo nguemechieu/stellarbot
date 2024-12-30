@@ -22,8 +22,6 @@ class Wallet(QFrame):
         self.transaction_history_label = None
         self.transaction_history_table = None
         self.controller = controller
-        self.setGeometry(0, 0, 1530, 780)
-        self.setStyleSheet("background-color: #1e2a38; color: white;")
 
         # Layout for the wallet
         self.create_widgets()

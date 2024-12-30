@@ -1,5 +1,12 @@
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QFrame
+
+
+def format_asset(asset):
+    """Helper function to format the asset data."""
+    if asset["asset_type"] == "native":
+        return "XLM"
+    return f'{asset["asset_code"]} ({asset["asset_issuer"][:5]}...)'
 
 
 class Offers(QFrame):
@@ -8,42 +15,33 @@ class Offers(QFrame):
     def __init__(self, parent=None, controller=None):
         super().__init__(parent)
         self.controller = controller
-
-
         # Main layout for the widget
         layout = QtWidgets.QVBoxLayout(self)
-
         # Title label
-        title_label = QtWidgets.QLabel("Offers", self)
-        title_label.setStyleSheet("font-size: 18pt; font-weight: bold; color: #343a40;")
-        layout.addWidget(title_label)
 
+
+        title_label = QtWidgets.QLabel("Offers", self)
+        layout.addWidget(title_label)
         # Create the table widget to display the offers
         self.table = QtWidgets.QTableWidget(self)
         self.table.setColumnCount(6)
         self.table.setHorizontalHeaderLabels(["Offer ID", "Seller", "Selling Asset", "Buying Asset", "Amount", "Price"])
         self.table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.table)
-
         # Fetch and display offers
-        self.update_offers()
 
-        # Automatically update the offers every 60 seconds
-        self.timer = QtCore.QTimer(self)
-        self.timer.timeout.connect(self.update_offers)
-        self.timer.start(60000)  # 60 seconds
 
     def fetch_offers(self):
         """Fetch offer data from Stellar API and populate the table."""
         try:
 
-
-
             # Get the offer data from the trading engine's get_offers() method
-            offers_data = self.controller.bot.get_offers()
+            offers_data = self.controller.offers
             if offers_data is None:
-                print("No offers found")
-                return
+                self.controller.logger.info("No offers found")
+
+                return []
+
 
             # Clear the current data in the table
             self.table.setRowCount(0)
@@ -55,8 +53,8 @@ class Offers(QFrame):
                 
                 offer_id = offer.get("id")
                 seller = offer.get("seller")
-                selling_asset = self.format_asset(offer["selling"])
-                buying_asset = self.format_asset(offer["buying"])
+                selling_asset = format_asset(offer["selling"])
+                buying_asset = format_asset(offer["buying"])
                 amount = offer.get("amount")
                 price = offer.get("price")
 
@@ -69,15 +67,7 @@ class Offers(QFrame):
                 self.table.setItem(row_position, 5, QtWidgets.QTableWidgetItem(str(price)))
 
         except Exception as e:
-            print(f"Error fetching offers: {e}")
+            self.controller.logger.error(f"Error fetching offers: {e}")
             self.controller.server_msg['message'] = f"Error fetching offers: {e}"
 
-    def format_asset(self, asset):
-        """Helper function to format the asset data."""
-        if asset["asset_type"] == "native":
-            return "XLM"
-        return f'{asset["asset_code"]} ({asset["asset_issuer"][:5]}...)'
 
-    def update_offers(self):
-        """Fetch and display new offers since the last update."""
-        self.fetch_offers()

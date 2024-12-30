@@ -1,244 +1,234 @@
-import logging
-import time
-from threading import Thread, Lock
-from tkinter import messagebox
+import asyncio
+import threading
 
-import qrcode
-from stellar_sdk import Server, Keypair
+from stellar_sdk import Network, TransactionBuilder, Asset, Keypair
 
-from src.modules.classes.trading_engine import TradingEngine
+from src.modules.classes.smart_trading_bot import SmartTradingBot
 
 
-class StellarClient:
+class StellarClient(SmartTradingBot):
     """
     StellarClient manages interactions with the Stellar blockchain network, including fetching market data,
-    executing trades, and managing accounts. It runs asynchronously in a background thread, allowing continuous
-    data fetching and trade execution.
+    executing trades, and managing accounts. It runs asynchronously, allowing continuous
+    data fetching, trade execution, and event-driven actions.
     """
-    def __init__(self, controller=None):
+
+    def __init__(self, controller):
         """
-        Initialize StellarClient with account_id and secret_key.
-        - controller: Main application controller
-        - horizon_url (str): Stellar Horizon server URL (default is public network)
+        Initializes the StellarClient with essential components and starts the event loop.
+
+        Parameters:
+        controller (object): The application controller that provides access to the bot, logger, and server message.
         """
+        super().__init__(controller=controller)
 
+        # Initialize logging and server message
+        self.logger = controller.logger
+        self.server_msg = self.controller.server_msg
 
+        # Log initial setup
+        self.logger.info("StellarClient initialized.")
 
+        # Initialize necessary components
+        self.controller = controller  # Access to the application controller
+        self.network = Network.PUBLIC_NETWORK_PASSPHRASE  # Default Stellar network
+        self.event_listeners = {}  # Dictionary for managing event listeners
+        self.loop = asyncio.get_event_loop()  # Event loop for async operations
+        self.running = True  # Flag to stop the background tasks
+
+        # Start the event loop in a background thread
+        threading.Thread(target=self.run_event_loop, daemon=True).start()
+
+    def run_event_loop(self):
+        """
+        Starts the event loop asynchronously in a separate thread.
+        """
         try:
-            self.controller = controller
-            self.logger = controller.logger
-            self.horizon_url="https://horizon.stellar.org"
-            # Setup file logging
-            handler = logging.FileHandler("stellar_client.log")
-            formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-            handler.setFormatter(formatter)
-            self.logger.addHandler(handler)
-
-            # Thread lock
-            self.lock = Lock()
-
-            # Initialize Stellar Server
-            self.server = Server(horizon_url=self.horizon_url)
-
-            # Initialize account info and check credentials
-            self.account_id = self.controller.account_id
-            self.secret_key = self.controller.secret_key
-            self.server_msg = self.controller.server_msg
-            self.logger.debug("Validating credentials...")
-            if not self._validate_credentials():
-                self.logger.error("Credentials validation failed.")
-                self.server_msg['message'] = 'Initialization failed: Invalid credentials'
-                self.server_msg['status'] = 'Error'
-                return
-            self.account = self.server.load_account(account_id=self.account_id)
-            # Initialize data fetching and trading components
-            self.keypair = Keypair.from_secret(self.secret_key)
-            # Manage background thread for trading
-            self.keep_running = False
-            self.trading_engine = TradingEngine(controller=self.controller)
-
-
-            # Log initialization success
-            self.logger.info(f"Initialized StellarClient with account: {self.account_id}")
-            self.server_msg['status'] = 'Started'
-            self.server_msg['info'] = 'Server started successfully'
-            self.server_thread = Thread(target=self.run)
-
-
+            self.loop.run_until_complete(self.start())
+            self.loop.run_forever()
         except Exception as e:
-            self.logger.error(f"Error initializing StellarClient: {e}")
-            messagebox.showerror("Initialization Error", str(e))
-            raise e
+            self.logger.error(f"Error in event loop: {e}")
 
-    def _validate_credentials(self):
-        """Validate account ID and secret key."""
-        if not self.account_id or not self.secret_key:
-            self.server_msg['message'] = 'Please provide an account ID and secret key'
-            self.server_msg['status'] = 'Error'
-            self.logger.error("Invalid credentials: account_id and secret_key are required")
-            return False
-        return True
+    async def fetch_account_data(self, account_id):
+        """
+        Asynchronously fetch account details from Stellar network.
 
-    def start(self):
-        """Start Stellar Client in a background thread for continuous data fetching and trading."""
-        with self.lock:
-            if not self.keep_running:
-                self.keep_running = True
-                self.server_thread.daemon = self.keep_running
-                self.server_thread.start()
+        Parameters:
+        account_id (str): The Stellar account ID to fetch data for.
 
-                self._update_server_status("StellarBot started", 'RUNNING', 'Trading started.')
+        Returns:
+        dict: Account details such as balances, operations, and transactions.
+        """
+        try:
+            account = await self.accounts().account_id(account_id).call()
+            self.logger.info(f"Fetched account data for {account_id}")
+            return account
+        except Exception as e:
+            self.logger.error(f"Error fetching account data for {account_id}: {str(e)}")
+            return None
+
+    async def fetch_market_data(self, base_asset_code='XLM', counter_asset_code='USDC'):
+        """
+        Asynchronously fetch market data for a given asset pair.
+
+        Parameters:
+        base_asset_code (str): The base asset code (e.g., 'XLM').
+        counter_asset_code (str): The counter asset code (e.g., 'USDC').
+
+        Returns:
+        dict: Market data such as bid/ask prices, order book, etc.
+        """
+        try:
+            # Simulating market data fetching, adjust based on actual API
+            market_data = {
+                'base_asset': base_asset_code,
+                'counter_asset': counter_asset_code,
+                'bid_price': 0.3,  # Example data, replace with real market data fetch
+                'ask_price': 0.35  # Example data, replace with real market data fetch
+            }
+            self.logger.info(f"Fetched market data for {base_asset_code}/{counter_asset_code}")
+            return market_data
+        except Exception as e:
+            self.logger.error(f"Error fetching market data: {str(e)}")
+            return None
+
+    async def execute_trade(self, account_id, base_asset, counter_asset, amount, action='buy'):
+        """
+        Asynchronously executes a trade on the Stellar network (buy/sell).
+
+        Parameters:
+        account_id (str): The Stellar account ID initiating the trade.
+        base_asset (Asset): The base asset for the trade.
+        counter_asset (Asset): The counter asset for the trade.
+        amount (float): The amount of the base asset to buy/sell.
+        action (str): 'buy' or 'sell' action.
+
+        Returns:
+        bool: True if the trade is successful, False otherwise.
+        """
+        try:
+            # Fetch account data
+            account = await self.fetch_account_data(account_id)
+            if not account:
+                self.logger.error("Account data could not be fetched.")
+                return False
+
+            # Build the transaction
+            transaction = TransactionBuilder(
+                source_account=account,
+                network_passphrase=self.network
+            )
+
+            if action == 'buy':
+                # Add the 'buy' operation (buying base asset with counter asset)
+                transaction.append_payment_op(destination=account_id, asset=counter_asset, amount=amount)
+            elif action == 'sell':
+                # Add the 'sell' operation (selling base asset for counter asset)
+                transaction.append_payment_op(destination=account_id, asset=base_asset, amount=amount)
             else:
-                self.logger.warning("StellarBot is already running.")
-                self.server_msg['message'] = 'StellarBot is already running'
-                self.server_msg['status'] = 'RUNNING'
+                self.logger.error(f"Invalid trade action: {action}")
+                return False
 
-    def stop(self):
-        """Stop Stellar Client and gracefully shut down the trading thread."""
-        with self.lock:
-            self.logger.info("Stopping StellarClient...")
-
-            self.keep_running = False
-            self.server_msg['info'] = 'Stopping server...'
-            if self.server_thread and self.server_thread.is_alive():
-                self.server_thread.join()
-                self.server_thread=None
-                self.server_msg['message'] = 'StellarBot stopped'
-            self._update_server_status("StellarBot stopped", 'Stopped', 'Trading stopped.')
-            self.logger.info("StellarBot stopped")
-
-    def _update_server_status(self, log_message: str, status: str, user_message: str):
-        """Update server status in logs and messages."""
-        with self.lock:
-            self.logger.info(log_message)
-            self.server_msg['status'] = status
-            self.server_msg['message'] = user_message
-
-    def run(self):
-        """Main loop for continuously fetching market data and executing trading strategies."""
-        self.logger.info("StellarClient run loop started.")
-
-        retry_count = 0
-        max_retries = 3
-        self.server_msg['message'] = 'Trade decision started'
-        self.server_msg['status'] = 'RUNNING'
-        retry_delay = 5
-
-        while self.keep_running:
-            try:
-                self.trading_engine.execute_trading_strategy()
-                retry_count = 0
-                time.sleep(1)
-            except Exception as e:
-                self.logger.error(f"Error during run loop: {e}")
-                self.server_msg['message'] = f"Error during run loop: {e}"
-                self.server_msg['status'] = 'Error'
-
-                retry_count += 1
-                if retry_count >= max_retries:
-                    self.logger.error("Max retries reached, stopping StellarBot.")
-                    self.stop()
-                    break
-                delay = min(retry_delay * (2 ** retry_count), 60)
-                self.logger.warning(f"Retrying in {delay} seconds...")
-                time.sleep(delay)
-
-        self.logger.info("StellarClient run loop stopped")
-        self.server_msg['status'] = 'Idle'
-
-    def generate_qr_code(self):
-        """Generate a QR code for the account ID."""
-        try:
-            qr = qrcode.make(self.account_id)
-            qr.save(f"{self.account_id}_qr.png")
-            self.logger.info(f"QR Code generated for account: {self.account_id}")
+            # Sign and submit the transaction
+            transaction.build().sign(Keypair.random())  # Using a random keypair for simplicity
+            response = self.submit_transaction(transaction.build())
+            self.logger.info(f"Trade {action} executed: {response}")
+            return True
         except Exception as e:
-            self.logger.error(f"Error generating QR Code: {e}")
-            self.server_msg['message'] = f"Error generating QR Code: {str(e)}"
+            self.logger.error(f"Error executing trade {action}: {str(e)}")
+            return False
 
-    def is_alive(self):
-        """Check if the StellarClient is running."""
-        with self.lock:
-            return self.keep_running
+    async def monitor_account(self, account_id, interval=60):
+        """
+        Asynchronously monitors the account's balance and performs actions (e.g., fetch market data, execute trades) at regular intervals.
 
-    def get_trading_signals(self):
-        """Fetch trading signals from the trading engine."""
-        try:
-            symbols = self.get_assets()
-            if not symbols:
-                self.logger.warning("No assets found for account")
-                self.server_msg['message'] = 'No assets found for account'
+        Parameters:
+        account_id (str): The Stellar account ID to monitor.
+        interval (int): Interval in seconds between each monitoring cycle.
+        """
+        while self.running:
+            # Fetch the latest account data
+            account_data = await self.fetch_account_data(account_id)
+            if account_data:
+                self.logger.info(f"Monitoring account {account_id}: {account_data['balances']}")
 
-                return []
+            # Optionally fetch market data or execute trades
+            market_data = await self.fetch_market_data('XLM', 'USDC')
+            if market_data:
+                self.logger.info(f"Market data: {market_data}")
+                # Execute a trade based on market conditions
+                await self.execute_trade(account_id, Asset.native(), Asset('USDC', 'GDUQX26QZNOI6KNLFLFSI35VBGIY5YQ6HHYQF5LPJ6XHNE7ZYEBJ7Y67'),
+                                         100, action='buy')
 
-            trading_pairs = [(symbol.code, symbol.counterparty) for symbol in symbols]
-            signals = [self.trading_engine.data_fetcher.get_trading_signals(pair[0], pair[1]) for pair in trading_pairs]
-            return signals
-        except Exception as e:
-            self.logger.error(f"Error fetching trading signals: {e}")
-            self.server_msg['message'] = f"Error fetching trading signals: {str(e)}"
-            return []
+            # Wait for the next cycle
+            await asyncio.sleep(interval)
 
+    def start_monitoring(self, account_id):
+        """
+        Starts the asynchronous monitoring of the account in a background thread.
 
-    def get_account(self):
-        """Fetch account balance."""
-        try:
-            accounts = self.server.accounts().call()
-            return accounts
+        Parameters:
+        account_id (str): The Stellar account ID to monitor.
+        """
+        # Start monitoring the account in an async event loop
+        self.loop.create_task(self.monitor_account(account_id))
 
-        except Exception as e:
-            self.logger.error(f"Error fetching account balance: {e}")
-            self.server_msg['message'] = f"Error fetching account: {str(e)}"
-            return None
+    def stop_monitoring(self):
+        """
+        Stops monitoring the account.
+        """
+        self.running = False  # Set the flag to stop monitoring
+        self.logger.info("Stopping account monitoring.")
 
-    def get_assets(self ):
-        """Fetch account assets."""
-        try:
-            assets = self.server.assets().call()["_embedded"][ "records"]
+    def send_alert(self, message):
+        """
+        Sends a message via Telegram bot to alert the user.
 
-            # Filter out assets that are not valid
-            assets = [asset for asset in assets if asset["asset_type"] == "credit_alphanum4"]
+        Parameters:
+        message (str): The message to send to the user.
+        """
+        if self.telegram:
+            self.telegram.send_message(message)
+            self.logger.info(f"Sent Telegram alert: {message}")
+        else:
+            self.logger.warning("Telegram bot is not initialized.")
 
-            # Sort assets by asset code
-            assets.sort(key=lambda x: x["asset_code"])
+    def add_event_listener(self, event_name, callback):
+        """
+        Adds an event listener for a specific event.
 
-            return assets
+        Parameters:
+        event_name (str): The name of the event to listen for.
+        callback (function): The function to call when the event is triggered.
+        """
+        if event_name not in self.event_listeners:
+            self.event_listeners[event_name] = []
+        self.event_listeners[event_name].append(callback)
+        self.logger.info(f"Event listener added for {event_name}")
 
-        except Exception as e:
-            self.logger.error(f"Error fetching account assets: {e}")
-            self.server_msg['message'] = f"Error fetching account assets: {str(e)}"
-            return None
+    def trigger_event(self, event_name, data=None):
+        """
+        Triggers an event, notifying all listeners of the event.
 
-    def get_effects(self):
-        """Fetch account effects."""
-        try:
-            effects = self.server.effects().call()["_embedded"][ "records"]
-            return effects
+        Parameters:
+        event_name (str): The name of the event to trigger.
+        data (any): The data to pass to the event listeners.
+        """
+        if event_name in self.event_listeners:
+            for callback in self.event_listeners[event_name]:
+                try:
+                    callback(data)
+                except Exception as e:
+                    self.logger.error(f"Error triggering event {event_name}: {e}")
 
-        except Exception as e:
-            self.logger.error(f"Error fetching account effects: {e}")
-            self.server_msg['message'] = f"Error fetching account effects: {str(e)}"
-            return None
+    def remove_event_listener(self, event_name, callback):
+        """
+        Removes a specific event listener for a given event.
 
-    def get_offers(self):
-        """Fetch account offers."""
-        try:
-            offers = self.server.offers().call()["_embedded"][ "records"]
-            return offers
-
-        except Exception as e:
-            self.logger.error(f"Error fetching account offers: {e}")
-            self.server_msg['message'] = f"Error fetching account offers: {str(e)}"
-            return None
-
-
-    def get_transactions(self):
-        """Fetch account transactions."""
-        try:
-            transactions = self.server.transactions().call()["_embedded"][ "records"]
-            return transactions
-
-        except Exception as e:
-            self.logger.error(f"Error fetching account transactions: {e}")
-            self.server_msg['message'] = f"Error fetching account transactions: {str(e)}"
-            return None
+        Parameters:
+        event_name (str): The name of the event.
+        callback (function): The function to remove from the event listeners.
+        """
+        if event_name in self.event_listeners and callback in self.event_listeners[event_name]:
+            self.event_listeners[event_name].remove(callback)
+            self.logger.info(f"Event listener removed for {event_name}")

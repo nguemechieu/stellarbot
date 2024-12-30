@@ -7,9 +7,9 @@ from PyQt5.QtWidgets import QFrame
 class Payments(QFrame):
     def __init__(self, parent=None, controller=None):
         super().__init__(parent)
+        self.payments_table = None
         self.controller = controller
         self.setGeometry(0, 0, 1530, 780)
-        self.setStyleSheet("background-color: #1e2a38; color: white;")
 
         # Create widgets to display the payments information
         self.create_widgets()
@@ -28,9 +28,7 @@ class Payments(QFrame):
         )
         self.payments_table.horizontalHeader().setStretchLastSection(True)
         self.payments_table.setAlternatingRowColors(True)
-        self.payments_table.setStyleSheet(
-            "QHeaderView::section {background-color: lightgrey; font-weight: bold; font-size: 12pt;}"
-        )
+
         layout.addWidget(self.payments_table)
 
     def update_payments_data(self):
