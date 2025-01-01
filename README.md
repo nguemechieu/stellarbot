@@ -1,6 +1,3 @@
-Here’s an improved version of the README with the requested updates, emphasizing that StellarBot is designed for investing in a decentralized exchange on the Stellar Network and includes a fast, reliable Telegram notification system:
-
----
 
 # StellarBot
 ![StellarBot](./stellarbot.ico)
@@ -139,11 +136,3 @@ We welcome contributions! Please review the [Contributing Guidelines](CONTRIBUTI
 
 For further inquiries, reach out via email: **nguemechieu@live.com**.
 
---- 
-
-### Improvements Added:
-1. **Clear Purpose**: Highlighted StellarBot's focus on the Stellar DEX and Telegram notifications.
-2. **Key Features Section**: Summarized major functionalities upfront.
-3. **Organized Installation**: Simplified and structured local and Docker setup instructions.
-4. **Troubleshooting and Resources**: Added links for common issues and further information.
-5. **Professional Formatting**: Improved readability and section clarity.
