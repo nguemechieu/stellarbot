@@ -1,119 +1,149 @@
+Here’s an improved version of the README with the requested updates, emphasizing that StellarBot is designed for investing in a decentralized exchange on the Stellar Network and includes a fast, reliable Telegram notification system:
+
+---
 
 # StellarBot
+![StellarBot](./stellarbot.ico)
 
-# Your open gateway for financial freedom 
+## Your Open Gateway to Financial Freedom
 
 [![Upload Python Package](https://github.com/nguemechieu/stellarbot/actions/workflows/python-publish.yml/badge.svg)](https://github.com/nguemechieu/stellarbot/actions/workflows/python-publish.yml)
 [![Docker Image CI](https://github.com/nguemechieu/stellarbot/actions/workflows/docker-image.yml/badge.svg)](https://github.com/nguemechieu/stellarbot/actions/workflows/docker-image.yml)
 [![Continuous Integration Workflow](https://github.com/nguemechieu/stellarbot/actions/workflows/continuous-integration-workflow.yml/badge.svg)](https://github.com/nguemechieu/stellarbot/actions/workflows/continuous-integration-workflow.yml)
 
+---
+
 ## About StellarBot
 
-StellarBot is a professional trading bot for the Stellar Network digital ledger. It allows you to execute trades on your own Stellar network using the standard protocol within the Stellar ecosystem. For more information on the Stellar Network, visit [Stellar Expert](https://stellar.expert/explorer/public/network-activity).
+**StellarBot** is a professional, fast, and reliable trading bot designed specifically for investing in the Stellar Network's decentralized exchange (DEX). With StellarBot, you can securely trade assets on the Stellar ledger and leverage real-time market opportunities.
 
-![StellarBot](src/assets/stellarbot.ico)
+Key features:
+- **Telegram Notification System**: Stay updated with real-time trade and market alerts through a robust Telegram integration.
+- **Fast and Reliable**: Optimized for performance and dependability, ensuring seamless execution of trades at any time.
+- **Decentralized Exchange Support**: Fully compliant with the Stellar ecosystem for trading on the Stellar DEX.
+
+For more information about the Stellar Network, visit [Stellar Expert](https://stellar.expert/explorer/public/network-activity).
+
+---
 
 ## Installation Guide
 
 ### Prerequisites
 
-Ensure you have the following prerequisites installed before setting up StellarBot:
+Ensure the following are installed before setting up StellarBot:
+- **Python 3.9+**: [Download Python](https://www.python.org/downloads/)
+- **Git**: [Install Git](https://git-scm.com/downloads)
+- **Docker** *(optional)*: [Get Docker](https://www.docker.com/get-started) for containerized deployment
 
-- **Python 3.9+**: [Download here](https://www.python.org/downloads/).
-- **Git**: [Install Git](https://git-scm.com/downloads).
-- **Docker** (optional): [Get Docker](https://www.docker.com/get-started) for containerized deployment.
+---
 
 ### Step-by-Step Installation
 
-1. **Clone the Repository:**
+#### Local Installation
+
+1. **Clone the Repository**:
    ```bash
    git clone https://github.com/nguemechieu/stellarbot.git
    cd stellarbot
-Set Up a Virtual Environment: Create and activate a virtual environment for dependency management:
+   ```
 
-bash
-Copy code
-python -m venv venv
-source venv/bin/activate  # Windows: `venv\Scripts\activate`
-Install Dependencies: Install required dependencies via pip:
+2. **Set Up a Virtual Environment**:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: `venv\Scripts\activate`
+   ```
 
-bash
-Copy code
-pip install -r requirements.txt
-Configure StellarBot: Copy the sample configuration and customize it to your preferences:
+3. **Install Dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-bash
-Copy code
-cp config.sample.json config.json
-Run StellarBot: Start StellarBot using:
+4. **Configure StellarBot**:
+   ```bash
+   cp config.sample.json config.json
+   # Customize `config.json` with your account settings and preferences
+   ```
 
-bash
-Copy code
-python stellarbot.py
-Docker Installation (Optional)
-Build the Docker Image:
+5. **Run StellarBot**:
+   ```bash
+   python stellarbot.py
+   ```
 
-bash
-Copy code
-docker build -t stellarbot .
-Run the Docker Container:
+#### Docker Installation *(Optional)*
 
-bash
-Copy code
-docker run -d --name stellarbot stellarbot
-Commands
-Start the bot:
-bash
-Copy code
-python stellarbot.py start
-Stop the bot:
-bash
-Copy code
-python stellarbot.py stop
-Check the bot’s status:
-bash
-Copy code
-python stellarbot.py status
-For more commands, check the Commands Documentation.
+1. **Build the Docker Image**:
+   ```bash
+   docker build -t stellarbot .
+   ```
 
-Troubleshooting
-If you encounter any issues during installation or while running StellarBot, please visit the issue tracker for support.
+2. **Run the Docker Container**:
+   ```bash
+   docker run -d --name stellarbot stellarbot
+   ```
 
-Using Docker
-For a containerized approach, pull the latest image and run StellarBot as a Docker container:
-
-bash
-Copy code
+Alternatively, pull the pre-built image:
+```bash
 docker pull nguemechieu/stellarbot:latest
 docker run -d --name stellarbot nguemechieu/stellarbot:latest
-Resources and Links
-StellarBot Repository
-Documentation
-Issue Tracker
-Stellar Network Activity
-License
-StellarBot is released under the GPLv3 License.
+```
 
-Contributing
-We welcome contributions! Please read the Contributing Guidelines before submitting a pull request.
+---
 
-Contact
-For further inquiries, reach out at nguemechieu@live.com.
+### Commands
 
-markdown
-Copy code
+- **Start the bot**:
+  ```bash
+  python stellarbot.py start
+  ```
 
-### Key Changes:
-1. **Image Path Correction:**
-   The `![StellarBot](src/assets/stellarbot_logo.png)` points to the logo in the `src/assets` folder.
+- **Stop the bot**:
+  ```bash
+  python stellarbot.py stop
+  ```
 
-2. **Clarified Docker instructions:**
-   Made sure the Docker instructions are concise and easily understandable.
+- **Check the bot's status**:
+  ```bash
+  python stellarbot.py status
+  ```
 
-3. **Improved formatting:** 
-   Minor tweaks to ensure everything is in clear sections and easy to follow.
+---
 
+## Troubleshooting
 
+Encounter issues? Visit the [issue tracker](https://github.com/nguemechieu/stellarbot/issues) for support and solutions.
 
+---
 
+## Resources and Links
 
+- [StellarBot Repository](https://github.com/nguemechieu/stellarbot)
+- [Documentation](https://github.com/nguemechieu/stellarbot/wiki)
+- [Issue Tracker](https://github.com/nguemechieu/stellarbot/issues)
+- [Stellar Network Activity](https://stellar.expert/explorer/public/network-activity)
+
+---
+
+## License
+
+StellarBot is released under the [GPLv3 License](https://www.gnu.org/licenses/gpl-3.0.en.html).
+
+---
+
+## Contributing
+
+We welcome contributions! Please review the [Contributing Guidelines](CONTRIBUTING.md) before submitting a pull request.
+
+---
+
+## Contact
+
+For further inquiries, reach out via email: **nguemechieu@live.com**.
+
+--- 
+
+### Improvements Added:
+1. **Clear Purpose**: Highlighted StellarBot's focus on the Stellar DEX and Telegram notifications.
+2. **Key Features Section**: Summarized major functionalities upfront.
+3. **Organized Installation**: Simplified and structured local and Docker setup instructions.
+4. **Troubleshooting and Resources**: Added links for common issues and further information.
+5. **Professional Formatting**: Improved readability and section clarity.
