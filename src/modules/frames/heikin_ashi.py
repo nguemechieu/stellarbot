@@ -8,12 +8,10 @@ from matplotlib.patches import Rectangle
 
 class HeikinAshi(QFrame):
     def __init__(self, parent=None, controller=None,df=None):
-        """Initialize the Heikin-Ashi chart frame."""
+        """Initialize the Heikin-Ash chart frame."""
         super().__init__(parent)
         self.controller = controller
 
-        if df is None:
-            df = {}
 
         # Data preparation: Creating a pandas DataFrame from the input data
         self.df = pd.DataFrame(df)
@@ -44,12 +42,16 @@ class HeikinAshi(QFrame):
         # Convert Date column to matplotlib's date format
         self.df['Date'] = pd.to_datetime(self.df['Date'])
         ha_data = self.df[['Date', 'HA_Open', 'HA_High', 'HA_Low', 'HA_Close']].values
-
         ax.xaxis_date()
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
 
         # Plot Heikin-Ashi Candlestick
-        self.plot_heikin_ashi_candlestick(ax, ha_data)
+        self.plot_heikin_ashi_candlestick(ax.bar(
+            mdates.date2num(ha_data[:, 0]), ha_data[:, 4], width=0.6,
+            facecolor='green' if ha_data[:, 4] >= ha_data[:, 3] else'red',
+            edgecolor='white',
+            alpha=0.7,
+        ), ha_data)
 
         ax.set_title('Heikin-Ashi Chart')
         ax.set_xlabel('Date')

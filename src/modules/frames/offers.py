@@ -1,73 +1,64 @@
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QFrame
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QHeaderView, QFrame
 
-
-def format_asset(asset):
-    """Helper function to format the asset data."""
-    if asset["asset_type"] == "native":
-        return "XLM"
-    return f'{asset["asset_code"]} ({asset["asset_issuer"][:5]}...)'
+from src.modules.frames.market_depth import random_color
 
 
 class Offers(QFrame):
-    """Widget to display offers from Stellar."""
-
     def __init__(self, parent=None, controller=None):
         super().__init__(parent)
         self.controller = controller
-        # Main layout for the widget
-        layout = QtWidgets.QVBoxLayout(self)
-        # Title label
+        self.setGeometry(
+            0, 0, 1530, 780
+        )
+        self.offers_df = self.controller.bot.offers_df  # Fetch the offer data from the controller
+        self.create_widgets()
 
+    def create_widgets(self):
 
-        title_label = QtWidgets.QLabel("Offers", self)
-        layout.addWidget(title_label)
-        # Create the table widget to display the offers
-        self.table = QtWidgets.QTableWidget(self)
-        self.table.setColumnCount(6)
-        self.table.setHorizontalHeaderLabels(["Offer ID", "Seller", "Selling Asset", "Buying Asset", "Amount", "Price"])
-        self.table.horizontalHeader().setStretchLastSection(True)
-        layout.addWidget(self.table)
-        # Fetch and display offers
+        layout = QVBoxLayout()
+        self.title_label = QLabel("Stellar Network Offers")
+        layout.addWidget(self.title_label)
+        self.table_widget = QTableWidget()
+        self.populate_table()
+        layout.addWidget(self.table_widget)
+        self.setLayout(layout)
 
+    def populate_table(self):
+        self.table_widget.setColumnCount(5)
+        self.table_widget.setRowCount(len(self.offers_df))
+        self.table_widget.setHorizontalHeaderLabels([
+            "Market", "Price", "Volume", "Change (%)", "Analysis"
+        ])
+        self.table_widget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table_widget.setSortingEnabled(True)
+        self.table_widget.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.table_widget.setAlternatingRowColors(True)
+        for i, offer in enumerate(self.offers_df.itertuples()):
+            market = offer.market
+            price = offer.price
+            volume = offer.volume
+            change = offer.change
+            analysis = self.analyze_offer(change)
+            self.table_widget.setItem(i, 0, QTableWidgetItem(market))
+            self.table_widget.setItem(i, 1, QTableWidgetItem(str(price)))
+            self.table_widget.setItem(i, 2, QTableWidgetItem(str(volume)))
+            self.table_widget.setItem(i, 3, QTableWidgetItem(str(change)))
+            self.table_widget.setItem(i, 4, QTableWidgetItem(analysis))
+            self.table_widget.item(i, 0).setBackgroundColor(random_color())
 
-    def fetch_offers(self):
-        """Fetch offer data from Stellar API and populate the table."""
-        try:
+            # Set custom color for Change column based on positive/negative
+            color = "#4CAF50" if change > 0 else "#F44336"
+            self.table_widget.item(i, 3).setForeground(Qt.QColor(color))
+            # Highlight the volume cells in a different color
+            self.table_widget.item(i, 2).setBackgroundColor(Qt.QColor("#f5f5f5"))
 
-            # Get the offer data from the trading engine's get_offers() method
-            offers_data = self.controller.offers
-            if offers_data is None:
-                self.controller.logger.info("No offers found")
-
-                return []
-
-
-            # Clear the current data in the table
-            self.table.setRowCount(0)
-
-            # Format and insert offer into the table
-            for offer in offers_data:
-                row_position = self.table.rowCount()
-                self.table.insertRow(row_position)
-                
-                offer_id = offer.get("id")
-                seller = offer.get("seller")
-                selling_asset = format_asset(offer["selling"])
-                buying_asset = format_asset(offer["buying"])
-                amount = offer.get("amount")
-                price = offer.get("price")
-
-                # Insert into the table
-                self.table.setItem(row_position, 0, QtWidgets.QTableWidgetItem(str(offer_id)))
-                self.table.setItem(row_position, 1, QtWidgets.QTableWidgetItem(seller))
-                self.table.setItem(row_position, 2, QtWidgets.QTableWidgetItem(selling_asset))
-                self.table.setItem(row_position, 3, QtWidgets.QTableWidgetItem(buying_asset))
-                self.table.setItem(row_position, 4, QtWidgets.QTableWidgetItem(str(amount)))
-                self.table.setItem(row_position, 5, QtWidgets.QTableWidgetItem(str(price)))
-
-        except Exception as e:
-            self.controller.logger.error(f"Error fetching offers: {e}")
-            self.controller.server_msg['message'] = f"Error fetching offers: {e}"
+    def analyze_offer(self, change):
+        if change < -0.05:
+            return "Strong Sell"
+        elif change > 0.05:
+            return "Strong Buy"
+        else:
+            return "Neutral"
 
 

@@ -9,16 +9,15 @@ class Help(QFrame):
         super().__init__(parent)
         self.controller = controller
         self.setGeometry(
-            0, 0,1530,780
+           0, 0,1530,780
         )
-        # Set up the layout for the help frame
+        # Set up the layout for the help frame9
         self.setWindowTitle("StellarBot - Help")
         layout = QtWidgets.QVBoxLayout(self)
         
         # Title label
         title_label = QtWidgets.QLabel("StellarBot Help & Resources", self)
         title_label.setAlignment(QtCore.Qt.AlignCenter)
-        title_label.setStyleSheet("color: #003366; font-size: 24px; font-weight: bold;")
         layout.addWidget(title_label)
 
         # Introduction section
@@ -26,7 +25,7 @@ class Help(QFrame):
             "Welcome to the StellarBot Help Center! Here you will find all the resources and "
             "information you need to get started, troubleshoot issues, and explore features."
         )
-        intro_label.setStyleSheet("color: #333333; font-size: 16px;")
+
         intro_label.setWordWrap(True)
         layout.addWidget(intro_label)
 

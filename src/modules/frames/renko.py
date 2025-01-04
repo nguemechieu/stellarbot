@@ -31,7 +31,7 @@ class Renko(QtWidgets.QWidget):
         layout.addLayout(toolbar)
 
         # Add Chart Button
-        add_chart_button = QPushButton("Add Chart", self)
+        add_chart_button: QPushButton | QPushButton = QPushButton("Add Chart", self)
         add_chart_button.clicked.connect(self.add_chart)
         toolbar.addWidget(add_chart_button)
 

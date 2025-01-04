@@ -115,7 +115,7 @@ Useful Links
 - Documentation: https://stellarbot-sdk.readthedocs.io
 - Source Code: https://github.com/nguemechieu/stellarbot
 - Issue Tracker: https://github.com/nguemechieu/stellarbot/issues
-- License: `Apache License 2.0 <https://github.com/stellarbot/blob/master/LICENSE>`_
+- License: `Apache License 2.0 <https://github.com/nguemechieu/stellarbot/blob/master/LICENSE>`_
 
 Thanks
 ------

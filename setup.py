@@ -15,10 +15,10 @@ setup(
     name='stellarbot',
     version='1.0.2',
     description='StellarBot is a professional trading bot that interacts with the Stellar network.',
-    author='Noel Martial Nguemechieu',
+    author='Noel M Nguemechieu',
     author_email='nguemechieu@live.com',
     packages=find_packages(where='.'),  # Find packages in the 'src' folder
-    package_dir={'': 'src'},  # Tells setuptools that the packages are under 'src'
+    package_dir={'': '.'},  # Tells setuptools that the packages are under 'src'
     install_requires=read_requirements(),  # Use the requirements.txt file
     zip_safe=False,
     entry_points={
@@ -39,6 +39,8 @@ setup(
     url='https://github.com/nguemechieu/stellarbot',
     project_urls={
         'Bug Reports': 'https://github.com/nguemechieu/stellarbot/issues',
-        'Source': 'https://github.com/nguemechieu/stellarbot'
+        'Source': 'https://github.com/nguemechieu/stellarbot',
+        'Documentation': 'https://github.com/nguemechieu/stellarbot/wiki',
+        'Funding': 'https://github.com/nguemechieu/stellarbot/donate'
     },
 )

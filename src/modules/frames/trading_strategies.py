@@ -7,7 +7,7 @@ class TradingStrategies(QtWidgets.QWidget):
         self.controller = controller
 
         # Layout for the widget
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QtWidgets.QVBoxLayout()
 
         # Create the trading strategies section
         self.create_widgets(layout)
@@ -23,21 +23,21 @@ class TradingStrategies(QtWidgets.QWidget):
 
         # Add header labels
         for i, header in enumerate(headers):
-            label = QtWidgets.QLabel(header, self)
-            label.setStyleSheet("font-size: 12px; font-weight: bold; color: #003366;")
+            label = QtWidgets.QLabel(header)
             label.setGeometry(header_x_positions[i], 50, 120, 30)
             layout.addWidget(label)
 
         # Example active strategy data
         active_strategy_data = [
             ("Trend Following", "Follows the prevailing market trend", "Daily", "BTC, ETH", "Buy/Sell Signal"),
-            ("Mean Reversion", "Trades when prices deviate from the mean", "4H", "Stocks", "Entry/Exit Signal"),
+            ("Mean Reversion", "Trades when prices deviate from the mean", "4H", "Stocks", "Entry/Exit Signal")
+
         ]
 
         y_position = 80
         for strategy in active_strategy_data:
             for i, value in enumerate(strategy):
-                entry = QtWidgets.QLineEdit(value, self)
+                entry = QtWidgets.QLineEdit(value)
                 entry.setReadOnly(True)
                 entry.setAlignment(QtCore.Qt.AlignCenter)
                 entry.setGeometry(header_x_positions[i], y_position, 120, 30)
@@ -80,12 +80,15 @@ class TradingStrategies(QtWidgets.QWidget):
 
     def create_frame(self, bg_color, title):
         """Create a styled frame with a title label."""
-        frame = QtWidgets.QFrame(self)
+        frame = QtWidgets.QFrame()
 
-      #  frame.setFixedSize(600, 250)
+        frame.setFixedSize(600, 250)
 
         title_label = QtWidgets.QLabel(title, frame)
 
         title_label.setGeometry(10, 10, 200, 30)
+        title_label.setStyleSheet(f"background-color: {bg_color}; color: white; font-weight: bold; font-size: 20px;")
+        frame.setLayout(QtWidgets.QVBoxLayout())
+
 
         return frame

@@ -1,30 +1,11 @@
 from datetime import datetime
-
 from PIL import Image
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QPushButton, QFrame
-
-from qrcode.main import QRCode
-
-
-def create_performance_stats(layout):
-    """Create a section to show performance stats such as total trades and profit."""
-    performance_group = QtWidgets.QGroupBox("Performance Stats")
-    performance_group.setStyleSheet("color: white; font-size: 16px; font-weight: bold; background-color: #2d3e50;")
-    performance_layout = QtWidgets.QVBoxLayout(performance_group)
-
-    stats = {
-        "Total Trades": "345",
-        "Profit": "$15,000",
-        "Win Rate": "75%"
-    }
-
-    for stat, value in stats.items():
-        stat_label = QtWidgets.QLabel(f"{stat}: {value}")
-        stat_label.setStyleSheet("color: #4CAF50; font-size: 12px; font-weight: bold;")
-        performance_layout.addWidget(stat_label)
-
-    layout.addWidget(performance_group)
+from PyQt5.QtWidgets import (
+    QFrame, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QGroupBox, QGridLayout
+)
+from qrcode import QRCode  # Ensure you install the qrcode library
+from src.modules.frames.market_depth import random_color
 
 
 class Dashboard(QFrame):
@@ -32,141 +13,141 @@ class Dashboard(QFrame):
 
     def __init__(self, parent=None, controller=None):
         super().__init__(parent)
-
-        self.start_button = QPushButton("START", self)
-
-        self.stop_button = QPushButton("STOP", self)
+        self.stop_button = None
+        self.start_button = None
         self.controller = controller
-        self.bot=controller.bot
-
-        # Set layout and background
-        layout = QtWidgets.QVBoxLayout(self)
-
-        # Create and style the canvas (QWidget in PyQt5)
-        self.lbl = QtWidgets.QLabel(self)
-        layout.addWidget(self.lbl)
-
-        # Welcome Message
-        welcome_label = QtWidgets.QLabel("Welcome to StellarBot Dashboard", self)
-        welcome_label.setAlignment(QtCore.Qt.AlignCenter)
-        layout.addWidget(welcome_label)
-
-        self.lbl_text = QtWidgets.QLabel()
-        self.lbl_text.setStyleSheet("color: white; font-size: 16px;")
-        self.lbl_text.setText(
-            f"Account ID: {self.controller.account_id}\n"
-            f"Last Update: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-            f"\nStatus: {self.controller.server_msg['status']}\n"
-            f"Info: {self.controller.server_msg['info']}\n"
-            f"Message: {self.controller.server_msg['message']}"
-        )
-
-        layout.addWidget(self.lbl_text)
-        # Create account ID QR code
-        self.create_qr_code("account_id")
-        # Add server control buttons
-        buttons_layout = QtWidgets.QHBoxLayout(self)
-        self.start_button.clicked.connect(self.start_bot)
-        self.stop_button.clicked.connect(self.stop_bot)
-
-
-        buttons_layout.addWidget(self.start_button)
-        buttons_layout.addWidget(self.stop_button)
-        layout.addLayout(buttons_layout)
-
-        # Performance stats
-        create_performance_stats(layout)
-        self.setLayout(layout)
+        self.timer = None
+        self.bot = self.controller.bot
+        self.init_ui()
         self.update_dashboard()
 
+    def init_ui(self):
+        """Initialize the user interface components."""
+        layout = QGridLayout()
 
-    def create_qr_code(self, account_id):
-        """Create a QR code for the account ID and display it on the dashboard."""
+        layout.addWidget(QLabel("Last Update: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S")), 0, 2, 0, 1)
+        layout.addWidget(QLabel("Account ID: " + self.controller.account_id), 1, 0, 0, 2)
+        layout.addWidget(QLabel("Scan to Send Money here"), 2, 0, 0, 2)
+        layout.addWidget(QLabel("Status: " + self.controller.server_msg.get('status', 'Unknown')), 3, 0, 0, 2)
+        layout.addWidget(QLabel("Info: " + self.controller.server_msg.get('info', 'No info available')), 4, 0, 0, 2)
+        layout.addWidget(QLabel("Message: " + self.controller.server_msg.get('message', 'No message')), 5, 0, 0, 2)
+        layout.update()
 
+        # QR Code Section (Positioned at the top)
+        self.create_qr_code_section(layout)
+        # Black Canvas Section (Positioned at the top)
+        self.create_black_canvas(layout)
+
+        # Control Buttons Section
+        self.start_button = QPushButton("START")
+        self.stop_button = QPushButton("STOP")
+        self.start_button.clicked.connect(self.start_bot, QtCore.Qt.UniqueConnection)
+        self.stop_button.clicked.connect(self.stop_bot, QtCore.Qt.UniqueConnection)
+        self.update_button_state(True, False)
+        self.start_button.setStyleSheet("background-color: green; color: #1e2a38;")
+        self.stop_button.setStyleSheet("background-color: red; color: #1e2a38;")
+
+        buttons_layout = QHBoxLayout()
+        buttons_layout.addWidget(self.start_button)
+        buttons_layout.addWidget(self.stop_button)
+        layout.addLayout(buttons_layout, 2, 1)
+        # Performance Stats Section (Positioned lower in the layout)
+        self.create_performance_stats(layout)
+
+        self.setLayout(layout)
+
+    def create_qr_code_section(self, layout):
+        """Create the QR code section."""
+        qr_group = QGroupBox("Account Information")
+        qr_group.setStyleSheet("font-size: 16px; font-weight: bold; background-color: #f0f0f0;")
+        qr_layout = QVBoxLayout(qr_group)
+
+        # QR Code Generation
         qr = QRCode(version=1, box_size=10, border=2)
-        qr.add_data(account_id)
+        qr.add_data(self.controller.account_id)
         qr.make(fit=True)
         qr_img = qr.make_image(fill="black", back_color="white")
-
-        # Save and display QR code
         qr_img.save("temp_qr.png")
-        img = Image.open("temp_qr.png")
-        img.resize((150, 150))
-        qt_img = QtGui.QPixmap("temp_qr.png")
 
-        qr_label = QtWidgets.QLabel(self)
-        qr_label.setPixmap(qt_img)
-        self._extracted_from_create_qr_code_16(qr_label, "background-color: #1e2a38;")
-        label = QtWidgets.QLabel("Account ID", self)
-        self._extracted_from_create_qr_code_16(
-            label, "color: white; font-size: 14px; font-weight: bold;"
-        )
+        qr_label = QLabel()
+        qr_pixmap = QtGui.QPixmap("temp_qr.png").scaled(150, 150, QtCore.Qt.KeepAspectRatio)
+        qr_label.setPixmap(qr_pixmap)
+        qr_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        account_label = QLabel(f"Account ID: {self.controller.account_id}")
+        account_label.setAlignment(QtCore.Qt.AlignCenter)
+        account_label.setStyleSheet("font-size: 14px; font-weight: bold;")
+
+        qr_layout.addWidget(account_label)
+        qr_layout.addWidget(qr_label)
+        layout.addWidget(qr_group, 0,1)
+
+    def create_black_canvas(self, layout):
+        """Create the black canvas section for server messages."""
+        canvas_group = QGroupBox("Server Messages")
+
+        canvas_group.setStyleSheet("background-color: black; color: white; font-size: 14px;")
+        canvas_layout = QVBoxLayout(canvas_group)
+        canvas_layout.setAlignment(QtCore.Qt.AlignTop)
+
+        for key in ['status', 'info', 'message', 'error']:
+            label = QLabel(self.controller.server_msg.get(key, ""))
+            label.setAlignment(QtCore.Qt.AlignCenter)
+            label.setStyleSheet("font-size: 12px;")
+            canvas_layout.addWidget(label)
+        layout.addWidget(canvas_group , 1, 1)
+
+    def create_performance_stats(self, layout_):
+        """Create a section to show performance stats such as total trades, profit, and win rate."""
+        stats_group = QGroupBox("Performance Stats")
+        stats_group.setStyleSheet("font-size: 16px; font-weight: bold; background-color: green; color: white;")
+        stats_layout = QVBoxLayout(stats_group)
+
+        for stat in ["Total Trades", "Profit", "Win Rate"]:
+            label_ = QLabel(f"{stat}: 0")
+            label_.setObjectName(stat)
+            stats_layout.addWidget(label_)
 
 
-    def _extracted_from_create_qr_code_16(self, arg0, arg1):
-        arg0.setAlignment(QtCore.Qt.AlignCenter)
-        arg0.setStyleSheet(arg1)
-        self.layout().addWidget(arg0)
-
-    def start_bot(self):
-
-        self.controller.server_msg['status'] = 'START'
-        self._extracted_from_start_bot_3(False, "background-color: gray; color: red;", True)
+        layout_.addWidget(stats_group,  1, 2)
 
 
+    def update_dashboard(self):
+        """Update the dashboard with live data."""
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.update_live_data)
+        self.timer.start(1000)  # Update every second
 
-    def stop_bot(self):
-        self.controller.server_msg['status'] = 'STOP'
-        self._extracted_from_stop_bot_3(True, "background-color: green; color: red;", False)
-
-    def _extracted_from_stop_bot_3(self, arg0, arg1, arg2):
-        self.start_button.setEnabled(arg0)
-        self.start_button.setStyleSheet(arg1)
-        self.stop_button.setEnabled(arg2)
-    def updates(self):
-        """Update the dashboard regularly with live data."""
+    def update_live_data(self):
+        """Fetch and display live data on the dashboard."""
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        # Fetch the latest data from the bot's server messages
         status = self.controller.server_msg.get('status', 'Unknown')
         info = self.controller.server_msg.get('info', 'No info available')
         message = self.controller.server_msg.get('message', 'No message')
 
-        # Update the text label with new data
-        self.lbl_text.setText(
-            f"Account ID: {self.controller.account_id}\n"
-            f"Last Update: {current_time}\n"
-            f"Status: {status}\n"
-            f"Info: {info}\n"
-            f"Message: {message}\n"
-            f"Performance Stats:\n"
-
-        )
-
-    def update_dashboard(self):
-        """Update the dashboard with live data."""
-        self.updates()
-        self.update()
-        QtCore.QTimer.singleShot(1000, self.update_dashboard)
-
-
-
+        # Update Performance Stats
+        self.update_performance_stats()
 
     def update_performance_stats(self):
         """Update the performance stats section with live data."""
-        # Fetch the latest performance stats from the bot's server messages
-        total_trades = self.controller.bot.server_msg['total_trades']
-        profit = self.controller.bot.server_msg['profit']
-        win_rate = self.controller.bot.server_msg['win_rate']
+        stats = self.controller.server_msg.get('performance_stats', {})
+        for stat, value in stats.items():
+            label = self.findChild(QLabel, stat)
+            if label:
+                label.setText(f"{stat}: {value}")
 
-        # Update the performance stats section with new data
-        for stat, value in zip(['Total Trades', 'Profit', 'Win Rate'], [total_trades, profit, win_rate]):
-            stat_label = self.findChild(QtWidgets.QLabel, stat)
-            stat_label.setText(f"{stat}: {value}")
+    def start_bot(self):
+        """Start the bot."""
+        self.bot.start()
 
-    def _extracted_from_start_bot_3(self, param, param1, param2):
-        self.start_button.setEnabled(param)
-        self.start_button.setStyleSheet(param1)
-        self.stop_button.setEnabled(param2)
-        pass
+    def stop_bot(self):
+        """Stop the bot."""
+        self.bot.stop()
 
+
+    def update_button_state(self, start_enabled, stop_enabled):
+        """Enable or disable control buttons."""
+        self.start_button.setEnabled(start_enabled)
+        self.stop_button.setEnabled(stop_enabled)
+        if start_enabled:
+            self.controller.server_msg['status'] = 'STOP'

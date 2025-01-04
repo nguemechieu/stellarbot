@@ -1,6 +1,9 @@
 LICENSE
+MANIFEST.in
 README.md
 setup.py
+./test/__init__.py
+./test/test_stellarbot.py
 stellarbot.egg-info/PKG-INFO
 stellarbot.egg-info/SOURCES.txt
 stellarbot.egg-info/dependency_links.txt
@@ -8,4 +11,4 @@ stellarbot.egg-info/entry_points.txt
 stellarbot.egg-info/not-zip-safe
 stellarbot.egg-info/requires.txt
 stellarbot.egg-info/top_level.txt
-tests/test.py
+test/test_stellarbot.py

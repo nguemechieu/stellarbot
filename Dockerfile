@@ -1,39 +1,44 @@
-# Use a base image with Python and tk (for tkinter)
-FROM python:3.11-slim
+# Base image with Ubuntu
+FROM ubuntu:latest
 
-# Set the working directory
-WORKDIR /stellarbot
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
+ENV PATH="/root/.local/bin:$PATH"
 
-# Install tk and other dependencies
-RUN apt-get update && apt-get install -y tk pkg-config 
+# Update and install essential tools
+RUN apt-get update 
+RUN apt-get install -y \
+    build-essential \
+    curl \
+    wget \
+    git \
+    vim \
+    nano \
+    python3 \
+    python3-pip \
+    nodejs \
+    npm \
+    docker.io \
+    docker-compose \
+    ssh \
+    unzip \
+    zip \
+    && apt-get clean
+    # Install Angular CLI globally
+RUN npm install -g @angular/cli \
+    && apt-get update && apt-get install -y python3-venv python3-pip \
+    && python3 -m venv /opt/venv \
+    && /opt/venv/bin/pip install virtualenv \
+    && mkdir -p /workspace
+
+# Update package lists and install the latest version of OpenJDK
+RUN  apt-get install -y openjdk-11-jdk && rm -rf /var/lib/apt/lists/*
 
 
-# Copy the requirements file
-COPY requirements.txt .
-
-# Install pip requirements
-RUN python -m pip install -r requirements.txt
-
-# Copy the rest of your application code
-COPY . /stellarbot/
-
-# Use a base image with Python
-
-# Install tkinter (tk) package and Xvfb (virtual display)
-RUN apt-get update && apt-get install -y python3-tk xvfb
-
-
-# Set up the virtual display
-ENV DISPLAY=:99
-# Your application's entry point
-
-
-# Ensure system packages are up to date
-RUN apt-get update && apt-get upgrade -y  # Fix: added -y flag
-
-RUN apt-get install -y xvfb
-EXPOSE  9000
-
-
-# Start Xvfb and run the Python script
-CMD [ "Xvfb :99 -screen 0 1280x1024x16 &", "python", "main.py" ]
+# Set working directory
+WORKDIR /workspace
+EXPOSE 3000
+EXPOSE 8080
+# Default entrypoint
+CMD ["bash"]

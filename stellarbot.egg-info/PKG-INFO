@@ -1,7 +1,43 @@
 Metadata-Version: 2.1
 Name: stellarbot
-Version: 1.0.1
-Summary: stellarbot  is a professional trading bot that can be used to interact with the Stellar network.
-Author: nguemechieu
+Version: 1.0.2
+Summary: StellarBot is a professional trading bot that interacts with the Stellar network.
+Home-page: https://github.com/nguemechieu/stellarbot
+Author: Noel Martial Nguemechieu
 Author-email: nguemechieu@live.com
+Project-URL: Bug Reports, https://github.com/nguemechieu/stellarbot/issues
+Project-URL: Source, https://github.com/nguemechieu/stellarbot
+Project-URL: Documentation, https://github.com/nguemechieu/stellarbot/wiki
+Project-URL: Funding, https://github.com/nguemechieu/stellarbot/donate
+Keywords: stellar network trading bot
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.12
 License-File: LICENSE
+Requires-Dist: scikit-learn~=1.5.1
+Requires-Dist: requests~=2.32.3
+Requires-Dist: pandas~=1.5.3
+Requires-Dist: qrcode~=7.4.2
+Requires-Dist: Pillow~=10.4.0
+Requires-Dist: ta~=0.11.0
+Requires-Dist: mplfinance~=0.12.10b0
+Requires-Dist: cryptography~=43.0.1
+Requires-Dist: PyQt5~=5.15.11
+Requires-Dist: pip~=24.3.1
+Requires-Dist: attrs~=24.2.0
+Requires-Dist: wheel~=0.44.0
+Requires-Dist: Jinja2~=3.1.4
+Requires-Dist: matplotlib~=3.9.2
+Requires-Dist: numpy~=1.26.4
+Requires-Dist: filelock~=3.16.1
+Requires-Dist: setuptools~=74.1.2
+Requires-Dist: protobuf~=5.29.0
+Requires-Dist: hypothesis~=6.123.1
+Requires-Dist: PyAutoGUI~=0.9.54
+Requires-Dist: textblob~=0.18.0.post0
+Requires-Dist: seaborn~=0.13.2
+Requires-Dist: self~=2020.12.3
+Requires-Dist: pygame~=2.6.0

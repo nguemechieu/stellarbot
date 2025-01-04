@@ -1,3 +1,0 @@
-include README.md
-recursive-include stellarbot/static *
-recursive-include stellarbot/templates *

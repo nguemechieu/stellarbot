@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QFrame
 from src.modules.frames.bar_chart import BarChart
 from src.modules.frames.candles_stick_chart import CandlestickChart
 from src.modules.frames.heikin_ashi import HeikinAshi
+
 from src.modules.frames.line_chart import LineChart
 from src.modules.frames.renko import Renko
 

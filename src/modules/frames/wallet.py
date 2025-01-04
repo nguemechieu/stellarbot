@@ -1,6 +1,5 @@
 import re
 
-import pandas as pd
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QFrame
 
@@ -9,7 +8,9 @@ class Wallet(QFrame):
     """Stellar wallet widget displaying balance, transactions, and payment options."""
 
     def __init__(self, parent=None, controller=None):
+
         super().__init__(parent)
+        self.balance_amount_label = None
         self.send_button = None
         self.wallet_title = None
         self.amount_entry = None
@@ -103,11 +104,11 @@ class Wallet(QFrame):
     def refresh_wallet_data(self):
         """Refresh the wallet data like balance and transaction history."""
         # Get balance and update UI
-        balance = pd.read_csv('ledger_accounts.csv')
-        self.balance_amount_label.setText(f"${balance['balance'][0]}")  # Assuming balance is in the first row
+        balance =self.controller.balances_df # Assuming accounts is a property of the controller
+        self.balance_amount_label.setText(f"${balance.ge('balance',0)}")  # Assuming balance is in the first row
 
         # Get transaction history and update table
-        transactions = pd.read_csv('ledger_transactions.csv')
+        transactions = self.controller.transactions_df  # Assuming transactions is a property of the controller
         self.transaction_table.setRowCount(0)  # Clear previous data
 
         for idx, transaction in transactions.iterrows():

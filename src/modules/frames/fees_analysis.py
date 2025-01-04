@@ -10,7 +10,7 @@ class FeesAnalysis(QFrame):
         self.controller = controller
 
         # Retrieve fee data from the controller
-        self.fees_data = self.controller.fees_stats # Assuming fees_stats is a property of the controller
+        self.fees_data =   {} # Assuming fees_stats is a property of the controller
 
         # Set up the layout and UI components
         self._initialize_ui()

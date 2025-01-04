@@ -1,107 +1,64 @@
-from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtWidgets import QFrame
+from PyQt5 import QtGui
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QTableWidgetItem, QFrame, QVBoxLayout, QLabel, QTableWidget
 
 
-class  TradingAnalysis(QFrame):
+class TradingAnalysis(QFrame):
     def __init__(self, parent=None, controller=None):
-        """Initialize the Performance Analytics widget."""
+        """Initialize the Trading Analysis widget."""
         super().__init__(parent)
         self.controller = controller
 
-
+        self.setGeometry(0, 0, 800, 600)
+        self.setWindowTitle("Trading Analysis")
+        self.setStyleSheet("background-color: #FFFFFF; color: #000000; font-size: 14px;")
 
         # Main layout for the widget
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QVBoxLayout(self)
+        self.setLayout(layout)
 
-        # Create the performance analytics section
-        self.create_widgets(layout)
+        # Title
+        title = QLabel("Market Trading Analysis")
+        title.setStyleSheet("font-size: 18px; font-weight: bold; margin-bottom: 10px;")
+        title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title)
 
-    def create_widgets(self, layout):
-        """Create and arrange widgets for the performance analytics section."""
-        
-        # Monthly/Yearly Performance Section
-        performance_frame = self.create_section_frame("#D6DBDF", "Monthly/Yearly Performance")
-        layout.addWidget(performance_frame)
+        # Create table
+        self.table = QTableWidget()
+        self.table.setColumnCount(5)
+        self.table.setHorizontalHeaderLabels([
+            "Market", "Price", "Volume", "Change (%)", "Analysis"
+        ])
 
-        # Performance Headers
-        headers = ["Month/Year", "Starting Balance", "Ending Balance", "% Growth"]
-        x_positions = [10, 150, 290, 450]
+        self.table.horizontalHeader().setStretchLastSection(True)
+        layout.addWidget(self.table)
 
-        # Add headers
-        for i, header in enumerate(headers):
-            label = QtWidgets.QLabel(header, performance_frame)
-            label.setStyleSheet("font-weight: bold; color: #1F618D; font-size: 12pt;")
-            label.move(x_positions[i], 50)
+        # Load market analysis data
+        self.load_analysis_data()
 
-        # Example performance data (replace with dynamic data later)
-        performance_data = [
-            ("January 2024", "$10,000", "$11,000", "10%"),
-            ("February 2024", "$11,000", "$12,500", "13.64%"),
-        ]
+    def load_analysis_data(self):
+        """Load and display market analysis data."""
+        try:
+            # Mock data for analysis (replace this with actual data from the controller or API)
+            data = [
+                {"market": "EUR/USD", "price": 1.1234, "volume": 2000, "change": 0.25, "analysis": "Bullish"},
+                {"market": "GBP/USD", "price": 1.2543, "volume": 1500, "change": -0.15, "analysis": "Bearish"},
+                {"market": "USD/JPY", "price": 109.23, "volume": 3000, "change": 0.12, "analysis": "Neutral"},
+                {"market": "AUD/USD", "price": 0.7654, "volume": 1800, "change": 0.40, "analysis": "Bullish"},
+                {"market": "USD/CAD", "price": 1.3412, "volume": 2200, "change": -0.30, "analysis": "Bearish"},
+            ]
 
-        # Add performance data
-        for row_num, perf in enumerate(performance_data):
-            y_position = 90 + row_num * 30
-            for col_num, value in enumerate(perf):
-                entry = QtWidgets.QLineEdit(performance_frame)
-                entry.setFixedWidth(100)
-                entry.setText(value)
-                entry.setReadOnly(True)
-                entry.move(x_positions[col_num], y_position)
+            self.table.setRowCount(len(data))
+            for row_idx, entry in enumerate(data):
+                self.table.setItem(row_idx, 0, QTableWidgetItem(entry["market"]))
+                self.table.setItem(row_idx, 1, QTableWidgetItem(f"{entry['price']:.4f}"))
+                self.table.setItem(row_idx, 2, QTableWidgetItem(f"{entry['volume']}"))
+                self.table.setItem(row_idx, 3, QTableWidgetItem(f"{entry['change']}%"))
+                self.table.setItem(row_idx, 4, QTableWidgetItem(entry["analysis"]))
 
-        # Key Metrics Section
-        metrics_frame = self.create_section_frame("#D1F2EB", "Key Metrics")
-        layout.addWidget(metrics_frame)
+                # Set custom color for Change column based on positive/negative
+                color = "#4CAF50" if entry["change"] > 0 else "#F44336"
+                self.table.item(row_idx, 3).setForeground(QtGui.QColor(color))
 
-        # Metrics Headers
-        metrics_headers = ["ROI (%) by Asset Class", "Trade Win Rate (%)", "Avg Profit/Trade", "Avg Loss/Trade"]
-        x_positions_metrics = [10, 150, 290, 450]
-
-        for i, header in enumerate(metrics_headers):
-            label = QtWidgets.QLabel(header, metrics_frame)
-            label.setStyleSheet("font-weight: bold; color: #1F618D; font-size: 12pt;")
-            label.move(x_positions_metrics[i], 50)
-
-        # Example key metrics data (replace with dynamic data later)
-        metrics_data = [
-            ("12%", "60%", "$200", "$100"),
-        ]
-
-        # Add key metrics data
-        for metric in metrics_data:
-            for col_num, value in enumerate(metric):
-                entry = QtWidgets.QLineEdit(metrics_frame)
-                entry.setFixedWidth(100)
-                entry.setText(value)
-                entry.setReadOnly(True)
-                entry.move(x_positions_metrics[col_num], 90)
-
-        # Equity Curve Section
-        equity_curve_frame = self.create_section_frame("#EBDEF0", "Equity Curve")
-        layout.addWidget(equity_curve_frame)
-
-        self._extracted_from_create_section_frame_66(
-            "Graph of balance over time will be displayed here.",
-            equity_curve_frame,
-            "color: #1F618D; font-size: 12pt;",
-            50,
-        )
-
-    def create_section_frame(self, bg_color, section_title):
-        """Helper function to create a section frame with a title."""
-        frame = QtWidgets.QFrame(self)
-        frame.setStyleSheet(f"background-color: {bg_color}; border: 1px solid #1F618D;")
-        frame.setFixedHeight(200)
-
-        self._extracted_from_create_section_frame_66(
-            section_title,
-            frame,
-            "font-weight: bold; color: #1F618D; font-size: 16pt;",
-            10,
-        )
-        return frame
-
-    def _extracted_from_create_section_frame_66(self, arg0, arg1, arg2, arg3):
-        equity_curve_placeholder = QtWidgets.QLabel(arg0, arg1)
-        equity_curve_placeholder.setStyleSheet(arg2)
-        equity_curve_placeholder.move(10, arg3)
+        except Exception as e:
+            raise f"Error loading market analysis data: {e}"

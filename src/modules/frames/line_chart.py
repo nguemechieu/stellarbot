@@ -1,8 +1,8 @@
-import sys
-import pandas as pd
 import mplfinance as mpf
+import pandas as pd
+from PyQt5.QtWidgets import QVBoxLayout, QWidget, QPushButton, QFileDialog, QHBoxLayout
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from PyQt5.QtWidgets import QMainWindow, QApplication, QVBoxLayout, QWidget, QPushButton, QFileDialog, QHBoxLayout
+
 
 class LineChart(QWidget):
     """A PyQt5 widget for displaying a line chart using mplfinance."""

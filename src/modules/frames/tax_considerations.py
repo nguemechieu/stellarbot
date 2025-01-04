@@ -1,14 +1,16 @@
 from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QFrame
 
-class TaxConsiderations(QtWidgets.QWidget):
+
+class TaxConsiderations(QFrame):
     def __init__(self, parent=None, controller=None):
         """Initialize the Tax Considerations widget."""
         super().__init__(parent)
         self.controller = controller
-        self.setGeometry(0, 0, 1530, 780)
+
 
         # Main layout for the widget
-        layout = QtWidgets.QVBoxLayout(parent)
+        layout = QtWidgets.QVBoxLayout(self)
 
         # Create the tax considerations section
         self.create_widgets(layout)
@@ -24,8 +26,8 @@ class TaxConsiderations(QtWidgets.QWidget):
         tax_layout = QtWidgets.QVBoxLayout(tax_frame)
 
         # Create labels for the tax considerations section
-        self.create_label("Tax Considerations", "font-size: 16pt; font-weight: bold; color: #1F618D;", tax_layout)
-        self.create_label("Realized Gains", "font-size: 14pt; font-weight: bold; color: #1F618D;", tax_layout)
+        self.create_label("Tax Considerations", "font-size: 16pt; font-weight: bold; ", tax_layout)
+        self.create_label("Realized Gains", "font-size: 14pt; font-weight: bold; ", tax_layout)
 
         # Realized Gains table header
         realized_header_layout = QtWidgets.QHBoxLayout()

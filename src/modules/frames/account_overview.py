@@ -1,103 +1,130 @@
-from PyQt5.QtWidgets import QFrame, QLabel, QLineEdit, QVBoxLayout, QGridLayout
+import time
+
+from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import QFrame, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem
+from requests import Session
+
 
 class AccountOverview(QFrame):
     def __init__(self, parent=None, controller=None):
-        """Initialize the Account Overview widget."""
+        """Initialize the Stellar Account Overview widget."""
         super().__init__(parent)
+        self.server_msg =  controller.server_msg
+        self.logger = controller.logger
+ 
+        self.session = Session()
         self.controller = controller
 
-        # Set the main layout for the widget
-        main_layout = QVBoxLayout(self)
 
-        self.account_details = self.controller.account_details # Fetch account details from the bot
+        self.setGeometry(0, 0, 1530, 780)
+        self.setWindowTitle("Stellar Account Overview")
+        self.setStyleSheet("background-color: black; color: green;")
+
+        # Main layout for the widget
+        layout = QVBoxLayout(parent)
+        self.setLayout(layout)
+
+        # Account Header
+        self.account_id_label = QLabel("Account ID: Loading...")
+        self.account_id_label.setStyleSheet("font-weight: bold; font-size: 16px; margin-bottom: 10px;")
+        layout.addWidget(self.account_id_label)
+
+        # Account Balance Section
+        self.balance_label = QLabel("Total Balance: Loading...")
+        self.balance_label.setStyleSheet("font-size: 14px; margin-bottom: 10px;")
+        layout.addWidget(self.balance_label)
+
+        # Asset Holdings Table
+        self.assets_table = QTableWidget()
+        self.assets_table.setColumnCount(3)
+        self.assets_table.setHorizontalHeaderLabels(["Asset", "Balance", "Issuer"])
+        self.assets_table.setStyleSheet("""
+            QTableWidget { background-color: #F8F8F8; border: 1px solid #CCCCCC; }
+            QHeaderView::section { background-color: #D9D9D9; font-weight: bold; }
+        """)
+        self.assets_table.horizontalHeader().setStretchLastSection(True)
+        layout.addWidget(self.assets_table)
+
+        # Recent Transactions Section
+        self.transactions_table = QTableWidget()
+        self.transactions_table.setColumnCount(3)
+        self.transactions_table.setHorizontalHeaderLabels(["Date", "Amount", "Type"])
+        self.transactions_table.setStyleSheet("""
+            QTableWidget { background-color: #F8F8F8; border: 1px solid #CCCCCC; }
+            QHeaderView::section { background-color: #D9D9D9; font-weight: bold; }
+        """)
+        self.transactions_table.horizontalHeader().setStretchLastSection(True)
+        layout.addWidget(self.transactions_table)
+
+        # Load account details
+        self.load_account_details()
+
+    def load_account_details(self):
+        """Load and display account details."""
+        try:
+            # Mock account data (replace with actual data from the controller)
+            account_data =self.controller.bot.account_info  # Fetch account details from the bot
+
+            # Update account details
+            self.account_id_label.setText(f"Account ID: {account_data['account_id']}")
+            self.balance_label.setText(f"Total Balance: {account_data['balance']} XLM  Value: "+
+            f"{0.0} USD")
+
+            # Update assets table
+            self.assets_table.setRowCount(len(self.controller.bot.assets))
+            for row_idx, asset in enumerate(account_data):
+                self.assets_table.setItem(row_idx, 0, QTableWidgetItem(asset["asset_code"]))
+                self.assets_table.setItem(row_idx, 1, QTableWidgetItem(f"{asset['balance']}"))
+                self.assets_table.setItem(row_idx, 2, QTableWidgetItem(asset["asset_issuer"]))
+
+            # Update transactions table
+            self.transactions_table.setRowCount(len(account_data["transactions"]))
+            for row_idx, tx in enumerate(account_data["transactions"]):
+                self.transactions_table.setItem(row_idx, 0, QTableWidgetItem(tx["date"]))
+                self.transactions_table.setItem(row_idx, 1, QTableWidgetItem(f"{tx['amount']} XLM"))
+                self.transactions_table.setItem(row_idx, 2, QTableWidgetItem(tx["type"]))
+
+                # Highlight amounts (green for positive, red for negative)
+                color = QColor("#4CAF50") if tx["amount"] > 0 else QColor("#F44336")
+                self.transactions_table.item(row_idx, 1).setForeground(color)
+
+        except Exception as e:
+
+            self.controller.logger.error(f"Error loading account details: {e}")
+
+            self.controller.server_msg['error'] = "Error loading account details:" +str(e)
 
 
-        # Create and add the Account Overview section
-        account_overview_frame = self.create_section("Account Overview")
-        self.populate_account_overview(account_overview_frame)
-        main_layout.addWidget(account_overview_frame)
-        main_layout.addStretch(1)
+    def convert_xlm_to_usd(self, balances: []) -> float:
+     """Convert XLM to USD using the Stellar Price Feed."""
+    # Get live Stellar price feed from Binance US API
+     endpoint = "https://api.binance.us/api/v3/ticker/price?symbol=XLMUSDT"
 
-        # Create and add the Financial Summary section
-        financial_summary_frame = self.create_section("Balances Overview")
-        self.populate_balances(financial_summary_frame)
-        main_layout.addWidget(financial_summary_frame)
+     try:
+        response = self.session.get(endpoint)
 
-    def create_section(self, title):
-        """Create a styled frame section with a title."""
-        frame = QFrame()
-        layout = QVBoxLayout(frame)
-        title_label = QLabel(title, frame)
-        layout.addWidget(title_label)
-        frame.setLayout(layout)
-        return frame
+        if response.status_code != 200:
+            self.logger.error(f"Error fetching Stellar price feed: {response.status_code}")
+            self.server_msg['status'] = 'ERROR'
+            self.server_msg['message'] = "Error fetching Stellar price feed"
+            self.server_msg['timestamp'] = int(time.time())
+            return 0.0
 
-    def populate_account_overview(self, frame):
-        """Populate the Account Overview section with account details."""
-        layout = QGridLayout(frame)
-        account_details = self.controller.account_details # Fetch account details from the bot
+        data = response.json()
+        if isinstance(data, dict) and 'price' in data:
+            usd_price = float(data['price'])
+            xlm_balance = next((float(b['balance']) for b in balances if b['asset'] == 'XLM'), 0.0)
+            self.logger.info(f"Converted {xlm_balance} XLM to USD at {usd_price} USD/XLM")
+            return usd_price * xlm_balance
+        else:
+            self.logger.error("Invalid response structure from price feed.")
+            self.server_msg['status'] = 'ERROR'
+            self.server_msg['message'] = "Invalid response structure from price feed"
+            return 0.0
+     except Exception as e:
+        self.logger.exception(f"An error occurred: {e}")
+        self.server_msg['status'] = 'ERROR'
+        self.server_msg['message'] = str(e)
+        self.server_msg['timestamp'] = int(time.time())
+        return 0.0
 
-        # Define account details fields
-        fields = [
-            ("Account ID", account_details.get("account_id", "")),
-            ("Sequence", account_details.get("sequence", "")),
-            ("Subentries", account_details.get("subentry_count", "")),
-            ("Last Modified Time", account_details.get("last_modified_time", "")),
-            ("Flags", account_details.get("flags", "")),
-            ("Home Domain", account_details.get("home_domain", "")),
-            ("Memo Type", account_details.get("memo_type", "")),
-            ("Memo", account_details.get("memo", ""))
-        ]
-
-        # Add labels and values to the layout
-        for row, (label_text, value) in enumerate(fields):
-            label = QLabel(f"{label_text}:", frame)
-            label.setStyleSheet("color: white;")
-            entry = QLineEdit(frame)
-            entry.setText(value)
-            entry.setReadOnly(True)
-            layout.addWidget(label, row, 0)
-            layout.addWidget(entry, row, 1)
-
-        # Handle complex fields (like thresholds, signers, and sponsorship)
-        self.populate_complex_fields(layout, "Thresholds", account_details.get("thresholds", {}), len(fields))
-        self.populate_complex_fields(layout, "Signers", account_details.get("signers", []), len(fields) + 1)
-        self.populate_complex_fields(layout, "Sponsorship", account_details.get("sponsorship", {}), len(fields) + 2)
-
-        frame.setLayout(layout)
-
-    def populate_complex_fields(self, layout, label, value, row):
-        """Handle complex fields like thresholds, signers, and sponsorship."""
-        label_widget = QLabel(f"{label}:", self)
-        label_widget.setStyleSheet("color: white;")
-        layout.addWidget(label_widget, row, 0)
-
-        value_widget = QLineEdit(self)
-        value_widget.setText(str(value))
-        value_widget.setReadOnly(True)
-        layout.addWidget(value_widget, row, 1)
-
-    def populate_balances(self, frame):
-        """Populate the Balances Overview section with asset balances."""
-        layout = QGridLayout(frame)
-
-        balances = self.account_details.get("balances", [])
-
-        # Add table headers
-        headers = ["Asset Code", "Balance", "Type"]
-        for col, header in enumerate(headers):
-            header_label = QLabel(header, frame)
-            header_label.setStyleSheet("color: #003366; font-size: 12px; font-weight: bold;")
-            layout.addWidget(header_label, 0, col)
-
-        # Populate balances
-        for row, balance in enumerate(balances, start=1):
-            asset_code = balance.get("asset_code", "XLM")  # 'XLM' for native asset
-            balance_value = balance.get("balance", "0")
-            asset_type = balance.get("asset_type", "native")
-
-            layout.addWidget(QLabel(asset_code, frame), row, 0)
-            layout.addWidget(QLineEdit(balance_value, frame), row, 1)
-            layout.addWidget(QLabel(asset_type, frame), row, 2)
-
-        frame.setLayout(layout)

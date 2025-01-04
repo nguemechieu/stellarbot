@@ -1,16 +1,14 @@
-import mplfinance as mpf
 import numpy as np
 import pandas as pd
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QFrame, QPushButton
 from matplotlib import pyplot as plt
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 
 def generate_random_xlm_data(start_date, num_days=100):
  date_range = pd.date_range(start=start_date, periods=num_days, freq='D')
  open_price = 0.2
 
- data=pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
+ data=pd.DataFrame(columns=[ 'Open', 'High', 'Low', 'Close', 'Volume'])
 
  for date in date_range:
     price_change = np.random.normal(loc=0, scale=0.01)
@@ -20,7 +18,7 @@ def generate_random_xlm_data(start_date, num_days=100):
     low_price = open_price - np.random.uniform(0.01, 0.03)
     close_price = open_price + np.random.normal(loc=0, scale=0.005)
     volume = np.random.randint(100000, 500000)
-    data['Date'] = date
+    data['TimeStamp'] = date
     data['Open'] = open_price
     data['High'] = high_price
     data['Low'] = low_price
@@ -58,7 +56,7 @@ class CandlestickChart(QFrame):
         toolbar = QHBoxLayout()
         layout.addLayout(toolbar)
 
-        self.add_button(toolbar, "Save Chart", self.save_chart)
+        self.add_button(toolbar, "Save Chart", self.save_chart())
         # self.add_button(toolbar, "Buy", self.buy)
         # self.add_button(toolbar, "Sell", self.sell)
         # self.add_label_input(toolbar, "Size:", self.size_entry)
@@ -92,5 +90,10 @@ class CandlestickChart(QFrame):
         self.ax.set_title("Candlestick Chart")
         self.ax_vol.set_ylabel("Volume")
         self.ax_vol.set_xlabel("Date")
-        
-        pass
+
+    def save_chart(self):
+
+            self.fig.savefig("chart.png", dpi=300)
+            print("Chart saved as chart.png")
+
+            return

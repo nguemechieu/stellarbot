@@ -1,0 +1,619 @@
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            1717    2888.189876  4.959022e+06
+1          B            1970    3441.844562  6.780434e+06
+2          C            1811    3450.014109  6.247976e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            2189    4568.337874  1.000009e+07
+1          B            1312    2711.507568  3.557498e+06
+2          C            1452    2698.353104  3.918009e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            2709    4778.688455  1.294547e+07
+1          B            1190    2527.175570  3.007339e+06
+2          C            1334    2709.535702  3.614521e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            1678    3219.849184  5.402907e+06
+1          B            1751    3681.087355  6.445584e+06
+2          C            1524    3113.788788  4.745414e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            1719    2934.558657  5.044506e+06
+1          B            1824    3567.752625  6.507581e+06
+2          C            1773    3453.087650  6.122324e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            1836    3916.679051  7.191023e+06
+1          B            1442    3433.551025  4.951181e+06
+2          C            1264    2584.964086  3.267395e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            1212    2894.456833  3.508082e+06
+1          B            1855    3591.061173  6.661418e+06
+2          C            1670    3473.337585  5.800474e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            2216    4165.378434  9.230479e+06
+1          B            1634    2960.043116  4.836710e+06
+2          C            1275    2974.035660  3.791895e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            1679    3226.537361  5.417356e+06
+1          B            1691    3308.858395  5.595280e+06
+2          C            1712    3481.810329  5.960859e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            1883    3941.396895  7.421650e+06
+1          B            1238    2690.179258  3.330442e+06
+2          C            1623    3366.681031  5.464123e+06
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            2255    4478.128866  1.009818e+07
+1          B             950    2115.230798  2.009469e+06
+2          C            1642    3426.299716  5.625984e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            1312    2714.521420  3.561452e+06
+1          B            1875    3895.877957  7.304771e+06
+2          C            1459    3405.363866  4.968426e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            1369    2697.841249  3.693345e+06
+1          B            1992    3757.872297  7.485682e+06
+2          C            1514    3527.341729  5.340395e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            1712    4048.823605  6.931586e+06
+1          B            1474    3201.686469  4.719286e+06
+2          C            1467    2975.782767  4.365473e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            2044    3560.463420  7.277587e+06
+1          B            1643    3433.542637  5.641311e+06
+2          C            1665    2938.607632  4.892782e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            1406    2806.207910  3.945528e+06
+1          B            1688    3739.706942  6.312625e+06
+2          C            1792    3478.668716  6.233774e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            1471    3118.953847  4.587981e+06
+1          B            2109    4138.987899  8.729125e+06
+2          C            1149    2673.552863  3.071912e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            1622    2946.992739  4.780022e+06
+1          B            1623    3448.527712  5.596960e+06
+2          C            1746    3576.279752  6.244184e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            1435    2920.881290  4.191465e+06
+1          B            1679    3841.071400  6.449159e+06
+2          C            1674    3292.796391  5.512141e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            1459    3019.645955  4.405663e+06
+1          B            1760    3739.226098  6.581038e+06
+2          C            1539    3105.733426  4.779724e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A            1896    3776.987665  7.161169e+06
+1          B            1394    2744.912674  3.826408e+06
+2          C            1547    3360.011011  5.197937e+06
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A           15988   32365.384229  5.174578e+08
+1          B           18589   34167.963823  6.351483e+08
+2          C           16480   33103.222925  5.455411e+08
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A           16673   32775.562943  5.464670e+08
+1          B           16015   34182.157149  5.474272e+08
+2          C           15837   33142.990547  5.248855e+08
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A           17860   34980.888892  6.247587e+08
+1          B           15628   31849.347606  4.977416e+08
+2          C           16199   33229.720092  5.382882e+08
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A           18022   36343.851016  6.549889e+08
+1          B           15574   32301.627987  5.030656e+08
+2          C           15531   30712.421814  4.769946e+08
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A           16931   32372.876754  5.481052e+08
+1          B           17366   33237.403718  5.772008e+08
+2          C           18243   34401.425366  6.275852e+08
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A           18207   36824.742794  6.704681e+08
+1          B           15089   32572.004709  4.914790e+08
+2          C           16594   30805.038654  5.111788e+08
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A           18387   35973.665443  6.614478e+08
+1          B           16303   31232.032511  5.091758e+08
+2          C           15478   32907.684393  5.093451e+08
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A          165646  334891.613694  5.547346e+10
+1          B          170933  335070.230922  5.727456e+10
+2          C          163530  331026.746712  5.413280e+10
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A          172816  341268.931561  5.897673e+10
+1          B          163430  326016.823594  5.328093e+10
+2          C          166079  332020.899201  5.514170e+10
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio report generated:
+INFO:__main__:  asset_code  Total Quantity  Average Price   total_value
+0          A          171102  335113.259228  5.733855e+10
+1          B          169441  338977.236939  5.743664e+10
+2          C          165391  325588.671709  5.384944e+10
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio performance report generated: portfolio_performance_report.csv
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio performance report generated: portfolio_performance_report.csv
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Portfolio performance report generated: portfolio_performance_report.csv
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Portfolio performance report generated: portfolio_performance_report.csv
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Portfolio performance report generated: portfolio_performance_report.csv
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Portfolio performance report generated: portfolio_performance_report.csv
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Portfolio performance report generated: portfolio_performance_report.csv
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Portfolio performance report generated: portfolio_performance_report.csv
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Portfolio performance report generated: portfolio_performance_report.csv
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Portfolio performance report generated: portfolio_performance_report.csv
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Portfolio performance report generated: portfolio_performance_report.csv
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Portfolio performance report generated: portfolio_performance_report.csv
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Portfolio performance report generated: portfolio_performance_report.csv
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Portfolio performance report generated: portfolio_performance_report.csv
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Portfolio performance report generated: portfolio_performance_report.csv
+INFO:__main__:Correlation matrix report generated: correlation_matrix.png
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Generating random portfolio data...
+INFO:__main__:Generating random market data...
+INFO:__main__:Generating market analysis report...
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Simulating trading strategy...
+ERROR:__main__:An error occurred: 'timestamp'
+INFO:__main__:Execution completed.
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Generating random portfolio data...
+INFO:__main__:Generating random market data...
+INFO:__main__:Generating market analysis report...
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Simulating trading strategy...
+ERROR:__main__:An error occurred: 'timestamp'
+INFO:__main__:Execution completed.
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Generating random portfolio data...
+INFO:__main__:Generating random market data...
+INFO:__main__:Generating market analysis report...
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Simulating trading strategy...
+ERROR:__main__:An error occurred: 'timestamp'
+INFO:__main__:Execution completed.
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Generating random portfolio data...
+INFO:__main__:Generating random market data...
+INFO:__main__:Generating market analysis report...
+ERROR:__main__:An error occurred: DataFrame must not contain a 'SMA' column
+INFO:__main__:Execution completed.
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Generating random portfolio data...
+INFO:__main__:Generating random market data...
+INFO:__main__:Generating market analysis report...
+ERROR:__main__:An error occurred: DataFrame must not contain a 'SMA' column
+INFO:__main__:Execution completed.
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:root:Generating market analysis report...
+ERROR:root:An error occurred: DataFrame must not contain a 'SMA' column
+INFO:root:Execution completed.
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:root:Generating market analysis report...
+ERROR:root:An error occurred: DataFrame must not contain a 'SMA' column
+INFO:root:Execution completed.
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Generating market analysis report...
+ERROR:__main__:An error occurred: DataFrame must not contain a 'SMA' column
+INFO:__main__:Execution completed.
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Time series analysis report generated: time_series_analysis.png
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv
+INFO:__main__:Market analysis report generated: market_analysis_report.xlsx
+INFO:__main__:Market analysis report generated: market_analysis_report.csv

@@ -1,14 +1,13 @@
 import csv
 import os
 import re
-
 import requests
 from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtWidgets import QProgressBar, QGridLayout
 from stellar_sdk import Keypair
 
-from src.modules.classes.settings_manager import SettingsManager
-from src.modules.classes.stellar_client import StellarClient
+from src.modules.engine.settings_manager import SettingsManager
+from src.modules.engine.smart_bot import SmartBot
 
 
 class SQLAlchemyError(Exception):
@@ -38,6 +37,7 @@ class Login(QtWidgets.QFrame):
         """Initialize the Login widget and set up the UI."""
         super().__init__(parent)
 
+        self.bot = controller.bot
         self.account_id = None
         self.progress_bar = QProgressBar(self)
         self.progress_bar.setGeometry(20, 400, 200, 20)
@@ -63,16 +63,13 @@ class Login(QtWidgets.QFrame):
         self.login_button = QtWidgets.QPushButton("Login", self)
         self.create_account_button = QtWidgets.QPushButton("Create New Account", self)
         self.network_status_label = QtWidgets.QLabel("Checking network status...", self)
-
         self.info_label = QtWidgets.QLabel("", self)
-
         self.grid_layout.setRowStretch(1, 1)
         self.grid_layout.setColumnStretch(1, 1)
         self.grid_layout.setContentsMargins(20, 20, 20, 20)
         self.grid_layout.setAlignment(QtCore.Qt.AlignTop)
         self.setGeometry(200, 200, 600, 400)
         self.setLayout(self.grid_layout)
-
         self.settings = SettingsManager.load_settings()
         self.setup_ui()
         self.populate_saved_settings()
@@ -88,19 +85,15 @@ class Login(QtWidgets.QFrame):
 
         # Network Status Label]
         layout.addWidget(self.network_status_label, 0, 4)
-
         # Account ID Entry
-
-        self.grid_layout.addWidget(self.background_image,
-                                  60, 400
-                            )
+        self.grid_layout.addWidget(self.background_image, 60, 400)
         # Secret Key Entry
         layout.addWidget(self.create_label("Secret Key"), 2, 0)
         self.secret_key_entry.setPlaceholderText("Enter your Secret Key")
         self.secret_key_entry.setEchoMode(QtWidgets.QLineEdit.Password)
         layout.addWidget(self.secret_key_entry, 2, 1)
 
-        # Toggle Password Visibilitylayout.addWidget(self.create_label("Account ID"), 1, 0)
+        # Toggle Password Visibility layout.addWidget(self.create_label("Account ID"), 1, 0)
         self.account_id_entry.setPlaceholderText("Enter your Stellar Account ID")
         layout.addWidget(self.account_id_entry, 1, 1)
 
@@ -118,25 +111,19 @@ class Login(QtWidgets.QFrame):
         self.remember_me.setCheckState(
             QtCore.Qt.Checked if self.settings.get('remember_me', False) else QtCore.Qt.Unchecked)
         layout.addWidget(self.remember_me, 3, 0)
-
         # Login Button
         self.login_button.clicked.connect(self.login)
         layout.addWidget(self.login_button, 4, 2)
-
         # Create New Account Button
-
         self.create_account_button.clicked.connect(self.create_new_account)
         layout.addWidget(self.create_account_button, 4, 0)
-
         # Info Label for displaying messages
         self.info_label.setStyleSheet("color: red;")
         layout.addWidget(self.info_label, 5, 2)
-
         # Network Connectivity Status
         self.network_status_label.setStyleSheet("color: green;")
         layout.addWidget(self.network_status_label, 0,8)
         self.check_network_connectivity()
-
         # Progress Bar
         layout.addWidget(self.progress_bar, 7, 1, 1, 3)
         self.progress_bar.move(20, 380)
@@ -158,8 +145,11 @@ class Login(QtWidgets.QFrame):
         """Populate fields with saved account ID and secret key if available."""
         if 'account_id' in self.settings:
             self.account_id_entry.setText(self.settings['account_id'])
+            self.controller.account_id = self.account_id_entry.text()
         if 'secret_key' in self.settings:
             self.secret_key_entry.setText(self.settings['secret_key'])
+            self.controller.account_id = self.account_id_entry.text()
+            self.secret_key_entry.setEchoMode(QtWidgets.QLineEdit.Password)
         self.remember_me.setChecked(self.settings.get('remember_me', False))
 
     def check_network_connectivity(self):
@@ -198,8 +188,20 @@ class Login(QtWidgets.QFrame):
         try:
             self.update_progress(50, "Validating credentials...")
             self.save_user_settings()
-            self.update_progress(100, "Login successful!")
-            self.controller.show_frame("Home")
+            self.controller.account_id = self.settings['account_id']
+            self.controller.secret_key = self.settings['secret_key']
+            self.controller.logger.info(f"User {self.account_id_entry.text()} logged in.")
+            self.bot = SmartBot(controller=self.controller)
+
+            if self.bot is not None:
+
+             self.controller.bot = self.bot
+
+
+
+
+             self.update_progress(100, "Login successful!")
+             self.controller.show_frame("Home")
         except Exception as e:
             self.update_progress(0, f"An error occurred: {str(e)}")
         finally:
@@ -218,14 +220,14 @@ class Login(QtWidgets.QFrame):
 
     def save_user_settings(self):
         """Save user settings if 'Remember Me' is checked."""
-        settings = {
+        self.settings = {
             'remember_me': self.remember_me.isChecked(),
             'account_id': self.account_id_entry.text() if self.remember_me.isChecked() else '',
             'secret_key': self.secret_key_entry.text() if self.remember_me.isChecked() else '',
             "telegram_token": self.controller.telegram_token,
-            "telegram_chat_id": self.controller.telegram_chat_id
+            "chat_id": self.controller.chat_id
         }
-        SettingsManager.save_settings(settings)
+        SettingsManager.save_settings(self.settings)
 
     def create_new_account(self):
         """Generate a new Stellar account and display the details."""
@@ -281,18 +283,10 @@ class Login(QtWidgets.QFrame):
         """Fetch and save Stellar assets to the database."""
         try:
             # Initialize Stellar client
-            self.controller.bot = StellarClient(controller=self.controller)
+
             self.account_id = self.controller.bot.account_id
-            assets = self.controller.bot.asset_pairs  # Assuming fetch_assets is defined
 
-            # Save to a database
-            self._save_to_db(con=self.controller.database_connection, data_frame=assets, schema="public",
-                             table_name="assets")
 
-            # Update info label and transition
-            self.update_info_label("Assets saved successfully!", "green")
-        except SQLAlchemyError as db_error:
-            self.handle_error(f"Database error: {str(db_error)}")
         except Exception as e:
             self.handle_error(f"An error occurred: {str(e)}")
 

@@ -1,2 +1,2 @@
 [console_scripts]
-stellarbot = stellarbot.stellarbot:main
+stellarbot = stellarbot.main:main

@@ -7,13 +7,7 @@ class Trades(QWidget):
     def __init__(self, parent=None, controller=None):
         super().__init__(parent)
         self.controller = controller
-
-        self.setGeometry(
-            0, 0,1530,780
-        )
-
         layout = QtWidgets.QVBoxLayout(parent)
-
         # Title label
         title_label = QtWidgets.QLabel("Trades", self)
         title_label.setAlignment(QtCore.Qt.AlignCenter)
