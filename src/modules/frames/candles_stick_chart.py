@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QFrame, QPushButton
+from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QFrame, QPushButton
 from matplotlib import pyplot as plt
 
 

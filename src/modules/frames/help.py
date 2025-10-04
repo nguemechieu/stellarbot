@@ -1,5 +1,5 @@
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import QFrame
+from PySide6 import QtWidgets, QtCore
+from PySide6.QtWidgets import QFrame
 
 
 class Help(QFrame):

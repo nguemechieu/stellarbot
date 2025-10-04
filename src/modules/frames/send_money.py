@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QFrame, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
 
 from src.modules.frames.market_depth import random_color
 

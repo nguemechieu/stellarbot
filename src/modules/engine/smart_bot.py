@@ -7,6 +7,7 @@ from typing import List
 import pandas as pd
 import requests
 import ta
+
 from stellar_sdk import Server, TransactionBuilder, Network, Asset, Keypair
 
 from src.modules.engine.learning import Learning

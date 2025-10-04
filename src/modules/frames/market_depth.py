@@ -1,7 +1,5 @@
-from datetime import datetime
 
-from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QFrame, QVBoxLayout, QLabel, QListWidgetItem, QListWidget, QWidget
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QListWidgetItem, QListWidget, QWidget
 import random
 
 class MarketDepth(QFrame):

@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QFrame, QLabel, QLineEdit, QVBoxLayout, QFormLayout
-from PyQt5.QtGui import QFont
-from PyQt5.QtCore import Qt
+from PySide6.QtWidgets import QFrame, QLabel, QLineEdit, QVBoxLayout, QFormLayout
+from PySide6.QtGui import QFont
+from PySide6.QtCore import Qt
 
 
 class FeesAnalysis(QFrame):

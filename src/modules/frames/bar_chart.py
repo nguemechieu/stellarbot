@@ -1,11 +1,9 @@
-import sys
-import pandas as pd
 import mplfinance as mpf
-from PyQt5.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog, QMessageBox, QApplication,
-                             QFrame)
+import pandas as pd
+from PySide6.QtWidgets import (QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog, QMessageBox, QFrame)
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
+from pandas import DataFrame
+
 
 class BarChart(QFrame):
     """A PyQt5 widget for displaying a bar chart using mplfinance."""
@@ -19,7 +17,7 @@ class BarChart(QFrame):
         )
 
         # Ensure the 'Date' column is in datetime format before setting it as the index
-        self.df = pd.DataFrame(df)
+        self.df = DataFrame(df)
         self.df['Date'] = pd.to_datetime(self.df['Date'], errors='coerce')  # Convert 'Date' column to datetime
         self.df.dropna(subset=['Date'], inplace=True)
         self.df.set_index('Date', inplace=True)

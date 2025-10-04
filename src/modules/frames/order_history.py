@@ -1,5 +1,5 @@
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QFrame, QVBoxLayout, QLabel, QHBoxLayout
+from PySide6 import QtWidgets
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QHBoxLayout
 
 
 class OrdersHistory(QFrame):

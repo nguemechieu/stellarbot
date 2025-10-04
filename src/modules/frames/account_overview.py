@@ -1,7 +1,7 @@
 import time
 
-from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QFrame, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem
 from requests import Session
 
 

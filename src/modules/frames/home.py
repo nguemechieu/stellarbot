@@ -1,5 +1,6 @@
-from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QTabWidget, QFrame, QMenuBar, QAction, QMessageBox, QStatusBar
+from PySide6.QtGui import QAction
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QTabWidget, QFrame, QMenuBar,  QMessageBox, QStatusBar
 )
 
 from src.modules.frames.account_overview import AccountOverview

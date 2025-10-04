@@ -1,5 +1,5 @@
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QMessageBox
+from PySide6 import QtWidgets
+from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QMessageBox
 import pandas as pd
 import mplfinance as mpf
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas

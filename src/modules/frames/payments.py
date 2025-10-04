@@ -1,6 +1,6 @@
-from PyQt5 import QtWidgets
-from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QFrame
+from PySide6 import QtWidgets
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import QFrame
 
 
 class Payments(QFrame):

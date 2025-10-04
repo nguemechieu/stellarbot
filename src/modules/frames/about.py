@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QApplication, QFrame
-from PyQt5.QtCore import Qt
+from PySide6.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QApplication, QFrame
+from PySide6.QtCore import Qt
 import sys
 
 class About(QFrame):

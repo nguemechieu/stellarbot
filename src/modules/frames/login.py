@@ -2,8 +2,8 @@ import csv
 import os
 import re
 import requests
-from PyQt5 import QtGui, QtWidgets, QtCore
-from PyQt5.QtWidgets import QProgressBar, QGridLayout
+from PySide6 import QtGui, QtWidgets, QtCore
+from PySide6.QtWidgets import QProgressBar, QGridLayout
 from stellar_sdk import Keypair
 
 from src.modules.engine.settings_manager import SettingsManager
@@ -264,6 +264,7 @@ class Login(QtWidgets.QFrame):
                     QtWidgets.QMessageBox.information(self, "Saved", f"Account saved to {file_path}")
             except Exception as e:
                 QtWidgets.QMessageBox.critical(self, "Error", f"Error saving account: {e}")
+            return  file_path
 
     def toggle_password_visibility(self):
         """Toggle the visibility of the Secret Key entry field."""

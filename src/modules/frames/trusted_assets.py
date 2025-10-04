@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QFrame, QVBoxLayout, QPushButton, QLabel, QComboBox, QTableWidget, QTableWidgetItem
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QPushButton, QLabel, QComboBox, QTableWidget, QTableWidgetItem
 from stellar_sdk import Asset
 
 

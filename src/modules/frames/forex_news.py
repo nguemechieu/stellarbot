@@ -1,7 +1,6 @@
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QFrame, QVBoxLayout, QLabel
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel
 
-from src.modules.frames.ui_helper import create_label_df
 from src.modules.frames.ui_utility import logger
 
 

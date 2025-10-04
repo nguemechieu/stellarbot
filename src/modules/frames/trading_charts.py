@@ -1,5 +1,5 @@
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QFrame
+from PySide6 import QtWidgets
+from PySide6.QtWidgets import QFrame
 
 from src.modules.frames.bar_chart import BarChart
 from src.modules.frames.candles_stick_chart import CandlestickChart

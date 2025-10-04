@@ -3,9 +3,10 @@ import sys
 import traceback
 
 import pandas as pd
-from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QVBoxLayout, QMainWindow, QSystemTrayIcon, QMenu, QMessageBox
+
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QVBoxLayout, QMainWindow, QSystemTrayIcon, QMenu, QMessageBox
+from PySide6 import QtGui, QtWidgets
 
 from src.modules.engine.db_manager import DatabaseManager
 from src.modules.engine.settings_manager import SettingsManager
@@ -26,6 +27,7 @@ def exception_hook(exc_type, exc_value, exc_traceback):
     logging.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
     # Optionally, you can display a message box here
     QMessageBox.critical(None, "Error", f"An unexpected error occurred:\n{exc_value}")
+
 
 sys.exception = exception_hook
 
@@ -51,20 +53,17 @@ class StellarBot(QMainWindow):
         self.help_frame = None
         self.about_frame = None
         self.current_frame = None
-        self.offers_df=pd.DataFrame()
-        self.orders_df=pd.DataFrame()
+        self.offers_df = pd.DataFrame()
+        self.orders_df = pd.DataFrame()
         self.assets_df = pd.DataFrame()
         self.asset_pairs_df = pd.DataFrame()
         self.assets_balances_df = pd.DataFrame()
         self.transactions_df = pd.DataFrame()
         self.order_book = {"bids": [], "asks": []}
-        self.effects_df=pd.DataFrame()
+        self.effects_df = pd.DataFrame()
         self.assets = {}
-
         self.data_fetcher = None
-
-        self.payments=None
-
+        self.payments = None
 
         self.time_frame_selected = "H1"
 
@@ -159,8 +158,8 @@ class StellarBot(QMainWindow):
         self.setWindowTitle(f"StellarBot - {page_name}")
         frame_class = frame_classes.get(page_name)
         if not frame_class:
-            self.logger.error(f"Invalid page name: {page_name}")
-            self.show_error_message(f"Invalid page name: {page_name}")
+            self.logger.error(f'Invalid page name: {page_name}')
+            self.show_error_message(f'Invalid page name: {page_name}')
             return
         frame = frame_class(self, self.controller)
         ql = QVBoxLayout()
@@ -225,8 +224,8 @@ if __name__ == "__main__":
     stellar_bot.setWindowTitle("StellarBot")
     stellar_bot.showMaximized()  # Maximize the application
     stellar_bot.show()  # Show the application
-    app.exec_()  # Execute the application
-    # Log the error and exit the application
+    app.exec()
+    # Log the errora and exit the application
     # sys.exit(app.exec_())
   except Exception as e:
     exception_hook(type(e), e, traceback.format_exc())

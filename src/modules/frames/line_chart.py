@@ -1,6 +1,6 @@
 import mplfinance as mpf
 import pandas as pd
-from PyQt5.QtWidgets import QVBoxLayout, QWidget, QPushButton, QFileDialog, QHBoxLayout
+from PySide6.QtWidgets import QVBoxLayout, QWidget, QPushButton, QFileDialog, QHBoxLayout
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 

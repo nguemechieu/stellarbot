@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import (QVBoxLayout, QTableWidget, QTableWidgetItem, QLabel, QHBoxLayout,
+from PySide6.QtWidgets import (QVBoxLayout, QTableWidget, QTableWidgetItem, QLabel, QHBoxLayout,
                              QLineEdit, QFrame)
 
 

@@ -381,8 +381,8 @@ def analyze_time_series_data(time_series_data, time_series_column, compare_data=
     plt.axvline(mean - std_dev, color='orange', label='Mean - Std. Dev.', linestyle='dashed', linewidth=2)
 
     # Adding labels and title
-    plt.title(f"Time Series Analysis for {time_series_column}")
-    plt.xlabel(f"{time_series_column} Values")
+    plt.title(f'Time Series Analysis for {time_series_column}')
+    plt.xlabel(f'{time_series_column} Values')
     plt.ylabel("Frequency")
     plt.legend()
 

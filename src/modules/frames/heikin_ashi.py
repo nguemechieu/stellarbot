@@ -1,6 +1,6 @@
 import matplotlib.dates as mdates
 import pandas as pd
-from PyQt5.QtWidgets import QVBoxLayout, QFrame
+from PySide6.QtWidgets import QVBoxLayout, QFrame
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.patches import Rectangle
