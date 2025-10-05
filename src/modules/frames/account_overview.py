@@ -1,130 +1,192 @@
 import time
+import traceback
+from typing import Optional, List, Dict
 
+import requests
+from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem
-from requests import Session
+from PySide6.QtWidgets import (
+    QFrame, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QMessageBox, QSizePolicy
+)
 
 
+# ⚙️ Background Worker for non-blocking tasks
+class Worker(QtCore.QRunnable):
+    """Executes long-running tasks safely in background threads."""
+
+    def __init__(self, fn, callback=None, error_callback=None):
+        super().__init__()
+        self.fn = fn
+        self.callback = callback
+        self.error_callback = error_callback
+
+    def run(self):
+        try:
+            result = self.fn()
+            if self.callback:
+                QtCore.QMetaObject.invokeMethod(
+                    self.callback.__self__, self.callback.__name__,
+                    QtCore.Qt.QueuedConnection,
+                    QtCore.Q_ARG(object, result)
+                )
+        except Exception as e:
+            if self.error_callback:
+                QtCore.QMetaObject.invokeMethod(
+                    self.error_callback.__self__, self.error_callback.__name__,
+                    QtCore.Qt.QueuedConnection,
+                    QtCore.Q_ARG(str, f"{e}\n{traceback.format_exc()}")
+                )
+
+
+# 🧾 Account Overview UI
 class AccountOverview(QFrame):
-    def __init__(self, parent=None, controller=None):
-        """Initialize the Stellar Account Overview widget."""
+    """Displays Stellar account balance, assets, and recent transactions."""
+
+    def __init__(self, parent: Optional[QtWidgets.QWidget] = None, controller=None):
         super().__init__(parent)
-        self.server_msg =  controller.server_msg
-        self.logger = controller.logger
- 
-        self.session = Session()
         self.controller = controller
+        self.logger = getattr(controller, "logger", None)
+        self.server_msg = getattr(controller, "server_msg", {})
+        self.bot = getattr(controller, "bot", None)
+
+        self.session = requests.Session()
+        self.thread_pool = QtCore.QThreadPool.globalInstance()
 
 
+
+        self._init_ui()
+
+        self._load_account_data_async()
+
+        # Periodically refresh balances
+        self.refresh_timer = QtCore.QTimer()
+        self.refresh_timer.timeout.connect(self._load_account_data_async)
+        self.refresh_timer.start(30_000)  # every 30s
+
+    # ------------------------------------------------------------------
+    # 🧱 UI Initialization
+    # ------------------------------------------------------------------
+    def _init_ui(self):
+        """Builds UI layout."""
         self.setGeometry(0, 0, 1530, 780)
         self.setWindowTitle("Stellar Account Overview")
-        self.setStyleSheet("background-color: black; color: green;")
+        self.setStyleSheet("background-color: #0A0A0A; color: #00FF7F;")
 
-        # Main layout for the widget
-        layout = QVBoxLayout(parent)
-        self.setLayout(layout)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(12)
 
-        # Account Header
+        # Header
         self.account_id_label = QLabel("Account ID: Loading...")
-        self.account_id_label.setStyleSheet("font-weight: bold; font-size: 16px; margin-bottom: 10px;")
+        self.account_id_label.setStyleSheet("font-weight:bold; font-size:16px; color:#00FF7F;")
         layout.addWidget(self.account_id_label)
 
-        # Account Balance Section
         self.balance_label = QLabel("Total Balance: Loading...")
-        self.balance_label.setStyleSheet("font-size: 14px; margin-bottom: 10px;")
+        self.balance_label.setStyleSheet("font-size:14px; margin-bottom:10px; color:#99FF99;")
         layout.addWidget(self.balance_label)
 
-        # Asset Holdings Table
-        self.assets_table = QTableWidget()
-        self.assets_table.setColumnCount(3)
+        # Assets Table
+        self.assets_table = QTableWidget(0, 3)
         self.assets_table.setHorizontalHeaderLabels(["Asset", "Balance", "Issuer"])
-        self.assets_table.setStyleSheet("""
-            QTableWidget { background-color: #F8F8F8; border: 1px solid #CCCCCC; }
-            QHeaderView::section { background-color: #D9D9D9; font-weight: bold; }
-        """)
         self.assets_table.horizontalHeader().setStretchLastSection(True)
+        self.assets_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout.addWidget(self.assets_table)
 
-        # Recent Transactions Section
-        self.transactions_table = QTableWidget()
-        self.transactions_table.setColumnCount(3)
+        # Transactions Table
+        self.transactions_table = QTableWidget(0, 3)
         self.transactions_table.setHorizontalHeaderLabels(["Date", "Amount", "Type"])
-        self.transactions_table.setStyleSheet("""
-            QTableWidget { background-color: #F8F8F8; border: 1px solid #CCCCCC; }
-            QHeaderView::section { background-color: #D9D9D9; font-weight: bold; }
-        """)
         self.transactions_table.horizontalHeader().setStretchLastSection(True)
+        self.transactions_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout.addWidget(self.transactions_table)
 
-        # Load account details
-        self.load_account_details()
+        self.setLayout(layout)
 
-    def load_account_details(self):
-        """Load and display account details."""
+    # ------------------------------------------------------------------
+    # ⚡ Async Data Loading
+    # ------------------------------------------------------------------
+    def _load_account_data_async(self):
+        """Run account data loading asynchronously."""
+        self._set_loading_state(True)
+        worker = Worker(self._fetch_account_data, self._on_account_data_loaded, self._on_error)
+        self.thread_pool.start(worker)
+
+    def _fetch_account_data(self) -> dict:
+        """Simulate fetching data (replace with real Stellar API/bot logic)."""
+        if not self.bot or not hasattr(self.bot, "account_info"):
+            raise ValueError("Bot not initialized or missing account_info.")
+
+        # Get local data (should be fast)
+        account_data = self.bot.account_balances_df
+        balances = account_data.get("balances", [])
+        usd_value = self._convert_xlm_to_usd(balances)
+        account_data["usd_value"] = usd_value
+        return account_data
+
+    def _on_account_data_loaded(self, account_data: dict):
+        """Safely update UI from thread result."""
+        self._set_loading_state(False)
+
         try:
-            # Mock account data (replace with actual data from the controller)
-            account_data =self.controller.bot.account_info  # Fetch account details from the bot
+            account_id = account_data.get("account_id", "Unknown")
+            balance = account_data.get("balance", 0.0)
+            usd_value = account_data.get("usd_value", 0.0)
 
-            # Update account details
-            self.account_id_label.setText(f"Account ID: {account_data['account_id']}")
-            self.balance_label.setText(f"Total Balance: {account_data['balance']} XLM  Value: "+
-            f"{0.0} USD")
+            self.account_id_label.setText(f"Account ID: {account_id}")
+            self.balance_label.setText(f"Total Balance: {balance:.2f} XLM (~${usd_value:.2f} USD)")
 
-            # Update assets table
-            self.assets_table.setRowCount(len(self.controller.bot.assets))
-            for row_idx, asset in enumerate(account_data):
-                self.assets_table.setItem(row_idx, 0, QTableWidgetItem(asset["asset_code"]))
-                self.assets_table.setItem(row_idx, 1, QTableWidgetItem(f"{asset['balance']}"))
-                self.assets_table.setItem(row_idx, 2, QTableWidgetItem(asset["asset_issuer"]))
+            # Assets
+            assets = account_data.get("balances", [])
+            self.assets_table.setRowCount(len(assets))
+            for row, a in enumerate(assets):
+                self.assets_table.setItem(row, 0, QTableWidgetItem(a.get("asset_code", "XLM")))
+                self.assets_table.setItem(row, 1, QTableWidgetItem(str(a.get("balance", "0"))))
+                self.assets_table.setItem(row, 2, QTableWidgetItem(a.get("asset_issuer", "Native")))
 
-            # Update transactions table
-            self.transactions_table.setRowCount(len(account_data["transactions"]))
-            for row_idx, tx in enumerate(account_data["transactions"]):
-                self.transactions_table.setItem(row_idx, 0, QTableWidgetItem(tx["date"]))
-                self.transactions_table.setItem(row_idx, 1, QTableWidgetItem(f"{tx['amount']} XLM"))
-                self.transactions_table.setItem(row_idx, 2, QTableWidgetItem(tx["type"]))
+            # Transactions
+            transactions = account_data.get("transactions", [])
+            self.transactions_table.setRowCount(len(transactions))
+            for row, tx in enumerate(transactions):
+                self.transactions_table.setItem(row, 0, QTableWidgetItem(tx.get("date", "—")))
+                self.transactions_table.setItem(row, 1, QTableWidgetItem(f"{tx.get('amount', 0)} XLM"))
+                self.transactions_table.setItem(row, 2, QTableWidgetItem(tx.get("type", "—")))
 
-                # Highlight amounts (green for positive, red for negative)
-                color = QColor("#4CAF50") if tx["amount"] > 0 else QColor("#F44336")
-                self.transactions_table.item(row_idx, 1).setForeground(color)
+                amount = tx.get("amount", 0)
+                color = QColor("#4CAF50") if amount >= 0 else QColor("#F44336")
+                self.transactions_table.item(row, 1).setForeground(color)
 
         except Exception as e:
+            self._on_error(str(e))
 
-            self.controller.logger.error(f"Error loading account details: {e}")
+    def _on_error(self, message: str):
+        """Handle errors gracefully."""
+        self._set_loading_state(False)
+        self.server_msg["error"] = message
+        if self.logger:
+            self.logger.error(message)
+        QMessageBox.critical(self, "Error", f"Failed to load account data:\n{message}")
 
-            self.controller.server_msg['error'] = "Error loading account details:" +str(e)
+    def _set_loading_state(self, loading: bool):
+        """Visual feedback while loading."""
+        text = "Loading..." if loading else ""
+        self.balance_label.setText(f"Total Balance: {text}")
+        self.account_id_label.setText(f"Account ID: {text}")
 
-
-    def convert_xlm_to_usd(self, balances: []) -> float:
-     """Convert XLM to USD using the Stellar Price Feed."""
-    # Get live Stellar price feed from Binance US API
-     endpoint = "https://api.binance.us/api/v3/ticker/price?symbol=XLMUSDT"
-
-     try:
-        response = self.session.get(endpoint)
-
-        if response.status_code != 200:
-            self.logger.error(f"Error fetching Stellar price feed: {response.status_code}")
-            self.server_msg['status'] = 'ERROR'
-            self.server_msg['message'] = "Error fetching Stellar price feed"
-            self.server_msg['timestamp'] = int(time.time())
+    # ------------------------------------------------------------------
+    # 💰 Price Conversion
+    # ------------------------------------------------------------------
+    def _convert_xlm_to_usd(self, balances: List[Dict]) -> float:
+        """Fetch real-time XLM/USD rate (Binance)."""
+        try:
+            response = self.session.get("https://api.binance.us/api/v3/ticker/price?symbol=XLMUSDT", timeout=5)
+            response.raise_for_status()
+            data = response.json()
+            usd_price = float(data.get("price", 0.0))
+            xlm_balance = next((float(b.get("balance", 0)) for b in balances if b.get("asset") == "XLM"), 0.0)
+            usd_value = usd_price * xlm_balance
+            if self.logger:
+                self.logger.info(f"1 XLM = {usd_price:.4f} USD → Total = ${usd_value:.2f}")
+            return usd_value
+        except Exception as e:
+            if self.logger:
+                self.logger.warning(f"Price conversion failed: {e}")
             return 0.0
-
-        data = response.json()
-        if isinstance(data, dict) and 'price' in data:
-            usd_price = float(data['price'])
-            xlm_balance = next((float(b['balance']) for b in balances if b['asset'] == 'XLM'), 0.0)
-            self.logger.info(f"Converted {xlm_balance} XLM to USD at {usd_price} USD/XLM")
-            return usd_price * xlm_balance
-        else:
-            self.logger.error("Invalid response structure from price feed.")
-            self.server_msg['status'] = 'ERROR'
-            self.server_msg['message'] = "Invalid response structure from price feed"
-            return 0.0
-     except Exception as e:
-        self.logger.exception(f"An error occurred: {e}")
-        self.server_msg['status'] = 'ERROR'
-        self.server_msg['message'] = str(e)
-        self.server_msg['timestamp'] = int(time.time())
-        return 0.0
-

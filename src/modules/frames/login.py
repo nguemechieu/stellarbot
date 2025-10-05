@@ -1,313 +1,270 @@
+from __future__ import annotations
+
 import csv
 import os
 import re
+from typing import Optional
+
 import requests
-from PySide6 import QtGui, QtWidgets, QtCore
-from PySide6.QtWidgets import QProgressBar, QGridLayout
+from PySide6 import QtWidgets, QtCore
+from PySide6.QtWidgets import (
+    QGridLayout, QVBoxLayout, QDialog, QLabel,
+    QPushButton, QFileDialog, QMessageBox, QCheckBox, QLineEdit
+)
 from stellar_sdk import Keypair
 
 from src.modules.engine.settings_manager import SettingsManager
 from src.modules.engine.smart_bot import SmartBot
 
 
-class SQLAlchemyError(Exception):
-    """A custom exception for SQLAlchemy errors."""
-
-    def __init__(self, message):
-        self.message = message
-        super().__init__(self.message)
-
-    pass
-
-
+# ---------------------------------------------------------------------
+# Utility Functions
+# ---------------------------------------------------------------------
 def is_valid_stellar_secret(secret_key: str) -> bool:
     """Validate the format of a Stellar secret key."""
-    return bool(re.match(r'^S[ABCDEFGHIJKLMNOPQRSTUVWXYZ234567]{55}$', secret_key))
+    return bool(re.match(r"^S[ABCDEFGHIJKLMNOPQRSTUVWXYZ234567]{55}$", secret_key))
 
 
 def is_valid_stellar_account_id(account_id: str) -> bool:
     """Validate the format of a Stellar account ID."""
-    return bool(re.match(r'^G[A-Z2-7]{55}$', account_id))
+    return bool(re.match(r"^G[A-Z2-7]{55}$", account_id))
 
 
+# ---------------------------------------------------------------------
+# Custom Exception
+# ---------------------------------------------------------------------
+class SQLAlchemyError(Exception):
+    """A custom exception for SQLAlchemy errors."""
+    pass
+
+
+# ---------------------------------------------------------------------
+# Login Frame
+# ---------------------------------------------------------------------
 class Login(QtWidgets.QFrame):
-    """A professional Stellar Network User Login Interface using PyQt5."""
+    """Modern Stellar Network Login Frame with async validation."""
 
-    def __init__(self, parent=None, controller=None):
-        """Initialize the Login widget and set up the UI."""
+    def __init__(self, parent: Optional[QtWidgets.QWidget] = None, controller=None):
         super().__init__(parent)
 
-        self.bot = controller.bot
-        self.account_id = None
-        self.progress_bar = QProgressBar(self)
-        self.progress_bar.setGeometry(20, 400, 200, 20)
-        self.progress_bar.setValue(1)
-        self.setWindowTitle("Stellar Network Login")
-
-        self.background_image = QtWidgets.QLabel(self)
-        self.background_image.setGeometry(0, 0, 600, 400)
-        self.background_image.setAlignment(QtCore.Qt.AlignTop)
-        self.background_image.setPixmap(QtGui.QPixmap("StellarBot.ico"))
-
-
-        self.parent = parent
         self.controller = controller
-        self.telegram_token = "2032573404:AAGnxJpNMJBKqLzvE5q4kGt1cCGF632bP7A"
-
-        self.grid_layout = QGridLayout(self)
-
-        self.account_id_entry = QtWidgets.QLineEdit(self)
-        self.secret_key_entry = QtWidgets.QLineEdit(self)
-        self.password_visibility_toggle = QtWidgets.QPushButton("Show", self)
-        self.remember_me = QtWidgets.QCheckBox("Remember Me", self)
-        self.login_button = QtWidgets.QPushButton("Login", self)
-        self.create_account_button = QtWidgets.QPushButton("Create New Account", self)
-        self.network_status_label = QtWidgets.QLabel("Checking network status...", self)
-        self.info_label = QtWidgets.QLabel("", self)
-        self.grid_layout.setRowStretch(1, 1)
-        self.grid_layout.setColumnStretch(1, 1)
-        self.grid_layout.setContentsMargins(20, 20, 20, 20)
-        self.grid_layout.setAlignment(QtCore.Qt.AlignTop)
-        self.setGeometry(200, 200, 600, 400)
-        self.setLayout(self.grid_layout)
+        self.bot: Optional[SmartBot] = getattr(controller, "bot", None)
         self.settings = SettingsManager.load_settings()
-        self.setup_ui()
-        self.populate_saved_settings()
 
-    def setup_ui(self):
-        """Set up the layout, styling, and widgets."""
-        layout = self.grid_layout
+        # --- Widgets
+        self.account_id_entry = QLineEdit(self)
+        self.secret_key_entry = QLineEdit(self)
+        self.password_toggle_btn = QPushButton("Show", self)
+        self.remember_me = QCheckBox("Remember Me", self)
+        self.login_button = QPushButton("Login", self)
+        self.create_account_button = QPushButton("Create New Account", self)
+        self.network_status_label = QLabel("Checking network...", self)
+        self.info_label = QLabel("", self)
 
-        # Introduction section
-        # Account ID Entry
-        layout.addWidget(self.create_label("Stellar Network Login"),
-                         0,0, 1, 4)
 
-        # Network Status Label]
-        layout.addWidget(self.network_status_label, 0, 4)
-        # Account ID Entry
-        self.grid_layout.addWidget(self.background_image, 60, 400)
-        # Secret Key Entry
-        layout.addWidget(self.create_label("Secret Key"), 2, 0)
-        self.secret_key_entry.setPlaceholderText("Enter your Secret Key")
-        self.secret_key_entry.setEchoMode(QtWidgets.QLineEdit.Password)
-        layout.addWidget(self.secret_key_entry, 2, 1)
 
-        # Toggle Password Visibility layout.addWidget(self.create_label("Account ID"), 1, 0)
+        self._init_ui()
+        self._restore_settings()
+
+        # Async network check
+        QtCore.QTimer.singleShot(100, self._check_network_connectivity)
+
+    # ------------------------------------------------------------------
+    # UI Setup
+    # ------------------------------------------------------------------
+    def _init_ui(self) -> None:
+        """Build and style the UI."""
+        layout = QGridLayout(self)
+        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setSpacing(10)
+        layout.setAlignment(QtCore.Qt.AlignTop)
+
+        title = QLabel("🔐 Stellar Network Login")
+        title.setStyleSheet("font-size: 20px; font-weight: bold; color: #1976D2;")
+        layout.addWidget(title, 0, 0, 1, 3)
+
+        layout.addWidget(QLabel("Account ID:"), 1, 0)
         self.account_id_entry.setPlaceholderText("Enter your Stellar Account ID")
-        layout.addWidget(self.account_id_entry, 1, 1)
+        layout.addWidget(self.account_id_entry, 1, 1, 1, 2)
 
-        # Secret Key Entry
-        layout.addWidget(self.create_label("Secret Key"), 2, 0)
+        layout.addWidget(QLabel("Secret Key:"), 2, 0)
         self.secret_key_entry.setPlaceholderText("Enter your Secret Key")
         self.secret_key_entry.setEchoMode(QtWidgets.QLineEdit.Password)
         layout.addWidget(self.secret_key_entry, 2, 1)
+        self.password_toggle_btn.clicked.connect(self._toggle_password_visibility)
+        layout.addWidget(self.password_toggle_btn, 2, 2)
 
-        # Toggle Password Visibility
-        self.password_visibility_toggle.clicked.connect(self.toggle_password_visibility)
-        layout.addWidget(self.password_visibility_toggle, 2, 3)
-
-        # Remember Me Checkbox
-        self.remember_me.setCheckState(
-            QtCore.Qt.Checked if self.settings.get('remember_me', False) else QtCore.Qt.Unchecked)
         layout.addWidget(self.remember_me, 3, 0)
-        # Login Button
-        self.login_button.clicked.connect(self.login)
-        layout.addWidget(self.login_button, 4, 2)
-        # Create New Account Button
-        self.create_account_button.clicked.connect(self.create_new_account)
+        self.remember_me.setChecked(self.settings.get("remember_me", False))
+
+        layout.addWidget(self.login_button, 4, 1)
         layout.addWidget(self.create_account_button, 4, 0)
-        # Info Label for displaying messages
-        self.info_label.setStyleSheet("color: red;")
-        layout.addWidget(self.info_label, 5, 2)
-        # Network Connectivity Status
-        self.network_status_label.setStyleSheet("color: green;")
-        layout.addWidget(self.network_status_label, 0,8)
-        self.check_network_connectivity()
-        # Progress Bar
-        layout.addWidget(self.progress_bar, 7, 1, 1, 3)
-        self.progress_bar.move(20, 380)
+
+        self.login_button.clicked.connect(self._login)
+        self.create_account_button.clicked.connect(self._create_new_account)
+
+        self.network_status_label.setStyleSheet("color: orange; font-size: 13px;")
+        layout.addWidget(self.network_status_label, 5, 0, 1, 3)
+
+        self.info_label.setStyleSheet("color: red; font-size: 13px;")
+        layout.addWidget(self.info_label, 6, 0, 1, 3)
 
 
-    def add_title_label(self, text, layout):
-        """Add a title label to the layout."""
-        label = QtWidgets.QLabel(text, self)
-        layout.addWidget(label)
-        layout.addSpacing(20)
 
-    def create_label(self, text):
-        """Create a standardized label for fields."""
-        label = QtWidgets.QLabel(text, self)
+        self.setLayout(layout)
+        self.setStyleSheet("""
+            QFrame { background-color: #fafafa; border-radius: 8px; }
+            QPushButton { background-color: #1976D2; color: white; padding: 6px 14px; border-radius: 6px; }
+            QPushButton:hover { background-color: #2196F3; }
+            QLineEdit { padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
+        """)
 
-        return label
-
-    def populate_saved_settings(self):
-        """Populate fields with saved account ID and secret key if available."""
-        if 'account_id' in self.settings:
-            self.account_id_entry.setText(self.settings['account_id'])
-            self.controller.account_id = self.account_id_entry.text()
-        if 'secret_key' in self.settings:
-            self.secret_key_entry.setText(self.settings['secret_key'])
-            self.controller.account_id = self.account_id_entry.text()
+    # ------------------------------------------------------------------
+    # Restore Saved Settings
+    # ------------------------------------------------------------------
+    def _restore_settings(self) -> None:
+        if acc := self.settings.get("account_id"):
+            self.account_id_entry.setText(acc)
+            self.controller.account_id = acc
+        if key := self.settings.get("secret_key"):
+            self.secret_key_entry.setText(key)
             self.secret_key_entry.setEchoMode(QtWidgets.QLineEdit.Password)
-        self.remember_me.setChecked(self.settings.get('remember_me', False))
 
-    def check_network_connectivity(self):
-        """Check network connectivity to the Stellar Network."""
-        try:
-            response = requests.get('https://horizon.stellar.org/assets')
-            if response.status_code == 200:
-                self.update_network_status("Connected to Stellar Network", "color: green;")
-                return True
-            else:
-                self.update_network_status("Network Unreachable", "color: red;")
-                return False
-        except requests.RequestException:
-            self.update_network_status("Network Unreachable", "color: red;")
-            return False
-
-    def update_network_status(self, message, style):
-        """Update the network status label."""
-        self.network_status_label.setText(message)
-        self.network_status_label.setStyleSheet(style)
-
-    def login(self):
-        if not is_valid_stellar_secret(self.secret_key_entry.text()):
-            self.update_progress(0, "Invalid Stellar Network Secret!")
-            self.hide_progress()
-            return
-        if not is_valid_stellar_account_id(self.account_id_entry.text()):
-            self.update_progress(0, "Invalid Stellar Network Account!")
-            self.hide_progress()
-            return
-        if not self.check_network_connectivity():
-            self.update_progress(0, "Unable to connect to Stellar Network.")
-            self.hide_progress()
-            return
-
-        try:
-            self.update_progress(50, "Validating credentials...")
-            self.save_user_settings()
-            self.controller.account_id = self.settings['account_id']
-            self.controller.secret_key = self.settings['secret_key']
-            self.controller.logger.info(f"User {self.account_id_entry.text()} logged in.")
-            self.bot = SmartBot(controller=self.controller)
-
-            if self.bot is not None:
-
-             self.controller.bot = self.bot
-
-
-
-
-             self.update_progress(100, "Login successful!")
-             self.controller.show_frame("Home")
-        except Exception as e:
-            self.update_progress(0, f"An error occurred: {str(e)}")
-        finally:
-            self.hide_progress()
-
-    def _save_to_db(self, con, data_frame, schema, table_name):
-        """Helper function to save DataFrame to the database."""
-        try:
-            # Save DataFrame to the specified schema and table
-            data_frame.to_sql(name=table_name, con=con, schema=schema, index=False, if_exists='replace')
-            self.controller.logger.info(f"Assets saved to {schema}.{table_name} table.")
-        except SQLAlchemyError as db_error:
-            # Log database-specific errors and re-raise them
-            self.controller.logger.error(f"Error saving assets to {schema}.{table_name}: {str(db_error)}")
-            raise db_error
-
-    def save_user_settings(self):
-        """Save user settings if 'Remember Me' is checked."""
-        self.settings = {
-            'remember_me': self.remember_me.isChecked(),
-            'account_id': self.account_id_entry.text() if self.remember_me.isChecked() else '',
-            'secret_key': self.secret_key_entry.text() if self.remember_me.isChecked() else '',
-            "telegram_token": self.controller.telegram_token,
-            "chat_id": self.controller.chat_id
-        }
-        SettingsManager.save_settings(self.settings)
-
-    def create_new_account(self):
-        """Generate a new Stellar account and display the details."""
-        new_keypair = Keypair.random()
-        new_account_window = QtWidgets.QDialog(self)
-        new_account_window.setWindowTitle("New Stellar Account")
-        layout = QtWidgets.QVBoxLayout(new_account_window)
-
-        layout.addWidget(QtWidgets.QLabel("New Stellar Account Created", self))
-        layout.addWidget(QtWidgets.QLabel(f"Account ID (Public Key): {new_keypair.public_key}", self))
-        layout.addWidget(QtWidgets.QLabel(f"Secret Key (Private Key): {new_keypair.secret}", self))
-
-        save_button = QtWidgets.QPushButton("Save to CSV", new_account_window)
-        save_button.clicked.connect(self.save_account_to_csv(new_keypair.public_key, new_keypair.secret))
-        layout.addWidget(save_button)
-
-        close_button = QtWidgets.QPushButton("Close",   new_account_window)
-        close_button.clicked.connect(new_account_window.close())
-        layout.addWidget(close_button)
-
-        new_account_window.setLayout(layout)
-        new_account_window.exec_()
-
-    def save_account_to_csv(self, account_id, secret_key):
-        """Save the new Stellar account to a CSV file."""
-        file_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save New Account", "", "CSV Files (*.csv)")
-        if file_path:
+    # ------------------------------------------------------------------
+    # Network Check
+    # ------------------------------------------------------------------
+    def _check_network_connectivity(self) -> None:
+        """Check Horizon connectivity asynchronously."""
+        def _run_check():
             try:
-                with open(file_path, mode='a', newline='') as file:
-                    writer = csv.writer(file)
-                    if os.path.getsize(file_path) == 0:
-                        writer.writerow(["Account ID", "Secret Key"])
-                    writer.writerow([account_id, secret_key])
-                    QtWidgets.QMessageBox.information(self, "Saved", f"Account saved to {file_path}")
-            except Exception as e:
-                QtWidgets.QMessageBox.critical(self, "Error", f"Error saving account: {e}")
-            return  file_path
+                r = requests.get("https://horizon.stellar.org/assets", timeout=5)
+                return r.status_code == 200
+            except Exception:
+                return False
 
-    def toggle_password_visibility(self):
-        """Toggle the visibility of the Secret Key entry field."""
+        def _update_ui(success: bool):
+            if success:
+                self.network_status_label.setText("✅ Connected to Stellar Network")
+                self.network_status_label.setStyleSheet("color: green;")
+            else:
+                self.network_status_label.setText("❌ Network Unreachable")
+                self.network_status_label.setStyleSheet("color: red;")
+
+        QtCore.QThreadPool.globalInstance().start(QtRunnableTask(_run_check, _update_ui))
+
+    # ------------------------------------------------------------------
+    # Login Logic
+    # ------------------------------------------------------------------
+    def _login(self) -> None:
+        """Validate and log in the user."""
+        account_id = self.account_id_entry.text().strip()
+        secret_key = self.secret_key_entry.text().strip()
+
+        if not is_valid_stellar_secret(secret_key):
+            return self._update_info("Invalid Stellar Secret Key!", "red")
+        if not is_valid_stellar_account_id(account_id):
+            return self._update_info("Invalid Stellar Account ID!", "red")
+
+
+        self._update_info("Validating credentials...", "blue")
+
+        try:
+            self._save_user_settings()
+            self.controller.account_id = account_id
+            self.controller.secret_key = secret_key
+
+            self.bot = SmartBot(controller=self.controller)
+            self.controller.bot = self.bot
+
+
+            self._update_info("✅ Login successful!", "green")
+            QtCore.QTimer.singleShot(800, lambda: self.controller.show_frame("Home"))
+        except Exception as e:
+            self._update_info(f"❌ Login failed: {e}", "red")
+
+    # ------------------------------------------------------------------
+    # Account Creation
+    # ------------------------------------------------------------------
+    def _create_new_account(self) -> None:
+        """Generate a new Stellar account and display a dialog."""
+        kp = Keypair.random()
+        dialog = QDialog(self)
+        dialog.setWindowTitle("New Stellar Account")
+        layout = QVBoxLayout(dialog)
+        layout.addWidget(QLabel("🎉 New Stellar Account Created"))
+        layout.addWidget(QLabel(f"Account ID: {kp.public_key}"))
+        layout.addWidget(QLabel(f"Secret Key: {kp.secret}"))
+
+        save_btn = QPushButton("💾 Save to CSV")
+        save_btn.clicked.connect(lambda: self._save_account_to_csv(kp.public_key, kp.secret))
+        layout.addWidget(save_btn)
+
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(dialog.close)
+        layout.addWidget(close_btn)
+
+        dialog.setLayout(layout)
+        dialog.exec()
+
+    def _save_account_to_csv(self, account_id: str, secret_key: str) -> None:
+        """Save generated Stellar keys to a CSV file."""
+        file_path, _ = QFileDialog.getSaveFileName(self, "Save Account", "", "CSV Files (*.csv)")
+        if not file_path:
+            return
+
+        try:
+            is_new = not os.path.exists(file_path)
+            with open(file_path, "a", newline="") as f:
+                writer = csv.writer(f)
+                if is_new:
+                    writer.writerow(["Account ID", "Secret Key"])
+                writer.writerow([account_id, secret_key])
+            QMessageBox.information(self, "Saved", f"✅ Account saved to:\n{file_path}")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error saving file:\n{e}")
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+    def _save_user_settings(self) -> None:
+        """Persist settings if Remember Me is checked."""
+        remember = self.remember_me.isChecked()
+        data = {
+            "remember_me": remember,
+            "account_id": self.account_id_entry.text() if remember else "",
+            "secret_key": self.secret_key_entry.text() if remember else "",
+        }
+        SettingsManager.save_settings(data)
+
+    def _toggle_password_visibility(self) -> None:
+        """Show/Hide the secret key."""
         if self.secret_key_entry.echoMode() == QtWidgets.QLineEdit.Password:
             self.secret_key_entry.setEchoMode(QtWidgets.QLineEdit.Normal)
-            self.password_visibility_toggle.setText("Hide")
+            self.password_toggle_btn.setText("Hide")
         else:
             self.secret_key_entry.setEchoMode(QtWidgets.QLineEdit.Password)
-            self.password_visibility_toggle.setText("Show")
+            self.password_toggle_btn.setText("Show")
 
-    def update_info_label(self, message, color):
-        """Update the info label with a message and style."""
-        self.info_label.setText(message)
-        self.info_label.setStyleSheet(f"color: {color}; font-size: 14px; margin-top: 10px; margin-bottom: 10px;")
-
-    def save_assets_to_database(self):
-        """Fetch and save Stellar assets to the database."""
-        try:
-            # Initialize Stellar client
-
-            self.account_id = self.controller.bot.account_id
+    def _update_info(self, text: str, color: str = "black") -> None:
+        """Display status message."""
+        self.info_label.setText(text)
+        self.info_label.setStyleSheet(f"color: {color}; font-weight: bold; font-size: 13px;")
 
 
-        except Exception as e:
-            self.handle_error(f"An error occurred: {str(e)}")
+# ---------------------------------------------------------------------
+# Simple thread utility for non-blocking network checks
+# ---------------------------------------------------------------------
+class QtRunnableTask(QtCore.QRunnable):
+    """Run a background task and update UI callback."""
 
-    def handle_error(self, message):
-        """Handle and log errors."""
-        self.update_info_label(message, "red")
-        self.controller.logger.error(message)
+    def __init__(self, func, callback):
+        super().__init__()
+        self.func = func
+        self.callback = callback
 
-    def show_progress(self, message: str):
-        """Show the progress bar and set the initial message."""
-        self.progress_bar.setVisible(True)
-        self.progress_bar.setValue(0)
-        self.info_label.setText(message)
-
-    def update_progress(self, value: int, message: str = ""):
-        """Update the progress bar value and optional message."""
-        self.progress_bar.setValue(value)
-        if message:
-            self.info_label.setText(message)
-
-    def hide_progress(self):
-        """Hide the progress bar."""
-        self.progress_bar.setVisible(False)
+    def run(self):
+        result = self.func()
+        QtCore.QMetaObject.invokeMethod(
+            self.callback.__self__, self.callback.__name__,
+            QtCore.Qt.QueuedConnection, QtCore.Q_ARG(bool, result)
+        )

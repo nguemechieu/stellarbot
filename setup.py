@@ -34,7 +34,7 @@ setup(
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Libraries :: Python Modules'
     ],
-    python_requires='>=3.12',
+    python_requires='>=3.13',
     keywords='stellar network trading bot',
     url='https://github.com/nguemechieu/stellarbot',
     project_urls={

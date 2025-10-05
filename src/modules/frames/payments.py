@@ -1,99 +1,134 @@
-from PySide6 import QtWidgets
+from PySide6 import QtWidgets, QtCore
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QFrame
 
 
 class Payments(QFrame):
+    """Display and auto-refresh Stellar payment history in a table."""
+
     def __init__(self, parent=None, controller=None):
         super().__init__(parent)
         self.controller = controller
+        self.bot = getattr(controller, "bot", None)
         self.payments_table = None
 
-        # Set up frame appearance
+        # Frame appearance
         self.setGeometry(100, 50, 1530, 780)
-        self.setStyleSheet(
-            "font-size:24px;"
-            "border: 1px solid #ccc;"
-            "padding: 20px;"
-        )
+        self.setStyleSheet("""
+            font-size: 16px;
+            border: 1px solid #333;
+            color: #eee;
+            padding: 20px;
+            background-color: #121212;
+        """)
 
-        # Create widgets and populate table
+        # Build UI
         self.create_widgets()
+
+        # Initialize update timer
+        self.refresh_timer = QtCore.QTimer()
+        self.refresh_timer.timeout.connect(self.update_payments_data)
+        self.refresh_timer.start(60000)  # every 60 seconds
+
+        # Load first batch of data
         self.update_payments_data()
 
+    # ----------------------------------------------------------------------
+    # UI CREATION
+    # ----------------------------------------------------------------------
     def create_widgets(self):
-        """Set up the layout and payments table."""
         layout = QtWidgets.QVBoxLayout(self)
 
-        # Add a label
-        ledger_label = QtWidgets.QLabel("Payments")
-        layout.addWidget(ledger_label)
+        # Header label
+        header = QtWidgets.QLabel("💸 Recent Payments (Auto-refresh every 60s)")
+        header.setStyleSheet("font-size: 22px; font-weight: bold; color: #00ff99;")
+        layout.addWidget(header, alignment=QtCore.Qt.AlignCenter)
 
-        # Create the payments table
+        # Payments table
         self.payments_table = QtWidgets.QTableWidget()
         self.payments_table.setColumnCount(11)
         self.payments_table.setHorizontalHeaderLabels([
             "ID", "Account", "From", "To", "Amount", "Asset Type",
             "Asset Code", "Asset Issuer", "Created At", "Memo Type", "Memo"
-        ])
 
-        # Set column widths
-  
-        self.payments_table.setSortingEnabled(True)  # Enable sorting for all columns
-        self.payments_table.setColumnHidden(0, True)  # Hide the ID column
+
+        ])
+        self.payments_table.setSortingEnabled(True)
         self.payments_table.setAlternatingRowColors(True)
         self.payments_table.horizontalHeader().setStretchLastSection(True)
-
+        self.payments_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         layout.addWidget(self.payments_table)
 
-        # Assign layout to the frame
         self.setLayout(layout)
 
+    # ----------------------------------------------------------------------
+    # DATA FETCH + UPDATE
+    # ----------------------------------------------------------------------
     def update_payments_data(self):
-        """Fetch and update payment data in the table."""
+        """Fetch and populate the payments table."""
         try:
-            # Fetch payment data
-            payments_df = self.get_payments_data()
+            df = self.get_payments_data()
+            if df is None or df.empty:
+                self._show_no_data()
+                return
 
-            # Clear existing rows
-            self.payments_table.setRowCount(0)
+            # Limit to 200 latest rows for performance
+            df = df.head(200).copy()
 
-            # Populate the table with new data
-            for idx, row in payments_df.iterrows():
-                self.payments_table.insertRow(idx)
+            self.payments_table.setRowCount(len(df))
 
-                # Fill each column with data
-                self.payments_table.setItem(idx, 0, QtWidgets.QTableWidgetItem(str(row.get('id', 'N/A'))))
-                self.payments_table.setItem(idx, 1, QtWidgets.QTableWidgetItem(str(row.get('account', 'N/A'))))
-                self.payments_table.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(row.get('from', 'N/A'))))
-                self.payments_table.setItem(idx, 3, QtWidgets.QTableWidgetItem(str(row.get('to', 'N/A'))))
-                self.payments_table.setItem(idx, 4, QtWidgets.QTableWidgetItem(str(row.get('amount', 'N/A'))))
-                self.payments_table.setItem(idx, 5, QtWidgets.QTableWidgetItem(str(row.get('asset_type', 'N/A'))))
-                self.payments_table.setItem(idx, 6, QtWidgets.QTableWidgetItem(str(row.get('asset_code', 'N/A'))))
-                self.payments_table.setItem(idx, 7, QtWidgets.QTableWidgetItem(str(row.get('asset_issuer', 'N/A'))))
-                self.payments_table.setItem(idx, 8, QtWidgets.QTableWidgetItem(str(row.get('created_at', 'N/A'))))
-                self.payments_table.setItem(idx, 9, QtWidgets.QTableWidgetItem(str(row.get('memo_type', 'N/A'))))
-                self.payments_table.setItem(idx, 10, QtWidgets.QTableWidgetItem(str(row.get('memo', 'N/A'))))
-
-                # Optional: Add custom tooltips
-                tooltips = [
-                    "Payment ID", "Account ID", "From Account ID", "To Account ID",
-                    "Payment Amount", "Payment Asset Type", "Payment Asset Code",
-                    "Payment Asset Issuer", "Created At", "Memo Type", "Memo"
+            for row_idx, row in enumerate(df.itertuples()):
+                values = [
+                    getattr(row, "id", "N/A"),
+                    getattr(row, "account", "N/A"),
+                    getattr(row, "from_", getattr(row, "from", "N/A")),  # handle reserved word 'from'
+                    getattr(row, "to", "N/A"),
+                    getattr(row, "amount", "N/A"),
+                    getattr(row, "asset_type", "N/A"),
+                    getattr(row, "asset_code", "N/A"),
+                    getattr(row, "asset_issuer", "N/A"),
+                    getattr(row, "created_at", "N/A")[:19],
+                    getattr(row, "memo_type", "N/A"),
+                    getattr(row, "memo", "N/A"),
                 ]
-                for col in range(len(tooltips)):
-                    if self.payments_table.item(idx, col):
-                        self.payments_table.item(idx, col).setToolTip(tooltips[col])
 
-                # Optional: Add custom background colors
-                if row.get('asset_type') != 'native':
-                    self.payments_table.item(idx, 5).setBackground(QColor(240, 240, 240))  # Light gray background for non-native assets
+                for col, value in enumerate(values):
+                    item = QtWidgets.QTableWidgetItem(str(value))
+                    self.payments_table.setItem(row_idx, col, item)
 
-        except AttributeError as e:
-            print(f"Error fetching payments data: {e}")
+                # Highlight asset type
+                asset_type = getattr(row, "asset_type", "")
+                if asset_type != "native":
+                    self.payments_table.item(row_idx, 5).setBackground(QColor(40, 40, 60))
+
+                # Color “Amount” cell
+                try:
+                    amt = float(getattr(row, "amount", 0))
+                    color = QColor(0, 255, 100) if amt > 0 else QColor(255, 80, 80)
+                    self.payments_table.item(row_idx, 4).setForeground(color)
+                except ValueError:
+                    pass
+
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            print(f"[Payments] Error updating data: {e}")
 
     def get_payments_data(self):
-        """Retrieve payment data from the bot controller."""
-        return self.controller.bot.payments_df
+        """Return payment DataFrame from SmartBot if available."""
+        try:
+            if self.bot and hasattr(self.bot, "payments_df"):
+                return self.bot.payments_df
+        except Exception as e:
+            print(f"[Payments] Error fetching payments data: {e}")
+        return None
+
+    # ----------------------------------------------------------------------
+    # UTILITIES
+    # ----------------------------------------------------------------------
+    def _show_no_data(self):
+        """Display placeholder when no payment data available."""
+        self.payments_table.setRowCount(0)
+        self.payments_table.setRowCount(1)
+        item = QtWidgets.QTableWidgetItem("No payment records found.")
+        item.setForeground(QColor("#888"))
+        self.payments_table.setItem(0, 0, item)
+        self.payments_table.setSpan(0, 0, 1, self.payments_table.columnCount())

@@ -1,166 +1,212 @@
-import requests
+import threading
 from PySide6 import QtWidgets, QtCore
-from PySide6.QtWidgets import QPushButton, QLabel, QLineEdit, QVBoxLayout, QComboBox, QFrame
+from PySide6.QtWidgets import (
+    QPushButton, QLabel, QLineEdit, QVBoxLayout, QComboBox, QFrame, QMessageBox
+)
+from stellar_sdk import Asset, TransactionBuilder, Network, exceptions as stellar_exceptions
 
 
 class Transactions(QFrame):
+    """Handles sending, depositing, and viewing Stellar transactions."""
+
     def __init__(self, parent=None, controller=None):
         super().__init__(parent)
-        self.history_listbox = None
-        self.submit_button = QPushButton("Submit")
-        self.controller=controller  # Application controller to access bot and other relevant data
-        self.status_message = None
-        self.history_label = None
-        self.asset_choice = None
-        self.destination_entry = None
-        self.deposit_withdrawal_label = None
-        self.amount_entry = None
-        self.status_label = None
-        self.withdrawal_button = None
-        self.deposit_button = None
-        self.source_entry = None
-        self.title_label = None
-        self.source_label = None
-
-         # Stellar client to interact with the Stellar network
-
-
+        self.controller = controller
+        self.bot = controller.bot
+        self.server = self.bot.server
+        self.keypair = self.bot.keypair
 
         self.init_ui()
+        self.load_assets()
+        self.refresh_timer = QtCore.QTimer()
+        self.refresh_timer.timeout.connect(self.fetch_transaction_history)
+        self.refresh_timer.start(60000)  # auto-refresh every 60s
+        self.fetch_transaction_history()
 
+    # ------------------------------------------------------------------
+    # UI SETUP
+    # ------------------------------------------------------------------
     def init_ui(self):
         layout = QVBoxLayout()
 
-        # Title Label
-        self.title_label = QLabel("Transactions", self)
+        title = QLabel("💱 Stellar Transactions", self)
+        title.setStyleSheet("font-size: 18px; font-weight: bold; color: #00ff99;")
+        layout.addWidget(title, alignment=QtCore.Qt.AlignCenter)
 
-        layout.addWidget(self.title_label, alignment=QtCore.Qt.AlignCenter)
-
-        # Source Account
-        self.source_label = QLabel("Source Account:", self)
-        layout.addWidget(self.source_label)
-        self.source_entry = QLineEdit(self)
-        self.source_entry.setText(self.controller.account_id)
+        # Source account
+        layout.addWidget(QLabel("Source Account:"))
+        self.source_entry = QLineEdit(self.controller.account_id)
         self.source_entry.setReadOnly(True)
         layout.addWidget(self.source_entry)
 
-        # Destination Account
-        destination_label = QLabel("Destination Account:", self)
-        layout.addWidget(destination_label)
-        self.destination_entry = QLineEdit(self)
+        # Destination
+        layout.addWidget(QLabel("Destination Account:"))
+        self.destination_entry = QLineEdit()
+        self.destination_entry.setPlaceholderText("Enter recipient Stellar address (G...)")
         layout.addWidget(self.destination_entry)
 
-        # Asset Choice
-
+        # Asset
+        layout.addWidget(QLabel("Select Asset:"))
         self.asset_choice = QComboBox()
-        #self.asset_choice.addItems(self.controller. or [])
-        self.asset_choice.currentIndexChanged.connect(self.update_deposit_withdrawal_options)
         layout.addWidget(self.asset_choice)
 
-        # Amount to Send
-        amount_label = QLabel("Amount:", self)
-        layout.addWidget(amount_label)
+        # Amount
+        layout.addWidget(QLabel("Amount:"))
         self.amount_entry = QLineEdit()
+        self.amount_entry.setPlaceholderText("e.g. 50.25")
         layout.addWidget(self.amount_entry)
 
-        # Deposit and Withdrawal Section
-        self.deposit_withdrawal_label = QLabel("Deposit/Withdrawal")
-
-        layout.addWidget(self.deposit_withdrawal_label)
-
-        self.deposit_button = QPushButton("Deposit")
+        # Actions
+        self.deposit_button = QPushButton("Deposit (Simulated)")
         self.deposit_button.clicked.connect(self.deposit_asset)
+        self.withdraw_button = QPushButton("Withdraw (Simulated)")
+        self.withdraw_button.clicked.connect(self.withdraw_asset)
         layout.addWidget(self.deposit_button)
+        layout.addWidget(self.withdraw_button)
 
-        self.withdrawal_button = QPushButton("Withdraw")
-        self.withdrawal_button.clicked.connect(self.withdraw_asset)
-        layout.addWidget(self.withdrawal_button)
-
-        # Status Message
-        self.status_label = QLabel("Status:")
-        layout.addWidget(self.status_label)
-        self.status_message = QLabel()
-        layout.addWidget(self.status_message)
-
-        # Submit Transaction Button
         self.submit_button = QPushButton("Submit Transaction")
         self.submit_button.clicked.connect(self.submit_transaction)
         layout.addWidget(self.submit_button)
 
-        # Transaction History
-        self.history_label = QLabel("Transaction History")
+        # Status + history
+        self.status_label = QLabel("Status: Ready")
+        self.status_label.setStyleSheet("color: #cccccc;")
+        layout.addWidget(self.status_label)
 
-        layout.addWidget(self.history_label)
-
+        layout.addWidget(QLabel("Recent Transactions:"))
         self.history_listbox = QtWidgets.QListWidget()
         layout.addWidget(self.history_listbox)
 
         self.setLayout(layout)
 
-    def update_deposit_withdrawal_options(self):
-        selected_asset = self.asset_choice.currentText()
-        self.deposit_button.setEnabled(selected_asset == "XLM")
-        self.withdrawal_button.setEnabled(True)
+    # ------------------------------------------------------------------
+    # LOAD ASSETS
+    # ------------------------------------------------------------------
+    def load_assets(self):
+        """Load account assets into dropdown."""
+        try:
+            balances = self.bot._on_account_balances()
+            self.asset_choice.clear()
+            for _, row in balances.iterrows():
+                code = "XLM" if row["asset_type"] == "native" else row["asset_code"]
+                self.asset_choice.addItem(code)
+            self._show_success("Assets loaded successfully.")
+        except Exception as e:
+            self._show_error(f"Error loading assets: {e}")
 
+    # ------------------------------------------------------------------
+    # SIMULATED ACTIONS
+    # ------------------------------------------------------------------
     def deposit_asset(self):
-        selected_asset = self.asset_choice.currentText()
-        amount = self.amount_entry.text()
-
+        asset = self.asset_choice.currentText()
+        amount = self.amount_entry.text().strip()
         if not amount:
-            self.status_message.setText("Please enter an amount for deposit")
-            self.status_message.setStyleSheet("color: red;")
-            return
-
-        self.status_message.setText(f"Depositing {amount} {selected_asset}...")
-
-        # Implement actual deposit logic here
-        self.status_message.setText(f"{amount} {selected_asset} deposited successfully")
+            return self._show_error("Please enter an amount.")
+        self._show_info(f"💰 Depositing {amount} {asset} (simulation).")
 
     def withdraw_asset(self):
-        selected_asset = self.asset_choice.currentText()
-        amount = self.amount_entry.text()
-
+        asset = self.asset_choice.currentText()
+        amount = self.amount_entry.text().strip()
         if not amount:
-            self.status_message.setText("Please enter an amount for withdrawal")
-            self.status_message.setStyleSheet("color: red;")
-            return
+            return self._show_error("Please enter an amount.")
+        self._show_info(f"🏦 Withdrawing {amount} {asset} (simulation).")
 
-        self.status_message.setText(f"Withdrawing {amount} {selected_asset}...")
-        self.status_message.setStyleSheet("color: green;")
-        # Implement actual withdrawal logic here
-        self.status_message.setText(f"{amount} {selected_asset} withdrawn successfully")
-
+    # ------------------------------------------------------------------
+    # TRANSACTION EXECUTION
+    # ------------------------------------------------------------------
     def submit_transaction(self):
-        source_account = self.controller.account
-        destination_account = self.destination_entry.text()
+        """Start threaded payment submission."""
+        dest = self.destination_entry.text().strip()
+        amount = self.amount_entry.text().strip()
+        asset_code = self.asset_choice.currentText().strip()
 
-        if not destination_account:
-            self.status_message.setText("Please enter a destination account")
-            self.status_message.setStyleSheet("color: red;")
-            return
+        if not dest.startswith("G"):
+            return self._show_error("Invalid destination: must start with G...")
+        if not amount or float(amount) <= 0:
+            return self._show_error("Amount must be greater than zero.")
 
-        amount = self.amount_entry.text()
+        self._show_info(f"🚀 Sending {amount} {asset_code} to {dest}...")
+        threading.Thread(
+            target=self._send_payment_thread, args=(dest, amount, asset_code), daemon=True
+        ).start()
 
-        if not amount:
-            self.status_message.setText("Please enter an amount")
-            self.status_message.setStyleSheet("color: red;")
-            return
-
+    def _send_payment_thread(self, dest: str, amount: str, asset_code: str):
+        """Execute Stellar payment operation."""
         try:
-            self.controller.submit_transaction(source_account, destination_account, amount)
-            self.status_message.setText("Transaction submitted successfully!")
-            self.status_message.setStyleSheet("color: green;")
+            account = self.server.load_account(self.keypair.public_key)
+            asset = Asset.native() if asset_code == "XLM" else Asset(asset_code, self.controller.account_id)
+
+            tx = (
+                TransactionBuilder(
+                    source_account=account,
+                    network_passphrase=Network.PUBLIC_NETWORK_PASSPHRASE,
+                    base_fee=100
+                )
+                .append_payment_op(destination=dest, asset=asset, amount=str(amount))
+                .set_timeout(30)
+                .build()
+            )
+
+            tx.sign(self.keypair)
+            resp = self.server.submit_transaction(tx)
+            tx_hash = resp.get("hash", "unknown")
+
+            QtCore.QMetaObject.invokeMethod(
+                self, "_show_success",
+                QtCore.Qt.QueuedConnection,
+                QtCore.Q_ARG(str, f"✅ Transaction successful! Hash: {tx_hash}")
+            )
+
             self.fetch_transaction_history()
-        except Exception as e:
-            self.status_message.setText(f"Error: {str(e)}")
 
+        except stellar_exceptions.BaseHorizonError as e:
+            QtCore.QMetaObject.invokeMethod(
+                self, "_show_error",
+                QtCore.Qt.QueuedConnection,
+                QtCore.Q_ARG(str, f"❌ Horizon error: {e}")
+            )
+        except Exception as e:
+            QtCore.QMetaObject.invokeMethod(
+                self, "_show_error",
+                QtCore.Qt.QueuedConnection,
+                QtCore.Q_ARG(str, f"❌ Failed to send transaction: {e}")
+            )
+
+    # ------------------------------------------------------------------
+    # TRANSACTION HISTORY
+    # ------------------------------------------------------------------
     def fetch_transaction_history(self):
+        """Refresh the transaction history from SmartBot’s cache."""
         try:
-            response = self.controller.bot.transactions_df
-            history = response
+            df = self.bot.transaction_df
             self.history_listbox.clear()
-            for tx in history:
-                tx_details = f"Hash: {tx['hash']} | Date: {tx['created_at']} | Successful: {tx['successful']}"
-                self.history_listbox.addItem(tx_details)
-        except requests.exceptions.RequestException as e:
-            self.history_listbox.addItem(f"Error fetching history: {str(e)}")
+            if df.empty:
+                self.history_listbox.addItem("No recent transactions found.")
+                return
+
+            for _, tx in df.iterrows():
+                txt = f"{tx.get('created_at', '')[:19]} | {'SUCCESS' if tx.get('successful') else 'FAILED'} | Hash: {tx.get('hash', '')[:10]}..."
+                self.history_listbox.addItem(txt)
+
+            self._show_info("📜 Transaction history updated.")
+        except Exception as e:
+            self._show_error(f"Error loading history: {e}")
+
+    # ------------------------------------------------------------------
+    # STATUS UTILITIES
+    # ------------------------------------------------------------------
+    @QtCore.Slot(str)
+    def _show_info(self, text: str):
+        self.status_label.setText(text)
+        self.status_label.setStyleSheet("color: #00ccff;")
+
+    @QtCore.Slot(str)
+    def _show_success(self, text: str):
+        self.status_label.setText(text)
+        self.status_label.setStyleSheet("color: #00ff66;")
+
+    @QtCore.Slot(str)
+    def _show_error(self, text: str):
+        self.status_label.setText(text)
+        self.status_label.setStyleSheet("color: red;")
+        QtWidgets.QMessageBox.critical(self, "Error", text)

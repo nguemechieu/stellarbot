@@ -1,0 +1,11 @@
+strategies:
+  FOREX_NEWS:
+    overbought: 80
+    oversold: 20
+  RSI_MACD:
+    rsi_period: 14
+    macd_fast: 12
+    macd_slow: 26
+risk:
+  max_drawdown: 10
+  risk_per_trade: 1

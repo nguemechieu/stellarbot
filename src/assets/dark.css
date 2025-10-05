@@ -1,0 +1,114 @@
+/* 🌌 StellarBot Dark Theme */
+
+* {
+    font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #e0e0e0;
+    background-color: transparent;
+}
+
+QMainWindow, QDialog, QFrame, QWidget {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+QGroupBox {
+    border: 1px solid #2c2c2c;
+    border-radius: 6px;
+    margin-top: 10px;
+    background-color: #1a1a1a;
+    font-weight: bold;
+}
+
+QLabel {
+    color: #e0e0e0;
+    font-size: 13px;
+}
+
+QPushButton {
+    background-color: #1976d2;
+    color: #ffffff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-weight: bold;
+}
+QPushButton:hover {
+    background-color: #2196f3;
+}
+QPushButton:disabled {
+    background-color: #444444;
+    color: #888888;
+}
+
+QLineEdit, QTextEdit, QPlainTextEdit {
+    background-color: #1e1e1e;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    color: #ffffff;
+    selection-background-color: #2979ff;
+    selection-color: #ffffff;
+}
+
+QTableWidget {
+    gridline-color: #333333;
+    background-color: #181818;
+    alternate-background-color: #1e1e1e;
+    color: #e0e0e0;
+    selection-background-color: #1976d2;
+}
+QHeaderView::section {
+    background-color: #212121;
+    color: #b0bec5;
+    padding: 6px;
+    border: 1px solid #2b2b2b;
+}
+
+QScrollBar:vertical {
+    background: #1a1a1a;
+    width: 10px;
+    margin: 0px;
+}
+QScrollBar::handle:vertical {
+    background: #333333;
+    min-height: 20px;
+    border-radius: 4px;
+}
+QScrollBar::handle:vertical:hover {
+    background: #555555;
+}
+
+QTabBar::tab {
+    background: #1e1e1e;
+    color: #b0bec5;
+    padding: 6px 12px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+}
+QTabBar::tab:selected {
+    background: #1976d2;
+    color: #ffffff;
+}
+
+QStatusBar {
+    background-color: #0d47a1;
+    color: #ffffff;
+    padding: 3px 8px;
+    border-top: 1px solid #333333;
+}
+
+QMenuBar {
+    background-color: #1c1c1c;
+    color: #e0e0e0;
+}
+QMenuBar::item:selected {
+    background-color: #1976d2;
+    color: white;
+}
+QMenu {
+    background-color: #1c1c1c;
+    color: #e0e0e0;
+}
+QMenu::item:selected {
+    background-color: #1976d2;
+    color: #ffffff;
+}
