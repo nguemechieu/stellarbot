@@ -3,6 +3,15 @@ from PySide6.QtGui import QFont
 from PySide6.QtCore import Qt
 
 
+def _create_title_label(text):
+    """Helper function to create a title label."""
+    label = QLabel(text)
+    label.setFont(QFont("Arial", 16, QFont.Bold))
+    label.setAlignment(Qt.AlignLeft)
+    label.setStyleSheet("color: #2874A6; font-weight: bold;")  # QSS for title styling
+    return label
+
+
 class FeesAnalysis(QFrame):
     def __init__(self, parent=None, controller=None):
         """Initialize the Fee Analysis widget."""
@@ -21,7 +30,7 @@ class FeesAnalysis(QFrame):
         main_layout = QVBoxLayout()
 
         # Add title
-        title_label = self._create_title_label("Fee Analysis")
+        title_label = _create_title_label("Fee Analysis")
         main_layout.addWidget(title_label)
 
         # Add a fee details form
@@ -30,14 +39,6 @@ class FeesAnalysis(QFrame):
 
         # Set the layout for the widget
         self.setLayout(main_layout)
-
-    def _create_title_label(self, text):
-        """Helper function to create a title label."""
-        label = QLabel(text)
-        label.setFont(QFont("Arial", 16, QFont.Bold))
-        label.setAlignment(Qt.AlignLeft)
-        label.setStyleSheet("color: #2874A6; font-weight: bold;")  # QSS for title styling
-        return label
 
     def _create_fee_details_form(self):
         """Helper function to create a form layout with fee details."""

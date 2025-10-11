@@ -12,13 +12,9 @@ class SendMoney(QFrame):
 
         self.recipient_input = None
         self.amount_input = None
-
         self.setGeometry(10, 10, 1530, 780)
-
         # Main layout for the widget
         self.layout = QVBoxLayout()
-
-
         # Create the send money section
         self.create_send_money_section()
 
@@ -66,7 +62,6 @@ class SendMoney(QFrame):
         user_id_label = QLabel("Your User ID:")
         user_id_label.setStyleSheet("font-size: 14px;")
         self.layout.addWidget(user_id_label)
-
         self.user_id_display = QLabel(self.controller.account_id if self.controller else "Unknown")
         self.user_id_display.setStyleSheet("font-size: 14px; color: #333; padding: 5px; border: 1px solid #CCC; background-color: #FFF;")
         self.layout.addWidget(self.user_id_display)

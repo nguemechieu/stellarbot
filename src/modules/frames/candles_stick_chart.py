@@ -1,99 +1,241 @@
-import numpy as np
+import mplfinance as mpf
 import pandas as pd
-from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QFrame, QPushButton
-from matplotlib import pyplot as plt
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import (
+    QVBoxLayout, QHBoxLayout, QFrame, QPushButton, QLabel, QLineEdit, QMessageBox
+)
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+from stellar_sdk import Server, Asset, TransactionBuilder, Network
 
 
-def generate_random_xlm_data(start_date, num_days=100):
- date_range = pd.date_range(start=start_date, periods=num_days, freq='D')
- open_price = 0.2
+class DexTradingChart(QFrame):
+    """📈 Stellar DEX chart with EMA/SMA, order-book heatmap & Buy/Sell buttons."""
 
- data=pd.DataFrame(columns=[ 'Open', 'High', 'Low', 'Close', 'Volume'])
-
- for date in date_range:
-    price_change = np.random.normal(loc=0, scale=0.01)
-    open_price = open_price + price_change
-    open_price = max(open_price, 0.05)
-    high_price = open_price + np.random.uniform(0.01, 0.03)
-    low_price = open_price - np.random.uniform(0.01, 0.03)
-    close_price = open_price + np.random.normal(loc=0, scale=0.005)
-    volume = np.random.randint(100000, 500000)
-    data['TimeStamp'] = date
-    data['Open'] = open_price
-    data['High'] = high_price
-    data['Low'] = low_price
-    data['Close'] = close_price
-    data['Volume'] = volume
-
- return data
-
-
-class CandlestickChart(QFrame):
-    def __init__(self, parent=None, controller=None, df=None):
+    def __init__(self, parent=None, controller=None):
         super().__init__(parent)
-        self.visible_data = generate_random_xlm_data(start_date="2022-01-01")
-        self.size_entry = 6
         self.controller = controller
+        self.bot = getattr(controller, "bot", None)
+        self.server = getattr(self.bot, "server", Server("https://horizon.stellar.org"))
 
-        if df is None:
-            print("No data provided. Generating random XLM/USDT data...")
-            df = self.visible_data
-            self.df = df
-        self.fig = plt.figure(figsize=(5, 3))
-        self.df["Date"] = pd.to_datetime(self.df.index)
-        self.df.dropna(inplace=True)
-        self.df.fillna(method='ffill', inplace=True)
+        # Assets
+        self.base_asset = Asset.native()  # XLM
+        self.counter_asset = Asset("USDC", "GDMTVHLWJTHSUDMZVVMXXH6VJHA2ZV3HNG5LYNAZ6RTWB7GISM6PGTUV")
+
+
+        # Chart setup
+        self.df = pd.DataFrame()
+        self.fig = Figure(figsize=(12, 8))
+        self.canvas = FigureCanvas(self.fig)
         self.ax = self.fig.add_subplot(1, 1, 1)
-        self.fig = plt.figure(figsize=(5, 3))
-        self.setup_chart()
-        self.zoom_level = 50
-        self.current_index = 0
+        self.fig.subplots_adjust(bottom=0.2)
 
-        self.setup_ui()
+        # UI
+        self._init_ui()
+        self._refresh_data()
+        self._setup_timer()
 
-    def setup_ui(self):
+        # Interactivity
+        self.canvas.mpl_connect("scroll_event", self._on_scroll)
+
+    # ------------------------------------------------------------------
+    # 🧱 UI SETUP
+    # ------------------------------------------------------------------
+    def _init_ui(self):
         layout = QVBoxLayout(self)
         toolbar = QHBoxLayout()
+
+        self._add_button(toolbar, "🔄 Refresh", self._refresh_data)
+        self._add_button(toolbar, "➕ Zoom In", lambda: self._zoom_chart(0.8))
+        self._add_button(toolbar, "➖ Zoom Out", lambda: self._zoom_chart(1.2))
+        self._add_button(toolbar, "💾 Save", self._save_chart)
+
+        # --- Trade Controls ---
+        self.amount_entry = QLineEdit()
+        self.amount_entry.setPlaceholderText("Amount (XLM)")
+        self.price_entry = QLineEdit()
+        self.price_entry.setPlaceholderText("Price (USDC)")
+
+        self.buy_btn = QPushButton("🟢 Buy")
+        self.sell_btn = QPushButton("🔴 Sell")
+        self.buy_btn.clicked.connect(lambda: self._execute_trade("buy"))
+        self.sell_btn.clicked.connect(lambda: self._execute_trade("sell"))
+
+        toolbar.addWidget(self.amount_entry)
+        toolbar.addWidget(self.price_entry)
+        toolbar.addWidget(self.buy_btn)
+        toolbar.addWidget(self.sell_btn)
+
+        self.status_label = QLabel("Status: Ready")
+        toolbar.addWidget(self.status_label)
+
         layout.addLayout(toolbar)
+        layout.addWidget(self.canvas)
+        self.setLayout(layout)
 
-        self.add_button(toolbar, "Save Chart", self.save_chart())
-        # self.add_button(toolbar, "Buy", self.buy)
-        # self.add_button(toolbar, "Sell", self.sell)
-        # self.add_label_input(toolbar, "Size:", self.size_entry)
-        # self.add_button(toolbar, "Zoom In", self.zoom_in)
-        # self.add_button(toolbar, "Zoom Out", self.zoom_out)
-        # self.add_button(toolbar, "Previous", self.prev_data)
-        # self.add_button(toolbar, "Next", self.next_data)
+    def _add_button(self, layout, text, callback):
+        btn = QPushButton(text)
+        btn.clicked.connect(callback)
+        layout.addWidget(btn)
 
-        self.create_candlestick_chart()
+    # ------------------------------------------------------------------
+    # ⏱ Auto Refresh
+    # ------------------------------------------------------------------
+    def _setup_timer(self):
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self._refresh_data)
+        self.timer.start(30000)  # 30s
 
-    def create_candlestick_chart(self):
-        self.fig, self.ax = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
-        self.ax_candle = self.ax[0]
-        self.ax_vol = self.ax[1]
-        self.fig.patch.set_facecolor('white')
+    # ------------------------------------------------------------------
+    # 📊 Fetch Trades + Orderbook
+    # ------------------------------------------------------------------
+    def _refresh_data(self):
+        try:
+            self.status_label.setText("Fetching market data...")
+            trades_call = (
+                self.server.trades()
+                .for_asset_pair(self.base_asset, self.counter_asset)
+                .order(desc=True)
+                .limit(200)
+                .call()
+            )
+            records = trades_call.get("_embedded", {}).get("records", [])
+            if not records:
+                self.status_label.setText("⚠️ No trades available.")
+                return
+            data = []
+            for r in records:
+                ts = pd.to_datetime(r["ledger_close_time"])
+                price = float(r["price"]["n"]) / float(r["price"]["d"])
+                amount = float(r["base_amount"])
+                data.append([ts, price, amount])
 
+            df = pd.DataFrame(data, columns=["Date", "Price", "Volume"])
+            df = df.set_index("Date").sort_index()
+            ohlc = df["Price"].resample("5T").ohlc()
+            ohlc["Volume"] = df["Volume"].resample("5T").sum()
+            ohlc.dropna(inplace=True)
 
+            # Indicators
+            ohlc["EMA20"] = ohlc["close"].ewm(span=20).mean()
+            ohlc["SMA50"] = ohlc["close"].rolling(window=50).mean()
 
-    def add_button(self, toolbar, param, sell):
-        button = QPushButton(param)
-        button.clicked.connect(sell)
-        toolbar.addWidget(button)
-        pass
+            self.df = ohlc
+            self._plot_chart()
+            self.status_label.setText("✅ Market updated.")
+        except Exception as e:
+            self.status_label.setText(f"❌ Fetch error: {e}")
+            self.status_label.setStyleSheet("background-color: red")
+            print(e)
 
-    def setup_chart(self):
+    # ------------------------------------------------------------------
+    # 🧮 Plot Chart + Heatmap
+    # ------------------------------------------------------------------
+    def _plot_chart(self):
+        self.ax.clear()
+
+        mpf.plot(
+            self.df,
+            type="candle",
+            ax=self.ax,
+            style="yahoo",
+            show_nontrading=False,
+        )
+
+        # EMA/SMA overlays
+        self.ax.plot(self.df.index, self.df["EMA20"], color="orange", label="EMA 20")
+        self.ax.plot(self.df.index, self.df["SMA50"], color="cyan", label="SMA 50")
+
+        # Add order-book heatmap
+        try:
+            book = self.server.orderbook(self.base_asset, self.counter_asset).call()
+            bids = pd.DataFrame(book.get("bids", []))
+            asks = pd.DataFrame(book.get("asks", []))
+            if not bids.empty:
+                bids["price"] = bids["price"].astype(float)
+                bids["amount"] = bids["amount"].astype(float)
+                self.ax.fill_between(
+                    bids["price"], 0, bids["amount"], color="green", alpha=0.15, label="Bids"
+                )
+            if not asks.empty:
+                asks["price"] = asks["price"].astype(float)
+                asks["amount"] = asks["amount"].astype(float)
+                self.ax.fill_between(
+                    asks["price"], 0, asks["amount"], color="red", alpha=0.15, label="Asks"
+                )
+        except Exception as e:
+            print(f"[OrderBook] Error: {e}")
+
+        self.ax.legend(loc="upper left")
+        self.ax.set_title("Stellar DEX: XLM/USDC with Orderbook Heatmap")
+        self.ax.set_ylabel("Price (USD)")
+        self.ax.grid(True, alpha=0.3)
         self.fig.autofmt_xdate()
-        self.ax.grid(True, color="lightgray", alpha=0.5)
-        self.ax_vol.grid(True, color="lightgray", alpha=0.5)
-        self.ax.set_ylabel("Price")
-        self.ax_vol.set_ylabel("Volume")
-        self.ax.set_title("Candlestick Chart")
-        self.ax_vol.set_ylabel("Volume")
-        self.ax_vol.set_xlabel("Date")
+        self.canvas.draw_idle()
 
-    def save_chart(self):
+    # ------------------------------------------------------------------
+    # 🛒 Execute Buy/Sell
+    # ------------------------------------------------------------------
+    def _execute_trade(self, side):
+        try:
+            amount = self.amount_entry.text().strip()
+            price = self.price_entry.text().strip()
+            if not amount or not price:
+                QMessageBox.warning(self, "Input Error", "Enter amount and price.")
+                return
 
-            self.fig.savefig("chart.png", dpi=300)
-            print("Chart saved as chart.png")
+            amount = str(amount)
+            price = str(price)
 
-            return
+            account = self.server.load_account(self.bot.keypair.public_key)
+            tx_builder = (
+                TransactionBuilder(
+                    source_account=account,
+                    network_passphrase=Network.PUBLIC_NETWORK_PASSPHRASE,
+                    base_fee=100
+                )
+            )
+
+            if side == "buy":
+                tx_builder.append_manage_buy_offer_op(
+                    selling=self.counter_asset,  # buy XLM using USDC
+                    buying=self.base_asset,
+                    amount=amount,
+                    price=price,
+                )
+            else:
+                tx_builder.append_manage_sell_offer_op(
+                    selling=self.base_asset,  # sell XLM for USDC
+                    buying=self.counter_asset,
+                    amount=amount,
+                    price=price,
+                )
+
+            tx = tx_builder.set_timeout(30).build()
+            tx.sign(self.bot.keypair)
+            resp = self.server.submit_transaction(tx)
+
+            QMessageBox.information(self, "Success", f"✅ Trade submitted.\nHash: {resp.get('hash')}")
+            self._refresh_data()
+        except Exception as e:
+            QMessageBox.critical(self, "Trade Error", str(e))
+
+    # ------------------------------------------------------------------
+    # 🔍 Zoom + Save
+    # ------------------------------------------------------------------
+    def _zoom_chart(self, factor):
+        n = int(len(self.df) * factor)
+        n = max(20, min(len(self.df), n))
+        self.df = self.df.tail(n)
+        self._plot_chart()
+
+    def _save_chart(self):
+        self.fig.savefig("stellar_dex_trading_chart.png", dpi=300)
+        self.status_label.setText("💾 Chart saved.")
+
+# ------------------------------------------------------------------
+# 🖱 Scroll Zoom
+# ------------------------------------------------------------------
+    def _on_scroll(self, event):
+     factor = 0.8 if event.button == "up" else 1.25
+     self._zoom_chart(factor)

@@ -4,12 +4,25 @@ import pandas as pd
 import mplfinance as mpf
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
+
+def add_chart():
+    """Simulate adding a new chart (placeholder functionality)."""
+    print("Add Chart button clicked")
+
+
+def remove_chart():
+    """Simulate removing a chart (placeholder functionality)."""
+    print("Remove Chart button clicked")
+
+
 class Renko(QtWidgets.QWidget):
     """A PyQt5 widget for displaying a Renko chart using mplfinance."""
 
     def __init__(self, parent=None, controller=None, df=None):
         """Initialize the Renko chart widget."""
         super().__init__(parent)
+        self.canvas = None
+        self.fig = None
         self.controller = controller
         self.setGeometry(
             0, 0,1530,780
@@ -23,7 +36,7 @@ class Renko(QtWidgets.QWidget):
         self.setup_ui()
 
     def setup_ui(self):
-        """Setup the UI with buttons and chart."""
+        """Set up the UI with buttons and chart."""
         layout = QVBoxLayout(self)
 
         # Toolbar layout for buttons
@@ -32,12 +45,12 @@ class Renko(QtWidgets.QWidget):
 
         # Add Chart Button
         add_chart_button: QPushButton | QPushButton = QPushButton("Add Chart", self)
-        add_chart_button.clicked.connect(self.add_chart)
+        add_chart_button.clicked.connect(add_chart)
         toolbar.addWidget(add_chart_button)
 
         # Remove Chart Button
         remove_chart_button = QPushButton("Remove Chart", self)
-        remove_chart_button.clicked.connect(self.remove_chart)
+        remove_chart_button.clicked.connect(remove_chart)
         toolbar.addWidget(remove_chart_button)
 
         # Refresh Button
@@ -67,14 +80,6 @@ class Renko(QtWidgets.QWidget):
         except ValueError as e:
             print(f"Error generating chart: {e}")
             QMessageBox.critical(self, "Error", f"Error generating chart: {e}")
-
-    def add_chart(self):
-        """Simulate adding a new chart (placeholder functionality)."""
-        print("Add Chart button clicked")
-
-    def remove_chart(self):
-        """Simulate removing a chart (placeholder functionality)."""
-        print("Remove Chart button clicked")
 
     def refresh_chart(self):
         """Refresh the chart with updated data."""

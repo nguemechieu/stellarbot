@@ -6,10 +6,9 @@ class RiskManagement(QFrame):
     def __init__(self, parent=None, controller=None):
         """Initialize the Risk Management widget."""
         super().__init__(parent)
-        self.controller = controller
+
         self.setGeometry(0, 0, 1530, 780)
-
-
+        self.controller = controller
         # Main layout for the widget
         layout = QtWidgets.QVBoxLayout(self)
 
@@ -22,7 +21,6 @@ class RiskManagement(QFrame):
         risk_management_frame = QtWidgets.QFrame(self)
         risk_management_frame.setFixedHeight(200)
         layout.addWidget(risk_management_frame)
-
         risk_management_layout = QtWidgets.QVBoxLayout(risk_management_frame)
         risk_management_label = QtWidgets.QLabel("Risk Management", self)
         risk_management_label.setStyleSheet("font-size: 16pt; font-weight: bold; color: #003366;")
@@ -44,7 +42,6 @@ class RiskManagement(QFrame):
             entry.setText(data)
             entry.setReadOnly(True)
             risk_row_layout.addWidget(entry)
-
             risk_management_layout.addLayout(risk_row_layout)
 
         # Risk Metrics Section
@@ -68,11 +65,9 @@ class RiskManagement(QFrame):
             label = QtWidgets.QLabel(header, self)
             label.setStyleSheet("font-size: 12pt; font-weight: bold; color: #003366;")
             metrics_row_layout.addWidget(label)
-
             entry = QtWidgets.QLineEdit(self)
             entry.setFixedWidth(100)
             entry.setText(data)
             entry.setReadOnly(True)
             metrics_row_layout.addWidget(entry)
-
             risk_metrics_layout.addLayout(metrics_row_layout)

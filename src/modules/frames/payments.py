@@ -1,10 +1,11 @@
-from PySide6 import QtWidgets, QtCore
+import pandas as pd
+from PySide6 import QtCore, QtWidgets
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QFrame
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QSizePolicy
 
 
 class Payments(QFrame):
-    """Display and auto-refresh Stellar payment history in a table."""
+    """💸 Display and refresh recent Stellar payments from SmartBot cache."""
 
     def __init__(self, parent=None, controller=None):
         super().__init__(parent)
@@ -12,123 +13,121 @@ class Payments(QFrame):
         self.bot = getattr(controller, "bot", None)
         self.payments_table = None
 
-        # Frame appearance
+        # --- Frame setup ---
         self.setGeometry(100, 50, 1530, 780)
         self.setStyleSheet("""
-            font-size: 16px;
-            border: 1px solid #333;
-            color: #eee;
-            padding: 20px;
-            background-color: #121212;
+            QFrame { background-color: #0D1117; color: #E0E0E0; }
+            QLabel { font-size: 18px; font-weight: bold; color: #00E676; margin: 10px; }
+            QHeaderView::section { background-color: #263238; color: white; font-weight: bold; }
+            QTableWidget { gridline-color: #333; selection-background-color: #1976D2; font-size: 13px; }
         """)
 
-        # Build UI
-        self.create_widgets()
+        self._init_ui()
+        self._start_auto_refresh()
 
-        # Initialize update timer
-        self.refresh_timer = QtCore.QTimer()
-        self.refresh_timer.timeout.connect(self.update_payments_data)
-        self.refresh_timer.start(60000)  # every 60 seconds
+    # ------------------------------------------------------------------
+    # 🧱 UI SETUP
+    # ------------------------------------------------------------------
+    def _init_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(10)
 
-        # Load first batch of data
-        self.update_payments_data()
+        title = QLabel("💸 Recent Payments")
+        layout.addWidget(title)
 
-    # ----------------------------------------------------------------------
-    # UI CREATION
-    # ----------------------------------------------------------------------
-    def create_widgets(self):
-        layout = QtWidgets.QVBoxLayout(self)
-
-        # Header label
-        header = QtWidgets.QLabel("💸 Recent Payments (Auto-refresh every 60s)")
-        header.setStyleSheet("font-size: 22px; font-weight: bold; color: #00ff99;")
-        layout.addWidget(header, alignment=QtCore.Qt.AlignCenter)
-
-        # Payments table
-        self.payments_table = QtWidgets.QTableWidget()
+        self.payments_table = QTableWidget(self)
         self.payments_table.setColumnCount(11)
         self.payments_table.setHorizontalHeaderLabels([
             "ID", "Account", "From", "To", "Amount", "Asset Type",
             "Asset Code", "Asset Issuer", "Created At", "Memo Type", "Memo"
-
-
         ])
+        self.payments_table.horizontalHeader().setStretchLastSection(True)
         self.payments_table.setSortingEnabled(True)
         self.payments_table.setAlternatingRowColors(True)
-        self.payments_table.horizontalHeader().setStretchLastSection(True)
-        self.payments_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.payments_table.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.payments_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout.addWidget(self.payments_table)
 
-        self.setLayout(layout)
+        self.placeholder = QLabel("⏳ Loading payment data...")
+        self.placeholder.setAlignment(QtCore.Qt.AlignCenter)
+        layout.addWidget(self.placeholder)
 
-    # ----------------------------------------------------------------------
-    # DATA FETCH + UPDATE
-    # ----------------------------------------------------------------------
-    def update_payments_data(self):
-        """Fetch and populate the payments table."""
+        self.setLayout(layout)
+        self.populate_table()
+
+    # ------------------------------------------------------------------
+    # 🔁 Auto-refresh system
+    # ------------------------------------------------------------------
+    def _start_auto_refresh(self):
+        """Auto-refresh payments table every 30 seconds."""
+        self.refresh_timer = QtCore.QTimer(self)
+        self.refresh_timer.timeout.connect(self.populate_table)
+        self.refresh_timer.start(30000)  # 30s interval
+
+    # ------------------------------------------------------------------
+    # 📊 Populate payments table
+    # ------------------------------------------------------------------
+    def populate_table(self):
+        """Refresh table from cached bot.payments_df."""
         try:
-            df = self.get_payments_data()
-            if df is None or df.empty:
-                self._show_no_data()
+            if not self.bot:
+                self.placeholder.setText("❌ Bot not initialized.")
                 return
 
-            # Limit to 200 latest rows for performance
-            df = df.head(200).copy()
+            df = getattr(self.bot, "payments_df", pd.DataFrame())
+            if df is None or df.empty:
+                self.placeholder.setText("No payments available.")
+                self.payments_table.setRowCount(0)
+                return
 
-            self.payments_table.setRowCount(len(df))
+            self.placeholder.hide()
+            records = df.iloc[0].get("_embedded", {}).get("records", []) if "_embedded" in df.columns else []
+            payments_df = pd.DataFrame(records)
+            if payments_df.empty:
+                self.placeholder.setText("No payments found in network.")
+                return
 
-            for row_idx, row in enumerate(df.itertuples()):
-                values = [
-                    getattr(row, "id", "N/A"),
-                    getattr(row, "account", "N/A"),
-                    getattr(row, "from_", getattr(row, "from", "N/A")),  # handle reserved word 'from'
-                    getattr(row, "to", "N/A"),
-                    getattr(row, "amount", "N/A"),
-                    getattr(row, "asset_type", "N/A"),
-                    getattr(row, "asset_code", "N/A"),
-                    getattr(row, "asset_issuer", "N/A"),
-                    getattr(row, "created_at", "N/A")[:19],
-                    getattr(row, "memo_type", "N/A"),
-                    getattr(row, "memo", "N/A"),
-                ]
+            self.payments_table.setRowCount(len(payments_df))
 
-                for col, value in enumerate(values):
-                    item = QtWidgets.QTableWidgetItem(str(value))
-                    self.payments_table.setItem(row_idx, col, item)
+            for i, row in payments_df.iterrows():
+                # Extract fields with safe fallbacks
+                data = {
+                    "id": row.get("id", "N/A"),
+                    "account": row.get("account", "N/A"),
+                    "from": row.get("from", "N/A"),
+                    "to": row.get("to", "N/A"),
+                    "amount": row.get("amount", "N/A"),
+                    "asset_type": row.get("asset_type", "native"),
+                    "asset_code": row.get("asset_code", "XLM" if row.get("asset_type") == "native" else row.get("asset_code")),
+                    "asset_issuer": row.get("asset_issuer", "Native"),
+                    "created_at": row.get("created_at", "N/A"),
+                    "memo_type": row.get("memo_type", "N/A"),
+                    "memo": row.get("memo", "—"),
+                }
 
-                # Highlight asset type
-                asset_type = getattr(row, "asset_type", "")
-                if asset_type != "native":
-                    self.payments_table.item(row_idx, 5).setBackground(QColor(40, 40, 60))
+                for col, key in enumerate(data.keys()):
+                    item = QTableWidgetItem(str(data[key]))
+                    self.payments_table.setItem(i, col, item)
 
-                # Color “Amount” cell
+                # 💰 Highlight non-native assets
+                if data["asset_type"] != "native":
+                    self.payments_table.item(i, 5).setBackground(QColor("#1A237E"))
+
+                # 💲 Amount color logic
                 try:
-                    amt = float(getattr(row, "amount", 0))
-                    color = QColor(0, 255, 100) if amt > 0 else QColor(255, 80, 80)
-                    self.payments_table.item(row_idx, 4).setForeground(color)
+                    amt = float(data["amount"])
+                    color = QColor("#4CAF50") if amt > 0 else QColor("#F44336")
+                    self.payments_table.item(i, 4).setForeground(color)
                 except ValueError:
                     pass
 
         except Exception as e:
-            print(f"[Payments] Error updating data: {e}")
+            print(f"[Payments] Error populating table: {e}")
 
-    def get_payments_data(self):
-        """Return payment DataFrame from SmartBot if available."""
-        try:
-            if self.bot and hasattr(self.bot, "payments_df"):
-                return self.bot.payments_df
-        except Exception as e:
-            print(f"[Payments] Error fetching payments data: {e}")
-        return None
-
-    # ----------------------------------------------------------------------
-    # UTILITIES
-    # ----------------------------------------------------------------------
-    def _show_no_data(self):
-        """Display placeholder when no payment data available."""
-        self.payments_table.setRowCount(0)
-        self.payments_table.setRowCount(1)
-        item = QtWidgets.QTableWidgetItem("No payment records found.")
-        item.setForeground(QColor("#888"))
-        self.payments_table.setItem(0, 0, item)
-        self.payments_table.setSpan(0, 0, 1, self.payments_table.columnCount())
+    # ------------------------------------------------------------------
+    # 🧾 Manual refresh
+    # ------------------------------------------------------------------
+    def update_payments_data(self):
+        """Force refresh from SmartBot cache (no API calls)."""
+        self.populate_table()

@@ -98,7 +98,7 @@ class Preferences(QtWidgets.QWidget):
         self.algo_stats_button.clicked.connect(self.show_algo_stats)
         settings_layout.addWidget(self.algo_stats_button)
 
-    # TODO Rename this here and in `create_widgets`
+
     def _extracted_from_create_widgets_12(self, arg0, arg1, settings_layout):
         # Section Title
         settings_label = QtWidgets.QLabel(arg0, self)

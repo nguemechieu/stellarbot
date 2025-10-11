@@ -1,118 +1,145 @@
 import mplfinance as mpf
 import pandas as pd
-from PySide6.QtWidgets import (QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog, QMessageBox, QFrame)
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from pandas import DataFrame
+from PySide6.QtWidgets import (
+    QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog,
+    QMessageBox, QFrame
+)
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 
 class BarChart(QFrame):
-    """A PyQt5 widget for displaying a bar chart using mplfinance."""
+    """
+    📊 BarChart: OHLC bar chart widget with mplfinance for PySide6.
+    Integrates seamlessly into your Charts dashboard and SmartBot data flow.
+    """
 
     def __init__(self, parent=None, controller=None, df=None):
-        """Initialize the Bar chart widget."""
         super().__init__(parent)
         self.controller = controller
-        self.setGeometry(
-            0, 0,1530,780
-        )
-
-        # Ensure the 'Date' column is in datetime format before setting it as the index
-        self.df = DataFrame(df)
-        self.df['Date'] = pd.to_datetime(self.df['Date'], errors='coerce')  # Convert 'Date' column to datetime
-        self.df.dropna(subset=['Date'], inplace=True)
-        self.df.set_index('Date', inplace=True)
-
-        # Setup the UI components
-        self.setup_ui()
-
-    def setup_ui(self):
-        """Setup the UI with buttons and chart."""
-        layout = QVBoxLayout(self)
-
-        # Toolbar for buttons
-        toolbar_layout = QHBoxLayout()
-        
-        # Add chart button
-        add_chart_button = QPushButton("Add Chart")
-        add_chart_button.clicked.connect(self.add_chart)
-        toolbar_layout.addWidget(add_chart_button)
-
-        # Remove chart button
-        remove_chart_button = QPushButton("Remove Chart")
-        remove_chart_button.clicked.connect(self.remove_chart)
-        toolbar_layout.addWidget(remove_chart_button)
-
-        # Refresh button
-        refresh_button = QPushButton("Refresh Data")
-        refresh_button.clicked.connect(self.refresh_chart)
-        toolbar_layout.addWidget(refresh_button)
-
-        # Save chart button
-        save_button = QPushButton("Save Chart")
-        save_button.clicked.connect(self.save_chart)
-        toolbar_layout.addWidget(save_button)
-
-        # Add the toolbar layout to the main layout
-        layout.addLayout(toolbar_layout)
-
-        # Create the bar chart
+        self.bot = getattr(controller, "bot", None)
         self.canvas = None
+
+        # Initialize and validate data
+        self.df = DataFrame(df) if df is not None else pd.DataFrame()
+        self._prepare_dataframe()
+
+        # Build UI
+        self._init_ui()
+
+    # ------------------------------------------------------------------
+    def _prepare_dataframe(self):
+        """Ensure DataFrame is in valid OHLCV format."""
+        try:
+            if "Date" not in self.df.columns:
+                raise ValueError("DataFrame missing 'Date' column")
+
+            self.df["Date"] = pd.to_datetime(self.df["Date"], errors="coerce")
+            self.df.dropna(subset=["Date"], inplace=True)
+            self.df.set_index("Date", inplace=True)
+            self.df.sort_index(inplace=True)
+        except Exception as e:
+            print(f"[BarChart] Data preparation error: {e}")
+            self.df = pd.DataFrame(columns=["Open", "High", "Low", "Close", "Volume"])
+
+    # ------------------------------------------------------------------
+    def _init_ui(self):
+        """Setup toolbar and chart area."""
+        layout = QVBoxLayout(self)
+        toolbar = QHBoxLayout()
+
+        # Buttons
+        for text, slot in [
+            ("➕ Add Chart", self.add_chart),
+            ("❌ Remove Chart", self.remove_chart),
+            ("🔄 Refresh Data", self.refresh_chart),
+            ("💾 Save Chart", self.save_chart),
+        ]:
+            btn = QPushButton(text)
+            btn.clicked.connect(slot)
+            toolbar.addWidget(btn)
+
+        layout.addLayout(toolbar)
+
+        # Initialize chart
         self.create_bar_chart()
 
-        # Set the main layout
-        self.setLayout(layout)
-
+    # ------------------------------------------------------------------
     def create_bar_chart(self):
-        """Create and display the bar chart."""
+        """Draw the mplfinance bar chart."""
         try:
-            # Generate the bar chart using mplfinance
-            fig, ax = mpf.plot(self.df, type='ohlc', style='charles', title='Bar Chart',
-                               ylabel='Price', volume=True, returnfig=True)
+            if self.df.empty:
+                QMessageBox.warning(self, "No Data", "No data available for bar chart.")
+                return
 
-            # Embed the chart into PyQt5 using FigureCanvasQTAgg
-            if self.canvas is not None:
-                self.layout().removeWidget(self.canvas)
+            # Clear old chart if present
+            if self.canvas:
+                layout = self.layout()
+                layout.removeWidget(self.canvas)
+                self.canvas.setParent(None)
                 self.canvas.deleteLater()
+
+            # Plot using mplfinance
+            fig, _ = mpf.plot(
+                self.df,
+                type="ohlc",
+                style="charles",
+                title="Bar Chart",
+                ylabel="Price",
+                volume=True,
+                returnfig=True,
+                figsize=(10, 6),
+            )
 
             self.canvas = FigureCanvas(fig)
             self.layout().addWidget(self.canvas)
 
         except Exception as e:
-            print(f"Error generating chart: {e}")
-            QMessageBox.critical(self, "Error", f"Error generating chart: {e}")
+            print(f"[BarChart] Chart rendering error: {e}")
+            QMessageBox.critical(self, "Error", f"Error generating chart:\n{e}")
 
+    # ------------------------------------------------------------------
     def add_chart(self):
-        """Simulate adding a new chart (placeholder functionality)."""
-        print("Add Chart button clicked")
+        """Placeholder for multi-chart logic (handled by Charts container)."""
+        print("[BarChart] Add chart clicked")
 
     def remove_chart(self):
-        """Simulate removing a chart (placeholder functionality)."""
-        print("Remove Chart button clicked")
+        """Placeholder for removal logic."""
+        print("[BarChart] Remove chart clicked")
 
+    # ------------------------------------------------------------------
     def refresh_chart(self):
-        """Refresh the chart with updated data."""
-        print("Refreshing chart with updated data...")
-        self.df['Close'] += 5  # Simulate price change
-        self.create_bar_chart()
+        """
+        Refresh chart with updated OHLCV data.
+        If SmartBot is connected, pull live asset data.
+        Otherwise simulate updates.
+        """
+        try:
+            if self.bot and hasattr(self.bot, "get_asset_data"):
+                # Example: bot.get_asset_data("XLM/USDC") returns DataFrame
+                new_df = self.bot.get_asset_data("XLM/USDC")
+                if not new_df.empty:
+                    self.df = new_df
+            else:
+                # Simulated data change
+                self.df["Close"] = self.df["Close"] + (pd.Series(range(len(self.df))) % 2 - 0.5) * 2
 
+            self.create_bar_chart()
+            print("[BarChart] Chart refreshed successfully")
+
+        except Exception as e:
+            print(f"[BarChart] Refresh error: {e}")
+            QMessageBox.warning(self, "Warning", f"Failed to refresh chart:\n{e}")
+
+    # ------------------------------------------------------------------
     def save_chart(self):
-        """Save the bar chart as an image."""
+        """Save chart as image."""
+        if not self.canvas:
+            QMessageBox.warning(self, "No Chart", "No chart available to save.")
+            return
+
         file_path, _ = QFileDialog.getSaveFileName(self, "Save Chart", "", "PNG Files (*.png)")
         if file_path:
-            self.canvas.figure.savefig(file_path)
-            print(f"Chart saved as {file_path}")
-
-
-# Example usage if running as a standalone application
-if __name__ == "__main__":
-    # Sample Data
-    df = {
-        'Date': pd.date_range(start='2023-01-01', periods=10, freq='D'),
-        'Open': [100, 120, 90, 110, 130, 105, 115, 125, 140, 110],
-        'High': [110, 130, 105, 125, 145, 115, 125, 135, 150, 120],
-        'Low': [90, 100, 85, 95, 115, 85, 95, 105, 120, 90],
-        'Close': [105, 125, 100, 115, 135, 105, 115, 125, 140, 115],
-        'Volume': [1000, 2000, 1500, 1800, 3000, 1500, 1800, 2500, 500, 1800]
-    }
-
-  
+            self.canvas.figure.savefig(file_path, dpi=300)
+            QMessageBox.information(self, "Saved", f"Chart saved as:\n{file_path}")
+            print(f"[BarChart] Saved to {file_path}")

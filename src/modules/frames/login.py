@@ -112,12 +112,7 @@ class Login(QtWidgets.QFrame):
 
 
         self.setLayout(layout)
-        self.setStyleSheet("""
-            QFrame { background-color: #fafafa; border-radius: 8px; }
-            QPushButton { background-color: #1976D2; color: white; padding: 6px 14px; border-radius: 6px; }
-            QPushButton:hover { background-color: #2196F3; }
-            QLineEdit { padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
-        """)
+
 
     # ------------------------------------------------------------------
     # Restore Saved Settings
@@ -173,8 +168,9 @@ class Login(QtWidgets.QFrame):
             self.controller.account_id = account_id
             self.controller.secret_key = secret_key
 
-            self.bot = SmartBot(controller=self.controller)
-            self.controller.bot = self.bot
+            self.controller.bot= SmartBot(self.controller)
+
+
 
 
             self._update_info("✅ Login successful!", "green")

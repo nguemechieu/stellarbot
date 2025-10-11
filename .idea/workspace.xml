@@ -4,41 +4,34 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d84abc81-fc38-45c9-ab69-dda17c6e8079" name="Changes" comment="update">
-      <change afterPath="$PROJECT_DIR$/config.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/logs/trades_logs.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/assets/dark.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/assets/light.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/assets/style.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/bot/analyzer.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/bot/data_fetcher.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/bot/exchanges.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/bot/risk_manager.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/bot/smartbot.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/bot/trader.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/bot/utils.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/modules/classes/backtesting.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/modules/classes/exchange.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/modules/classes/notifications.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/modules/classes/risk_manager.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/modules/classes/strategy.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/modules/frames/theme_manager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env.stellarbot" afterDir="false" />
+    <list default="true" id="d84abc81-fc38-45c9-ab69-dda17c6e8079" name="Changes" comment="progress">
+      <change afterPath="$PROJECT_DIR$/src/modules/frames/assets_frame.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/modules/frames/effects_frame.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/modules/frames/market_assets_frame.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/modules/frames/orderbook_frame.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/market_analysis_report.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/market_analysis_report.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/modules/engine/smart_bot.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/engine/smart_bot.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/modules/frames/account_overview.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/frames/account_overview.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/modules/frames/asset_portfolio.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/modules/frames/bar_chart.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/frames/bar_chart.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/modules/frames/candles_stick_chart.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/frames/candles_stick_chart.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/modules/frames/dashboard.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/frames/dashboard.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/modules/frames/forex_news.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/frames/forex_news.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/modules/frames/effects.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/modules/frames/fees_analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/frames/fees_analysis.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/modules/frames/help.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/frames/help.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/modules/frames/home.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/frames/home.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/modules/frames/login.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/frames/login.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/modules/frames/offers.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/frames/offers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/modules/frames/payments.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/frames/payments.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/modules/frames/preferences.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/frames/preferences.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/modules/frames/renko.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/frames/renko.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/modules/frames/risk_management.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/frames/risk_management.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/modules/frames/send_money.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/frames/send_money.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/modules/frames/trading_charts.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/frames/charts.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/modules/frames/transactions.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/modules/frames/transactions.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stellarbot.css" beforeDir="false" afterPath="$PROJECT_DIR$/stellarbot.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/stellarbot.py" beforeDir="false" afterPath="$PROJECT_DIR$/stellarbot.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ui_utility.log" beforeDir="false" afterPath="$PROJECT_DIR$/ui_utility.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/user_settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/user_settings.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -80,7 +73,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "Python.stellarbot.executor": "Debug",
+    "Python.stellarbot.executor": "Run",
     "Python.tester.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
@@ -185,7 +178,15 @@
       <option name="presentableId" value="Default" />
       <updated>1735848614620</updated>
       <workItem from="1759305547952" duration="7440000" />
-      <workItem from="1759552417630" duration="26483000" />
+      <workItem from="1759552417630" duration="49609000" />
+      <workItem from="1759787957698" duration="692000" />
+      <workItem from="1759814301200" duration="655000" />
+      <workItem from="1759822621782" duration="1027000" />
+      <workItem from="1759832020695" duration="1517000" />
+      <workItem from="1759858545843" duration="1725000" />
+      <workItem from="1759864679682" duration="733000" />
+      <workItem from="1759867201243" duration="589000" />
+      <workItem from="1760173049564" duration="16956000" />
     </task>
     <task id="LOCAL-00001" summary="update">
       <option name="closed" value="true" />
@@ -195,7 +196,15 @@
       <option name="project" value="LOCAL" />
       <updated>1759582967463</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="progress">
+      <option name="closed" value="true" />
+      <created>1759664826885</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1759664826885</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -203,9 +212,10 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="update" />
-    <option name="LAST_COMMIT_MESSAGE" value="update" />
+    <MESSAGE value="progress" />
+    <option name="LAST_COMMIT_MESSAGE" value="progress" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/stellarbot$stellarbot.coverage" NAME="stellarbot Coverage Results" MODIFIED="1759664053008" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/stellarbot$stellarbot.coverage" NAME="stellarbot Coverage Results" MODIFIED="1760205035099" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
