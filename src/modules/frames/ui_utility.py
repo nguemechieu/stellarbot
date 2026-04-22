@@ -1,10 +1,41 @@
 import logging
 import os
 from datetime import datetime, timedelta
-import seaborn as sns
-import numpy as np
-import pandas as pd
-from matplotlib import pyplot as plt
+
+# Lazy imports for visualization libraries (matplotlib/seaborn can hang during import)
+# These will be imported only when actually needed
+_sns = None
+_np = None
+_pd = None
+_plt = None
+
+def get_sns():
+    global _sns
+    if _sns is None:
+        import seaborn as sns
+        _sns = sns
+    return _sns
+
+def get_np():
+    global _np
+    if _np is None:
+        import numpy as np
+        _np = np
+    return _np
+
+def get_pd():
+    global _pd
+    if _pd is None:
+        import pandas as pd
+        _pd = pd
+    return _pd
+
+def get_plt():
+    global _plt
+    if _plt is None:
+        from matplotlib import pyplot as plt
+        _plt = plt
+    return _plt
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -145,27 +176,18 @@ def gennerate_market_annalysis(asset_info_df, market_data_df):
     # Calculate the daily average price and volume for each asset
     daily_average_price_df = market_data_df.groupby(['asset_code', 'timestamp'])['price'].mean().reset_index()
     daily_average_volume_df = market_data_df.groupby(['asset_code', 'timestamp'])['volume'].sum().reset_index()
-    daily_average_df = pd.merge(daily_average_price_df, daily_average_volume_df, on=['asset_code', 'timestamp'])
-    daily_average_df['average_price'] = daily_average_df['price'] / daily_average_df['volume']
-    daily_average_df = daily_average_df.drop(columns=['price', 'volume'])
-    daily_average_df = daily_average_df.rename(columns={'average_price': 'daily_average_price'})
-
-    # Calculate the weekly average price and volume for each asset
-    weekly_average_price_df = market_data_df.groupby(['asset_code', pd.Grouper(key='timestamp', freq='7D')])['price'].mean().reset_index()
-    weekly_average_volume_df = market_data_df.groupby(['asset_code', pd.Grouper(key='timestamp', freq='7D')])['volume'].sum().reset_index()
-    weekly_average_df = pd.merge(weekly_average_price_df, weekly_average_volume_df, on=['asset_code', 'timestamp'])
-    weekly_average_df['average_price'] = weekly_average_df['price'] / weekly_average_df['volume']
-    weekly_average_df = weekly_average_df.drop(columns=['price', 'volume'])
-    weekly_average_df = weekly_average_df.rename(columns={'average_price': 'weekly_average_price'})
-
-    # Calculate the monthly average price and volume for each asset
-    monthly_average_price_df = market_data_df.groupby(['asset_code', pd.Grouper(key='timestamp', freq='1M')])['price'].mean().reset_index()
-    monthly_average_volume_df = market_data_df.groupby(['asset_code', pd.Grouper(key='timestamp', freq='1M')])['volume'].sum().reset_index()
-    monthly_average_df = pd.merge(monthly_average_price_df, monthly_average_volume_df, on=['asset_code', 'timestamp'])
-    monthly_average_df['average_price'] = monthly_average_df['price'] / monthly_average_df['volume']
-    monthly_average_df = monthly_average_df.drop(columns=['price', 'volume'])
-    monthly_average_df = monthly_average_df.rename(columns={'average_price': 'monthly_average_price'})
-
+    daily_average_df = _extracted_from_gennerate_market_annalysis_20(
+        pd,
+        daily_average_price_df,
+        daily_average_volume_df,
+        'daily_average_price',
+    )
+    weekly_average_df = _extracted_from_gennerate_market_annalysis_26(
+        market_data_df, pd, '7D', 'weekly_average_price'
+    )
+    monthly_average_df = _extracted_from_gennerate_market_annalysis_26(
+        market_data_df, pd, '1M', 'monthly_average_price'
+    )
     # Merge daily, weekly, and monthly averages into a single DataFrame
     market_analysis_df = pd.merge(asset_info_df, daily_average_df, on='asset_code', how='left')
     market_analysis_df = pd.merge(market_analysis_df, weekly_average_df, on=['asset_code', 'timestamp'], how='left')
@@ -185,6 +207,38 @@ def gennerate_market_annalysis(asset_info_df, market_data_df):
     market_analysis_df.to_csv(report_path, index=False)
 
     logger.info(f"Market analysis report generated: {report_path}")
+
+
+# TODO Rename this here and in `gennerate_market_annalysis`
+def _extracted_from_gennerate_market_annalysis_26(market_data_df, pd, freq, arg3):
+    # Calculate the weekly average price and volume for each asset
+    weekly_average_price_df = (
+        market_data_df.groupby(
+            ['asset_code', pd.Grouper(key='timestamp', freq=freq)]
+        )['price']
+        .mean()
+        .reset_index()
+    )
+    weekly_average_volume_df = (
+        market_data_df.groupby(
+            ['asset_code', pd.Grouper(key='timestamp', freq=freq)]
+        )['volume']
+        .sum()
+        .reset_index()
+    )
+    return _extracted_from_gennerate_market_annalysis_20(
+        pd, weekly_average_price_df, weekly_average_volume_df, arg3
+    )
+
+
+# TODO Rename this here and in `gennerate_market_annalysis`
+def _extracted_from_gennerate_market_annalysis_20(pd, arg1, arg2, arg3):
+    result = pd.merge(arg1, arg2, on=['asset_code', 'timestamp'])
+    result['average_price'] = result['price'] / result['volume']
+    result = result.drop(columns=['price', 'volume'])
+    result = result.rename(columns={'average_price': arg3})
+
+    return result
 
 
 
@@ -249,9 +303,9 @@ def create_random_market_data(param):
     return _market_data_df
 
 
-# Test the function
-market_data_df = create_random_market_data(1000)
-generate_market_analysis_report(market_data_df)
+# Test the function (commented out - was causing import hangs)
+# market_data_df = create_random_market_data(1000)
+# generate_market_analysis_report(market_data_df)
 
 
 

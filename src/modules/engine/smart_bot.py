@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import logging
 import threading
 import time
@@ -11,6 +12,28 @@ from stellar_sdk import Server, TransactionBuilder, Network, Asset, Keypair
 
 from src.modules.engine.learning import Learning
 from src.modules.engine.time_frames import TimeFrame
+=======
+from __future__ import annotations
+import logging
+import threading
+import time
+from datetime import datetime, timedelta
+from typing import List, Dict, Tuple, Optional, Callable
+import pandas as pd
+from stellar_sdk import Server, Asset, Keypair, TransactionBuilder, Network, ManageSellOffer
+
+from ta.momentum import RSIIndicator
+from ta.trend import MACD
+>>>>>>> Stashed changes
+
+# Import production-ready configuration and logging
+try:
+    from src.modules.engine.config_manager import get_config
+    from src.modules.engine.logging_config import get_logger
+except ImportError:
+    # Fallback for testing
+    import logging as get_logger_fallback
+    get_logger = lambda name: get_logger_fallback.getLogger(name)
 
 
 class EventListener:
@@ -58,6 +81,7 @@ def calculate_indicator(ohlcv_data, indicator):
 
 
 class SmartBot:
+<<<<<<< Updated upstream
     def __init__(self, controller):
 
         self.running = False
@@ -144,6 +168,66 @@ class SmartBot:
         self.learn_to_trade = True
         self.settings = {}
         self.strategies = {
+=======
+    """💡 Advanced Stellar Trading Bot — stable, threaded, and UI-ready."""
+
+    def __init__(self, controller=None):
+        # Initialize configuration and logging
+        try:
+            self.config = get_config()
+            self.logger = get_logger("SmartBot")
+        except Exception as e:
+            # Fallback logging if config fails
+            self.logger = logging.getLogger("SmartBot")
+            self.logger.error(f"Config initialization failed: {e}, using fallback")
+            self.config = None
+        
+        self.controller = controller
+        self.running = False
+        self.test_mode = False
+        self.interval_seconds = 60
+        self.resolution = 3600000  # 1h
+
+        # --- Stellar Setup ---
+        try:
+            stellar_network = self.config.stellar_network if self.config else "https://horizon.stellar.org"
+            self.server = Server(stellar_network)
+            
+            # Get credentials from config or controller
+            if self.config:
+                try:
+                    self.account_id = self.config.stellar_account_id
+                    self.secret_key = self.config.stellar_secret_key
+                except ValueError as config_err:
+                    # Config doesn't have credentials, try controller
+                    if controller and hasattr(controller, 'account_id'):
+                        self.account_id = controller.account_id
+                        self.secret_key = controller.secret_key
+                    else:
+                        raise ValueError(f"No credentials provided: {config_err}")
+            elif controller:
+                self.account_id = controller.account_id
+                self.secret_key = controller.secret_key
+            else:
+                raise ValueError("No credentials provided: set STELLAR_ACCOUNT_ID and STELLAR_SECRET_KEY in .env or provide via controller")
+            
+            if not self.account_id or not self.secret_key:
+                raise ValueError("Stellar credentials are empty")
+            
+            self.keypair = Keypair.from_secret(self.secret_key)
+            self.account = self.server.load_account(self.account_id)
+            self.logger.info(f"✅ Connected to Stellar Network: {stellar_network}")
+        except ValueError as val_err:
+            self.logger.warning(f"⚠️  Stellar not configured: {val_err}. Bot will not be able to trade without credentials.")
+            # Set dummy values for non-trading operations
+            self.account_id = None
+            self.secret_key = None
+            self.keypair = None
+            self.account = None
+        except Exception as e:
+            self.logger.error(f"❌ Stellar initialization failed: {e}", exc_info=True)
+            raise
+>>>>>>> Stashed changes
 
             "FOREX_NEWS": {
                 "period": 20,
@@ -172,6 +256,7 @@ class SmartBot:
 
         self.thread = threading.Thread(target=self.run)
 
+<<<<<<< Updated upstream
 
         # Fetch claimable balances
         self.claimable_balances = self.server.claimable_balances().order(True).limit(200).call()["_embedded"]["records"]
@@ -265,6 +350,149 @@ class SmartBot:
             data = response.json()
             self.logger.info(f"Liquidity Pool: {data}")
             return data
+=======
+        # --- Initialization ---
+        try:
+            if self.account_id and self.account:
+                self._initialize_account()
+            self.logger.info("✅ SmartBot initialized successfully.")
+        except Exception as e:
+            self.logger.error(f"Account initialization failed: {e}", exc_info=True)
+            # Don't raise - allow bot to continue in limited mode
+
+    # ===============================================================
+    # ACCOUNT INIT
+    # ===============================================================
+    def _initialize_account(self):
+        """Initialize account with comprehensive error handling."""
+        try:
+            self.account = self.server.load_account(self.account_id)
+            self.logger.info(f"✅ Loaded account: {self.account_id}")
+            
+            # Fetch market data with error handling
+            try:
+                self.assets_df = pd.DataFrame(self.server.assets().call())
+                self.logger.debug("✅ Loaded assets data")
+            except Exception as e:
+                self.logger.warning(f"Failed to load assets: {e}")
+            
+            try:
+                self.accounts_df = pd.DataFrame([self.server.accounts().account_id(self.account_id).call()])
+                self.logger.debug("✅ Loaded account data")
+            except Exception as e:
+                self.logger.warning(f"Failed to load account data: {e}")
+            
+            try:
+                self.transactions_df = pd.DataFrame([self.server.transactions().for_account(self.account_id).call()])
+                self.logger.debug("✅ Loaded transactions data")
+            except Exception as e:
+                self.logger.warning(f"Failed to load transactions: {e}")
+            
+            try:
+                self.effects_df = pd.DataFrame([self.server.effects().for_account(self.account_id).call()])
+                self.logger.debug("✅ Loaded effects data")
+            except Exception as e:
+                self.logger.warning(f"Failed to load effects: {e}")
+            
+            try:
+                self.offers_df = pd.DataFrame([self.server.offers().call()])
+                self.logger.debug("✅ Loaded offers data")
+            except Exception as e:
+                self.logger.warning(f"Failed to load offers: {e}")
+            
+            try:
+                self.orderbook_df = pd.DataFrame([self.server.orderbook(self.selling, self.buying).call()])
+                self.logger.debug("✅ Loaded orderbook data")
+            except Exception as e:
+                self.logger.warning(f"Failed to load orderbook: {e}")
+            
+            try:
+                self.payments_df = pd.DataFrame([self.server.payments().for_account(self.account_id).call()])
+                self.logger.debug("✅ Loaded payments data")
+            except Exception as e:
+                self.logger.warning(f"Failed to load payments: {e}")
+            
+            try:
+                self.trades_df = pd.DataFrame([self.server.trades().for_account(self.account_id).call()])
+                self.logger.debug("✅ Loaded trades data")
+            except Exception as e:
+                self.logger.warning(f"Failed to load trades: {e}")
+            
+            try:
+                self.fees_stats_df = pd.DataFrame([self.server.fee_stats().call()])
+                self.logger.debug("✅ Loaded fee stats")
+            except Exception as e:
+                self.logger.warning(f"Failed to load fee stats: {e}")
+            
+            try:
+                self.operations_df = pd.DataFrame([self.server.operations().for_account(self.account_id).call()])
+                self.logger.debug("✅ Loaded operations data")
+            except Exception as e:
+                self.logger.warning(f"Failed to load operations: {e}")
+            
+            try:
+                self.ledger_df = pd.DataFrame([self.server.ledgers().order(desc=True).limit(50).call()])
+                self.logger.debug("✅ Loaded ledger data")
+            except Exception as e:
+                self.logger.warning(f"Failed to load ledger data: {e}")
+                
+        except Exception as e:
+            self.logger.error(f"❌ Account initialization failed: {e}", exc_info=True)
+            raise
+
+    # ===============================================================
+    # START/STOP
+    # ===============================================================
+    def start(self):
+        """Launch trading loop and data updaters."""
+        if self.running:
+            self.logger.warning("Bot already running.")
+            return
+        self.running = True
+        self.thread = threading.Thread(target=self._run_loop, name="SmartBotMain", daemon=True)
+        self.thread.start()
+        self._start_background_updaters()
+        self.logger.info("🚀 SmartBot started.")
+
+    def stop(self):
+        """Stop trading and background updates."""
+        self.running = False
+        self.logger.info("🛑 Stopping SmartBot...")
+        if self.thread and self.thread.is_alive():
+            self.thread.join(timeout=5)
+        self.logger.info("✅ SmartBot stopped.")
+
+    # ===============================================================
+    # MAIN LOOP
+    # ===============================================================
+    def _run_loop(self):
+        """Main trading strategy loop."""
+        try:
+            pairs = self._create_trading_pairs()
+            if not pairs:
+                self.logger.warning("⚠️ No trading pairs found.")
+                return
+
+            while self.running:
+                start_time = time.time()
+                for base, quote in pairs:
+                    df = self._fetch_ohlcv(base, quote)
+                    if df is None or df.empty:
+                        continue
+                    self._apply_indicators(df)
+                    signal = self._generate_signal(df, f"{base.code}/{quote.code}")
+                    if signal:
+                        self.execute_trade(signal)
+
+                    # Notify UI
+                    self.events.notify("market_update", {
+                        "timestamp": datetime.now(),
+                        "pair": f"{base.code}/{quote.code}",
+                        "status": "RUNNING"
+                    })
+
+                time.sleep(max(0, self.interval_seconds - (time.time() - start_time)))
+>>>>>>> Stashed changes
 
         except Exception as e:
             self.logger.error(f"Error fetching liquidity pool: {e}")
@@ -290,6 +518,7 @@ class SmartBot:
             self.server_msg['error'] = f"Error fetching liquidity pool effects: {e}"
             return []
 
+<<<<<<< Updated upstream
     def get_liquidity_pools_trades(self):
         """
             Fetch the trades of a liquidity pool.
@@ -1231,3 +1460,14 @@ class SmartBot:
 
         }
 
+=======
+    def _on_market_update(self, event, data):
+        """Handle market update event safely."""
+        try:
+            msg = f"Market updated at {data.get('timestamp', datetime.now())}"
+            if self.controller and hasattr(self.controller, 'server_msg'):
+                self.controller.server_msg.update({"status": "RUNNING", "message": msg})
+            self.logger.debug(msg)
+        except Exception as e:
+            self.logger.debug(f"Market update handler error: {e}")
+>>>>>>> Stashed changes

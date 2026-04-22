@@ -1,6 +1,7 @@
 {
-    "workbench.colorTheme": "Default Dark+",
+    "workbench.colorTheme": "Dark+",
     "python.analysis.extraPaths": [
         "./src"
-    ]
+    ],
+    "python.defaultInterpreterPath": "${workspaceFolder}/Scripts/python.exe"
 }
